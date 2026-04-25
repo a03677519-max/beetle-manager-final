@@ -199,24 +199,25 @@ const App = () => {
 
   // 個体データをテキスト形式で生成しコピーする関数
   const copyBeetleText = (beetle) => {
-    const startDate = (beetle.status === 'SpawnSet' ? beetle.setDate : beetle.hatchDate) || '';
-    
     let text = `和名 ${beetle.species || ''}\n`;
     text += `学名 ${beetle.scientificName || ''}\n`;
     text += `産地 ${beetle.locality || ''}\n`;
-    text += `累代 ${beetle.generation || ''} 管理名 ${beetle.name || ''} 産卵セット日 ${startDate}\n`;
+    text += `累代 ${beetle.generation || ''} ${beetle.name || ''} ${beetle.hatchDate || ''}\n`;
 
     // 履歴データ（最大5件分）
     for (let i = 0; i < 5; i++) {
       const rec = beetle.records && beetle.records[i];
       if (rec) {
-        text += ` ${rec.date || ''} ${rec.substrate || ''} 水${rec.moisture || ''}圧${rec.packingPressure || ''} ${rec.containerSize || ''} ${rec.stage || ''}\n`;
+        text += ` ${rec.date || ''} ${rec.substrate || ''} 水${rec.moisture || ''} 圧${rec.packingPressure || ''} ${rec.containerSize || ''} ${rec.stage || ''}\n`;
       } else {
         text += `\n`;
       }
     }
 
-    text += `\n　　　${beetle.emergenceDate || ''} 羽化・堀　${beetle.feedingStartDate || ''} 後食`;
+    const emergenceDateFormatted = beetle.emergenceDate ? beetle.emergenceDate : '　　　　　　　　　'; // 全角スペース10個
+    const feedingStartDateFormatted = beetle.feedingStartDate ? beetle.feedingStartDate : '　　　　　　　　　'; // 全角スペース10個
+
+    text += `\n　　　${emergenceDateFormatted} 羽化・堀　${feedingStartDateFormatted} 後食`;
 
     if (!navigator.clipboard) {
       alert('このブラウザではクリップボードへのコピーがサポートされていません。');
@@ -242,7 +243,7 @@ const App = () => {
     setIsFetchingAI(true);
     try {
       const dynamicAI = new GoogleGenerativeAI(activeKey);
-      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
       const prompt = `Return ONLY the scientific name in Latin for the beetle "${speciesName}". No commentary, no bold text, just the name. If unknown, return "Unknown".`;
       const result = await model.generateContent(prompt);
       // 不要な記号（バッククォートなど）を除去
@@ -690,6 +691,19 @@ const App = () => {
   // 重複を除いた既存の管理名と種類のリストを作成
   const existingNames = [...new Set(beetles.map(b => b.name))].filter(Boolean);
   const existingSpecies = [...new Set(beetles.map(b => b.species))].filter(Boolean);
+  const existingLocalities = [...new Set(beetles.map(b => b.locality))].filter(Boolean);
+  const existingGenerations = [...new Set(beetles.map(b => b.generation))].filter(Boolean);
+  const existingSubstrates = [...new Set([
+    ...beetles.map(b => b.substrate),
+    ...beetles.flatMap(b => b.records?.map(r => r.substrate) || [])
+  ])].filter(Boolean);
+  const existingContainers = [...new Set([
+    ...beetles.map(b => b.containerSize),
+    ...beetles.flatMap(b => b.records?.map(r => r.containerSize) || [])
+  ])].filter(Boolean);
+
+  const getEnhancedStats = () => enhancedStats;
+
 
   const deleteBeetle = (id, e) => {
     e.stopPropagation();
@@ -845,42 +859,47 @@ const App = () => {
         <main className="max-w-md mx-auto p-4">
           {/* Removed top dashboard card */}
 
-          {/* Tab: Home (List & Recent) */}
+          {/* Tab: Home */}
           {activeTab === 'home' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h3 className="font-bold text-slate-700 mb-3 px-1">最近のタスク</h3>
-              <div className="bg-white rounded-2xl border border-slate-100 p-2 shadow-sm">
-                {beetles.filter(b => !b.archived && (b.tasks?.some(t => !t.completed) || getAutoTasks(b).length > 0)).length > 0 ? (
-                  beetles.filter(b => !b.archived && (b.tasks?.some(t => !t.completed) || getAutoTasks(b).length > 0))
-                    .slice(0, 3)
-                    .map(b => {
-                      const firstTask = (b.tasks || []).find(t => !t.completed) || getAutoTasks(b)[0];
-                      return (
-                        <div 
-                          key={b.id} 
-                          onClick={() => setSelectedBeetle(b)}
-                          className="p-3 border-b last:border-0 border-slate-50 flex justify-between items-center active:bg-slate-50 cursor-pointer transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${firstTask.isAuto ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
-                              <ClipboardCheck size={16} />
+              {/* 検索中またはカテゴリ選択時は、結果に集中させるためタスクセクションを非表示にする */}
+              {!searchTerm && filterStatus === 'All' && (
+                <div className="mb-8">
+                  <h3 className="font-bold text-slate-700 mb-3 px-1">最近のタスク</h3>
+                  <div className="bg-white rounded-2xl border border-slate-100 p-2 shadow-sm">
+                    {beetles.filter(b => !b.archived && (b.tasks?.some(t => !t.completed) || getAutoTasks(b).length > 0)).length > 0 ? (
+                      beetles.filter(b => !b.archived && (b.tasks?.some(t => !t.completed) || getAutoTasks(b).length > 0))
+                        .slice(0, 3)
+                        .map(b => {
+                          const firstTask = (b.tasks || []).find(t => !t.completed) || getAutoTasks(b)[0];
+                          return (
+                            <div 
+                              key={b.id} 
+                              onClick={() => setSelectedBeetle(b)}
+                              className="p-3 border-b last:border-0 border-slate-50 flex justify-between items-center active:bg-slate-50 cursor-pointer transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${firstTask.isAuto ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
+                                  <ClipboardCheck size={16} />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-bold text-slate-800">{b.name}</p>
+                                  <p className={`text-xs ${firstTask.isAuto ? 'text-rose-500 font-bold' : 'text-slate-500'}`}>{firstTask.type}</p>
+                                </div>
+                              </div>
+                              <ChevronRight size={16} className="text-slate-300" />
                             </div>
-                            <div>
-                              <p className="text-sm font-bold text-slate-800">{b.name}</p>
-                              <p className={`text-xs ${firstTask.isAuto ? 'text-rose-500 font-bold' : 'text-slate-500'}`}>{firstTask.type}</p>
-                            </div>
-                          </div>
-                          <ChevronRight size={16} className="text-slate-300" />
-                        </div>
-                      );
-                    })
-                ) : (
-                  <p className="text-xs text-slate-400 text-center py-4">予定されたタスクはありません</p>
-                )}
-              </div>
+                          );
+                        })
+                    ) : (
+                      <p className="text-xs text-slate-400 text-center py-4">予定されたタスクはありません</p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Integrated List Section */}
-              <div className="mt-8 space-y-4">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-slate-700">個体リスト</h3>
@@ -921,22 +940,42 @@ const App = () => {
                   />
                 </div>
 
-                <div className="space-y-3 pb-10">
-                  {beetles
-                    .filter(b => view === 'archive' ? b.archived : !b.archived)
-                    .filter(b => filterStatus === 'All' || b.status === filterStatus)
-                    .filter(b => {
-                      const term = searchTerm.toLowerCase();
-                      if (!term) return true;
-                      const searchableValues = [b.name, b.species, b.locality, b.generation, b.substrate, b.notes];
-                      return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
-                    })
-                    .map(beetle => (
-                    <div 
-                      key={beetle.id} 
-                      onClick={() => setSelectedBeetle(beetle)}
-                      className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center active:scale-[0.98] transition-all"
-                    >
+                <div className="space-y-3 pb-24">
+                  {(() => {
+                    const filtered = beetles
+                      .filter(b => view === 'archive' ? b.archived : !b.archived)
+                      .filter(b => filterStatus === 'All' || b.status === filterStatus)
+                      .filter(b => {
+                        const term = searchTerm.toLowerCase();
+                        if (!term) return true;
+                        const searchableValues = [b.name, b.species, b.locality, b.generation, b.substrate, b.notes];
+                        return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
+                      });
+
+                    if (filtered.length === 0 && (searchTerm || filterStatus !== 'All')) {
+                      return (
+                        <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
+                          <Search className="mx-auto text-slate-200 mb-2" size={40} />
+                          <p className="text-sm text-slate-400 font-bold">該当する個体がいません</p>
+                        </div>
+                      );
+                    }
+
+                    return filtered.map(beetle => {
+                      const lastRecordDate = beetle.records.length > 0 
+                        ? new Date(beetle.records[beetle.records.length - 1].date)
+                        : (beetle.hatchDate ? new Date(beetle.hatchDate) : (beetle.setDate ? new Date(beetle.setDate) : new Date(parseInt(beetle.id))));
+                      
+                      const overdueLimit = new Date(lastRecordDate);
+                      overdueLimit.setMonth(overdueLimit.getMonth() + 3);
+                      const isOverdue = !beetle.archived && new Date() > overdueLimit;
+
+                      return (
+                      <div 
+                        key={beetle.id} 
+                        onClick={() => setSelectedBeetle(beetle)}
+                        className={`p-4 rounded-2xl shadow-sm border flex justify-between items-center active:scale-[0.98] transition-all ${isOverdue ? 'bg-rose-50/50 border-rose-200' : 'bg-white border-slate-100'}`}
+                      >
                       <div className="flex gap-3 items-center">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl overflow-hidden shadow-inner ${!beetle.image && (beetle.status === 'Larva' ? 'bg-amber-50 text-amber-600' : beetle.status === 'SpawnSet' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600')}`}>
                           {beetle.image ? (
@@ -948,14 +987,17 @@ const App = () => {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-slate-800">{beetle.name}</span>
+                            {isOverdue && <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse">要交換</span>}
                           </div>
                           <p className="text-xs text-slate-500 font-bold leading-tight">{beetle.species}</p>
                           <p className="text-[10px] text-slate-400 italic leading-tight">{beetle.scientificName}</p>
                         </div>
                       </div>
-                      <ChevronRight className="text-slate-300" size={18} />
+                      <ChevronRight className={isOverdue ? "text-rose-400" : "text-slate-300"} size={18} />
                     </div>
-                  ))}
+                    );
+                  });
+                  })()}
                 </div>
               </div>
             </div>
@@ -1472,7 +1514,12 @@ const App = () => {
                       </div>
                       <div className="space-y-1 col-span-2">
                         <label className="text-[10px] text-slate-400 uppercase">使用マット</label>
-                        <input placeholder="例: G-pot" className="w-full text-xs border p-2 rounded-lg" value={newLog.substrate} onChange={e => setNewLog({...newLog, substrate: e.target.value})} />
+                        <input 
+                          placeholder="例: G-pot" 
+                          list="substrate-options"
+                          className="w-full text-xs border p-2 rounded-lg" 
+                          value={newLog.substrate} 
+                          onChange={e => setNewLog({...newLog, substrate: e.target.value})} />
                       </div> 
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 uppercase">加齢状況</label>
@@ -1484,7 +1531,12 @@ const App = () => {
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] text-slate-400 uppercase">ボトルサイズ</label>
-                        <input placeholder="例: 800cc" className="w-full text-xs border p-2 rounded-lg" value={newLog.containerSize} onChange={e => setNewLog({...newLog, containerSize: e.target.value})} />
+                        <input 
+                          placeholder="例: 800cc" 
+                          list="container-options"
+                          className="w-full text-xs border p-2 rounded-lg" 
+                          value={newLog.containerSize} 
+                          onChange={e => setNewLog({...newLog, containerSize: e.target.value})} />
                       </div>
                       <div className="space-y-1 col-span-2">
                         <label className="text-[10px] text-slate-400 uppercase">雌雄判別</label>
@@ -1718,11 +1770,21 @@ const App = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-gray-500 ml-1">産地</label>
-                    <input placeholder="例: 兵庫県川西市" className="w-full border p-3 rounded-xl" value={formData.locality || ''} onChange={e => setFormData({...formData, locality: e.target.value})} />
+                    <input 
+                      placeholder="例: 兵庫県川西市" 
+                      list="locality-options"
+                      className="w-full border p-3 rounded-xl" 
+                      value={formData.locality || ''} 
+                      onChange={e => setFormData({...formData, locality: e.target.value})} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-gray-500 ml-1">累代</label>
-                    <input placeholder="例: CBF1" className="w-full border p-3 rounded-xl" value={formData.generation || ''} onChange={e => setFormData({...formData, generation: e.target.value})} />
+                    <input 
+                      placeholder="例: CBF1" 
+                      list="generation-options"
+                      className="w-full border p-3 rounded-xl" 
+                      value={formData.generation || ''} 
+                      onChange={e => setFormData({...formData, generation: e.target.value})} />
                   </div>
                 </div>
 
@@ -1810,8 +1872,18 @@ const App = () => {
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <input placeholder="使用マット" className="border p-2 rounded-xl text-sm" value={formData.substrate || ''} onChange={e => setFormData({...formData, substrate: e.target.value})} />
-                      <input placeholder="容器サイズ" className="border p-2 rounded-xl text-sm" value={formData.containerSize || ''} onChange={e => setFormData({...formData, containerSize: e.target.value})} />
+                      <input 
+                        placeholder="使用マット" 
+                        list="substrate-options"
+                        className="border p-2 rounded-xl text-sm" 
+                        value={formData.substrate || ''} 
+                        onChange={e => setFormData({...formData, substrate: e.target.value})} />
+                      <input 
+                        placeholder="容器サイズ" 
+                        list="container-options"
+                        className="border p-2 rounded-xl text-sm" 
+                        value={formData.containerSize || ''} 
+                        onChange={e => setFormData({...formData, containerSize: e.target.value})} />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
@@ -2049,7 +2121,12 @@ const App = () => {
                 </div>
                 <div className="space-y-1 col-span-2">
                   <label className="text-[10px] text-slate-500 font-bold uppercase">使用マット/菌糸</label>
-                  <input placeholder="ロット共通の餌" className="w-full border p-3 rounded-xl text-sm" value={newLog.substrate} onChange={e => setNewLog({...newLog, substrate: e.target.value})} />
+                  <input 
+                    placeholder="ロット共通の餌" 
+                    list="substrate-options"
+                    className="w-full border p-3 rounded-xl text-sm" 
+                    value={newLog.substrate} 
+                    onChange={e => setNewLog({...newLog, substrate: e.target.value})} />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] text-slate-500 font-bold uppercase">加齢状況</label>
@@ -2059,7 +2136,12 @@ const App = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] text-slate-500 font-bold uppercase">ボトルサイズ</label>
-                  <input placeholder="例: 800cc" className="w-full border p-3 rounded-xl text-sm" value={newLog.containerSize} onChange={e => setNewLog({...newLog, containerSize: e.target.value})} />
+                  <input 
+                    placeholder="例: 800cc" 
+                    list="container-options"
+                    className="w-full border p-3 rounded-xl text-sm" 
+                    value={newLog.containerSize} 
+                    onChange={e => setNewLog({...newLog, containerSize: e.target.value})} />
                 </div>
                 <div className="col-span-2 grid grid-cols-2 gap-4">
                   <RatingSelector label="詰圧" icon={Hammer} value={newLog.packingPressure} onChange={v => setNewLog({...newLog, packingPressure: v})} />
@@ -2102,6 +2184,26 @@ const App = () => {
       <datalist id="species-options">
         {existingSpecies.map(species => (
           <option key={species} value={species} />
+        ))}
+      </datalist>
+      <datalist id="locality-options">
+        {existingLocalities.map(loc => (
+          <option key={loc} value={loc} />
+        ))}
+      </datalist>
+      <datalist id="generation-options">
+        {existingGenerations.map(gen => (
+          <option key={gen} value={gen} />
+        ))}
+      </datalist>
+      <datalist id="substrate-options">
+        {existingSubstrates.map(sub => (
+          <option key={sub} value={sub} />
+        ))}
+      </datalist>
+      <datalist id="container-options">
+        {existingContainers.map(cont => (
+          <option key={cont} value={cont} />
         ))}
       </datalist>
     </>
