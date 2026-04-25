@@ -702,9 +702,6 @@ const App = () => {
     ...beetles.flatMap(b => b.records?.map(r => r.containerSize) || [])
   ])].filter(Boolean);
 
-  const getEnhancedStats = () => enhancedStats;
-
-
   const deleteBeetle = (id, e) => {
     e.stopPropagation();
     if (window.confirm('この個体を削除してもよろしいですか？')) {
