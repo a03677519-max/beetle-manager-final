@@ -1,0 +1,45 @@
+{
+  "name": "BeetleLog - 昆虫飼育管理",
+  "short_name": "BeetleLog",
+  "description": "クワガタ・カブトムシのブリード記録を管理するPWA",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#064e3b",
+  "icons": [
+    {
+      "src": "/logo192.png?v=1",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo192.png?v=1",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo512.png?v=1",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "635x510",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "PCでの飼育管理画面"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "645x528",
+      "type": "image/png",
+      "label": "スマホでの飼育管理画面"
+    }
+  ]
+}
