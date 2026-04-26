@@ -9,7 +9,7 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// Service Worker Registration with Strong Update Logic
+// PWA 自己修復 & アップデートロジック
 if ('serviceWorker' in navigator) {
   // 新しいワーカーが制御を開始した時にリロードを実行
   navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -17,13 +17,17 @@ if ('serviceWorker' in navigator) {
   });
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(reg => {
+      // 定期的に更新をチェック
+      setInterval(() => { reg.update(); }, 60 * 60 * 1000);
+
       reg.onupdatefound = () => {
         const installingWorker = reg.installing;
         installingWorker.onstatechange = () => {
           if (installingWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
-              // 新しいコンテンツが利用可能な場合、自動的にリロード
+              // インストール完了、かつ既存のコントローラーがある場合は更新
+              console.log('New content is available; please refresh.');
               window.location.reload();
             }
           }

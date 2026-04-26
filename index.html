@@ -11,11 +11,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BeetleLog</title>
     <script>
-      // 古いキャッシュによる404エラーを検知して自動リロード
-      window.addEventListener('error', function(e) {
+      // 白画面（WSoD）対策: 5秒待っても描画されない場合はキャッシュを消して強制リロード
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          const root = document.getElementById('root');
+          if (root && root.innerHTML === '') {
+            console.warn('App failed to mount. Purging caches...');
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) registration.unregister();
+                caches.keys().then(names => {
+                  for (let name of names) caches.delete(name);
+                  window.location.reload(true);
+                });
+              });
+            } else {
+              window.location.reload(true);
+            }
+          }
+        }, 5000);
+      });
+
+      // 古いハッシュ名のファイル読み込み失敗（404）時の自動復旧
+      window.addEventListener('error', (e) => {
         if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
-          console.warn('Resource load failed. Forcing reload...');
-          window.location.reload();
+          const lastReload = sessionStorage.getItem('last_auto_reload');
+          if (!lastReload || Date.now() - lastReload > 10000) {
+            sessionStorage.setItem('last_auto_reload', Date.now());
+            window.location.reload(true);
+          }
         }
       }, true);
     </script>
