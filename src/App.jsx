@@ -243,7 +243,7 @@ const App = () => {
     setIsFetchingAI(true);
     try {
       const dynamicAI = new GoogleGenerativeAI(activeKey);
-      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
+      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1beta" });
       const prompt = `Return ONLY the scientific name in Latin for the beetle "${speciesName}". No commentary, no bold text, just the name. If unknown, return "Unknown".`;
       const result = await model.generateContent(prompt);
       // 不要な記号（バッククォートなど）を除去
@@ -837,7 +837,7 @@ const App = () => {
     <>
       <div className="min-h-screen bg-slate-50 pb-32 font-sans">
         {/* Header */}
-        <header className="bg-white text-emerald-900 border-b border-slate-200 p-4 sticky top-0 z-10">
+      <header className="bg-white text-emerald-900 border-b border-slate-200 p-4 pt-[calc(1rem+env(safe-area-inset-top))] sticky top-0 z-10">
           <div className="max-w-md mx-auto flex justify-between items-center">
             <h1 
               onClick={() => setActiveTab('home')} 
@@ -1306,7 +1306,7 @@ const App = () => {
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-20">
-          <nav className="bg-white/90 backdrop-blur-lg border-t border-slate-100 px-6 py-4 pb-10 flex justify-between items-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+        <nav className="bg-white/90 backdrop-blur-lg border-t border-slate-100 px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
             <button onClick={() => { setActiveTab('home'); setFilterStatus('All'); }} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' && filterStatus === 'All' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
               <Home size={26} fill={activeTab === 'home' && filterStatus === 'All' ? "currentColor" : "none"} />
               <span className="text-xs font-bold">ホーム</span>
@@ -1347,7 +1347,7 @@ const App = () => {
         {/* Detail Modal */}
         {selectedBeetle && (
           <div className="fixed inset-0 bg-white z-20 flex flex-col">
-            <div className="bg-emerald-800 text-white p-4 flex justify-between items-center">
+          <div className="bg-emerald-800 text-white p-4 pt-[calc(1rem+env(safe-area-inset-top))] flex justify-between items-center">
               <h2 className="text-xl font-bold">{(categories[selectedBeetle.status + 's'] || '個体')}詳細</h2>
               <button onClick={() => setSelectedBeetle(null)}><X size={24} /></button>
             </div>
