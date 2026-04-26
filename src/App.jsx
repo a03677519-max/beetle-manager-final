@@ -389,18 +389,35 @@ const App = () => {
   };
 
   // スワイプ更新ロジック
-  const handleTouchStart = (e) => setTouchStart(e.targetTouches[0].clientY);
+  const handleTouchStart = (e) => {
+    // モーダル表示中やリストが一番上にない時はリロード判定をスキップして不具合（固まる・閉じる）を防止
+    if (selectedBeetle || showForm || showEmergenceForm || showDeathForm || statGraphInfo || showBatchModal || window.scrollY !== 0) {
+      setTouchStart(null);
+      return;
+    }
+    setTouchStart(e.targetTouches[0].clientY);
+  };
   const handleTouchMove = (e) => {
     if (touchStart === null) return;
     const currentTouch = e.targetTouches[0].clientY;
-    const pullDistance = currentTouch - touchStart;
-    if (pullDistance > 150 && window.scrollY === 0 && !isRefreshing) {
+    const pull = currentTouch - touchStart;
+    
+    // 下方向へのスワイプ量を追跡（視覚フィードバック用）
+    if (pull > 0 && window.scrollY === 0) {
+      setPullOffset(Math.min(pull, 200));
+    }
+
+    // 下スワイプ(更新)のみを検知し、上スワイプやモーダル内操作による誤動作を防止
+    if (pull > 150 && !isRefreshing) {
       if (window.navigator.vibrate) window.navigator.vibrate(50);
       setIsRefreshing(true);
       window.location.reload();
     }
   };
-  const handleTouchEnd = () => setTouchStart(null);
+  const handleTouchEnd = () => {
+    setTouchStart(null);
+    setPullOffset(0);
+  };
 
   // SwitchBotデバイスリストを取得する関数
   const fetchSbDevices = async () => {
@@ -734,7 +751,8 @@ const App = () => {
               unit: '頭/日',
               temp: avgTemp,
               moisture: beetle?.moisture || '-',
-              packing: beetle?.packingPressure || '-'
+              packing: beetle?.packingPressure || '-',
+              notes: beetle?.notes || ''
             });
         });
     });
@@ -745,11 +763,14 @@ const App = () => {
   // 学名データの収集ロジックを微調整 (IDを含める)
   const enhancedStats = useMemo(() => {
     const stats = getScientificNameStats() || [];
+    // 高速検索用マップの作成（計算負荷による画面の固まりを防止）
+    const beetleMap = new Map(beetles.map(b => [b.name, b]));
+
     return stats.map(group => {
       const updatedGroup = { ...group };
       ['sizes', 'larvalPeriods', 'restingPeriods', 'lifespans', 'spawnSetRankings'].forEach(key => {
         updatedGroup[key] = (updatedGroup[key] || []).map(item => {
-          const beetle = beetles.find(b => b.name === item.name);
+          const beetle = beetleMap.get(item.name.split(' (')[0]);
           if (!beetle) return item;
 
           const records = beetle.records || [];
@@ -1012,6 +1033,15 @@ const App = () => {
   return (
     <>
       <div className="min-h-screen bg-slate-50 pb-32 font-sans" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        {/* Pull-to-Refresh Visual Indicator */}
+        {pullOffset > 20 && !isRefreshing && (
+          <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none transition-transform" style={{ transform: `translateY(${Math.min(pullOffset / 3, 40)}px)` }}>
+            <div className={`bg-white p-2 rounded-full shadow-md border border-slate-100 flex items-center justify-center transition-all ${pullOffset > 150 ? 'text-emerald-600' : 'text-slate-300'}`}>
+              <RefreshCw size={20} style={{ transform: `rotate(${pullOffset * 2}deg)` }} />
+            </div>
+          </div>
+        )}
+
         {isRefreshing && (
           <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 pointer-events-none">
             <div className="bg-emerald-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
@@ -1023,25 +1053,25 @@ const App = () => {
         {/* Header */}
       <header className="bg-white text-emerald-900 border-b border-slate-200 px-4 py-3 pt-[calc(1rem+env(safe-area-inset-top))] sticky top-0 z-10">
           <div className="max-w-md mx-auto flex justify-between items-center">
-            <div className="flex items-center gap-3">
+            <h1 
+              onClick={() => setActiveTab('home')} 
+              className="text-lg font-black tracking-tight flex items-center gap-2 text-emerald-800 cursor-pointer select-none active:opacity-70 transition-opacity"
+            >
+              <img src={logoImg} alt="BeetleLog" className="w-8 h-8 rounded-lg object-contain shadow-sm" />
+              BeetleLog
+            </h1>
+            <div className="flex items-center gap-1.5">
+              <div className="flex gap-1.5 border-r border-slate-100 pr-2 mr-1">
+                <button onClick={() => openFormWithStatus('Adult')} className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">成</button>
+                <button onClick={() => openFormWithStatus('Larva')} className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">幼</button>
+                <button onClick={() => openFormWithStatus('SpawnSet')} className="w-8 h-8 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">産</button>
+              </div>
               <button onClick={() => setActiveTab('settings')} className={`p-1.5 rounded-xl transition-colors ${activeTab === 'settings' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-400'}`}>
                 <Settings size={22} />
               </button>
-              <h1 
-                onClick={() => setActiveTab('home')} 
-                className="text-lg font-black tracking-tight flex items-center gap-2 text-emerald-800 cursor-pointer select-none active:opacity-70 transition-opacity"
-              >
-                <img src={logoImg} alt="BeetleLog" className="w-8 h-8 rounded-lg object-contain shadow-sm" />
-                BeetleLog
-              </h1>
-            </div>
-            <div className="flex gap-2">
-              <button onClick={() => openFormWithStatus('Adult')} className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">成</button>
-              <button onClick={() => openFormWithStatus('Larva')} className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">幼</button>
-              <button onClick={() => openFormWithStatus('SpawnSet')} className="w-8 h-8 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">産</button>
             </div>
           </div>
-        </header>
+      </header>
 
         <main className="max-w-md mx-auto p-4">
           {/* Removed top dashboard card */}
@@ -1387,13 +1417,6 @@ const App = () => {
                               <p className="text-base font-black text-emerald-700">{sizeSum.avg}mm</p>
                             </button>
                             <button 
-                              onClick={() => { setStatGraphInfo({ title: `${group.name} - 割り出し数比較`, data: group.spawnSetData, unit: '頭', color: '#f43f5e' }); setStatViewMode('graph'); }}
-                              className="bg-rose-50 p-3 rounded-xl text-left"
-                            >
-                              <p className="text-[9px] font-bold text-rose-600 uppercase">割り出し</p>
-                              <p className="text-base font-black text-rose-700">{group.spawnSetData.reduce((a,b)=>a+b.value, 0)}頭</p>
-                            </button>
-                            <button 
                               onClick={() => { setStatGraphInfo({ title: `${group.name} - 幼虫期間比較`, data: group.larvalPeriods, unit: '日', color: '#f59e0b' }); setStatViewMode('graph'); }}
                               className="bg-amber-50 p-3 rounded-xl text-left"
                             >
@@ -1423,18 +1446,47 @@ const App = () => {
                             </button>
                           </div>
 
-                          {group.spawnSetRankings.length > 0 && (
-                            <div className="mb-4 p-3 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <div className="bg-amber-500 text-white p-1 rounded-lg"><Crown size={14} fill="currentColor" /></div>
-                                <span className="text-[10px] font-black text-amber-800 uppercase">産卵黄金比</span>
+                          {/* Spawning Analysis & Golden Ratio (Combined) */}
+                          {group.spawnSetRankings.length > 0 && (() => {
+                            const best = [...group.spawnSetRankings].sort((a, b) => b.value - a.value)[0];
+                            const bestBeetle = beetles.find(b => b.name === best.name.split(' (')[0]);
+                            return (
+                              <div className="mb-4 p-4 bg-amber-50 rounded-2xl border border-amber-200">
+                                <div 
+                                  className="flex items-center justify-between mb-3 cursor-pointer active:opacity-60"
+                                  onClick={() => bestBeetle && setSelectedBeetle(bestBeetle)}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <div className="bg-amber-500 text-white p-1 rounded-lg shadow-sm"><Crown size={14} fill="currentColor" /></div>
+                                    <span className="text-xs font-black text-amber-800 uppercase">飼育黄金比 (産卵成功データ)</span>
+                                  </div>
+                                  <ChevronRight size={16} className="text-amber-400" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 mb-3">
+                                  <div className="bg-white/50 p-2 rounded-xl text-center border border-amber-100">
+                                    <p className="text-[9px] font-bold text-amber-600">採卵効率</p>
+                                    <p className="text-sm font-black text-amber-900">{best.value}頭/日</p>
+                                  </div>
+                                  <div className="bg-white/50 p-2 rounded-xl text-center border border-amber-100">
+                                    <p className="text-[9px] font-bold text-amber-600">環境設定</p>
+                                    <p className="text-sm font-black text-amber-900">{best.temp}℃ / 水{best.moisture} / 圧{best.packing}</p>
+                                  </div>
+                                </div>
+                                {best.notes && (
+                                  <div className="bg-white/80 p-3 rounded-xl text-[10px] text-amber-800 font-medium leading-relaxed italic border border-amber-100 flex gap-2">
+                                    <MessageSquare size={12} className="shrink-0 mt-0.5 text-amber-400" />
+                                    {best.notes}
+                                  </div>
+                                )}
+                                <button 
+                                  onClick={() => { setStatGraphInfo({ title: `${group.name} - 産卵効率ランキング`, data: group.spawnSetRankings, unit: '頭/日', color: '#ec4899' }); setStatViewMode('graph'); }}
+                                  className="w-full mt-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-[10px] font-black rounded-lg transition-colors border border-amber-500/20"
+                                >
+                                  全産卵セットのランキング・詳細比較を表示
+                                </button>
                               </div>
-                              {(() => {
-                                const best = [...group.spawnSetRankings].sort((a, b) => b.value - a.value)[0];
-                                return <p className="text-[10px] font-bold text-amber-700">{best.temp}℃ / 水{best.moisture} / 圧{best.packing}</p>;
-                              })()}
-                            </div>
-                          )}
+                            );
+                          })()}
 
                           <button 
                             onClick={() => {
@@ -2453,7 +2505,19 @@ const App = () => {
                           return 0;
                         }).map((row, i) => (
                           <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-3 py-3 font-bold text-slate-700 border-b">{row.name}</td>
+                            <td 
+                              className="px-3 py-3 font-bold text-slate-700 border-b cursor-pointer hover:text-emerald-600 transition-colors flex items-center gap-1"
+                              onClick={() => {
+                                const cleanName = row.name.split(' (')[0];
+                                const target = beetles.find(b => b.name === cleanName);
+                                if (target) {
+                                  setSelectedBeetle(target);
+                                  setStatGraphInfo(null);
+                                }
+                              }}
+                            >
+                              {row.name} <ChevronRight size={10} className="text-slate-300" />
+                            </td>
                             <td className="px-3 py-3 font-black text-emerald-600 border-b">{row.value}{statGraphInfo.unit}</td>
                             <td className="px-3 py-3 text-slate-500 border-b">{row.temp}℃</td>
                             <td className="px-3 py-3 text-slate-500 border-b">{row.moisture}</td>
