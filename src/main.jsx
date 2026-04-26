@@ -17,7 +17,7 @@ if ('serviceWorker' in navigator) {
   });
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(reg => {
+    navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).then(reg => {
       // 定期的に更新をチェック
       setInterval(() => { reg.update(); }, 60 * 60 * 1000);
 
