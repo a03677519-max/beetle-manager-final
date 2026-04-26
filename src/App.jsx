@@ -243,7 +243,7 @@ const App = () => {
     setIsFetchingAI(true);
     try {
       const dynamicAI = new GoogleGenerativeAI(activeKey);
-      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
       const prompt = `Return ONLY the scientific name in Latin for the beetle "${speciesName}". No commentary, no bold text, just the name. If unknown, return "Unknown".`;
       const result = await model.generateContent(prompt);
       // 不要な記号（バッククォートなど）を除去
@@ -1299,7 +1299,7 @@ const App = () => {
         {/* Floating Action Button */}
         <button 
           onClick={() => setShowForm(true)}
-          className="fixed bottom-28 right-6 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-200 flex items-center justify-center active:scale-90 transition-all z-20"
+          className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] right-6 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-200 flex items-center justify-center active:scale-90 transition-all z-20"
         >
           <Plus size={40} />
         </button>
