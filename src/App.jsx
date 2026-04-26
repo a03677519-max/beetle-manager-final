@@ -585,13 +585,13 @@ const App = () => {
   // 自動タスク（期限切れアラート）の取得
   const getAutoTasks = (beetle) => {
     const autoTasks = [];
-    if (!beetle || beetle.archived || !beetle.id) return autoTasks;
+    if (!beetle || beetle.archived || !beetle.id || typeof beetle.id === 'undefined') return autoTasks;
 
     const now = new Date();
     const records = beetle.records || [];
     if (beetle.status === 'Larva') {
       const lastRecordDate = records.length > 0 
-        ? new Date(records[records.length - 1].date)
+        ? new Date(records[records.length - 1]?.date || 0)
         : (beetle.hatchDate ? new Date(beetle.hatchDate) : new Date(parseInt(beetle.id)));
       
       const limitDate = new Date(lastRecordDate);
@@ -611,7 +611,8 @@ const App = () => {
 
   // 学名ごとの統計データを計算
   const getScientificNameStats = () => {
-    const grouped = (beetles || []).filter(b => b && typeof b === 'object').reduce((acc, b) => {
+    if (!Array.isArray(beetles)) return [];
+    const grouped = beetles.filter(b => b && typeof b === 'object' && b.id).reduce((acc, b) => {
       const name = b.scientificName || '学名未設定';
       if (!acc[name]) {
         acc[name] = {
@@ -661,10 +662,10 @@ const App = () => {
         }
       }
 
-      if (b.adultSize && b.name) acc[name].sizes.push({ name: b.name, value: parseFloat(b.adultSize) });
+      if (b.adultSize && b.name && !isNaN(parseFloat(b.adultSize))) acc[name].sizes.push({ name: b.name, value: parseFloat(b.adultSize) });
 
       // 温度とマットの履歴
-      (b?.records || []).forEach(r => {
+      (Array.isArray(b.records) ? b.records : []).forEach(r => {
         if (r.temperature) acc[name].temps.push(parseFloat(r.temperature));
         if (r.substrate) acc[name].substrates.add(r.substrate);
       });
@@ -688,7 +689,7 @@ const App = () => {
             const setName = beetle.name || 'Unknown Set';
             const count = beetles.filter(b => b && b.parentSpawnSetId === setId).length;
             const records = beetle?.records || [];
-            const avgTemp = beetle ? getStatSummary(records.map(r => ({value: r.temperature}))).avg : '25.0';
+            const avgTemp = beetle ? getStatSummary((records || []).map(r => ({value: r.temperature}))).avg : '25.0';
             const startDate = beetle?.setDate ? new Date(beetle.setDate) : new Date();
             const endDate = beetle?.deathDate ? new Date(beetle.deathDate) : (beetle?.emergenceDate ? new Date(beetle.emergenceDate) : new Date());
             const days = Math.max(1, Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24)));
@@ -721,32 +722,36 @@ const App = () => {
 
   // 学名データの収集ロジックを微調整 (IDを含める)
   const enhancedStats = useMemo(() => {
-    const stats = getScientificNameStats() || [];
-    // 高速検索用マップの作成（計算負荷による画面の固まりを防止）
-    const beetleMap = new Map((beetles || []).filter(b => b && b.name).map(b => [b.name, b]));
+    try {
+      const stats = getScientificNameStats() || [];
+      const beetleMap = new Map((beetles || []).filter(b => b && b.name).map(b => [String(b.name), b]));
 
-    return stats.map(group => {
-      const updatedGroup = { ...group };
-      ['sizes', 'larvalPeriods', 'restingPeriods', 'lifespans', 'spawnSetRankings'].forEach(key => {
-        updatedGroup[key] = Array.isArray(updatedGroup[key]) ? updatedGroup[key].map(item => {
-          if (!item || !item.name) return item;
-          const beetle = beetleMap.get(item.name.split(' (')[0]);
-          if (!beetle) return item;
+      return stats.map(group => {
+        const updatedGroup = { ...group };
+        ['sizes', 'larvalPeriods', 'restingPeriods', 'lifespans', 'spawnSetRankings'].forEach(key => {
+          updatedGroup[key] = Array.isArray(updatedGroup[key]) ? updatedGroup[key].map(item => {
+            if (!item || !item.name) return item;
+            const beetle = beetleMap.get(String(item.name).split(' (')[0]);
+            if (!beetle) return item;
 
           const records = beetle.records || [];
           const avgTemp = getStatSummary(records.map(r => ({ value: r.temperature }))).avg;
           const lastRec = records.length > 0 ? records[records.length - 1] : {};
 
-          return {
-            ...item,
-            temp: avgTemp,
-            moisture: beetle.status === 'SpawnSet' ? (beetle.moisture || '-') : (lastRec.moisture || '-'),
-            packing: beetle.status === 'SpawnSet' ? (beetle.packingPressure || '-') : (lastRec.packingPressure || '-')
-          };
-        }) : [];
+            return {
+              ...item,
+              temp: avgTemp,
+              moisture: beetle.status === 'SpawnSet' ? (beetle.moisture || '-') : (lastRec.moisture || '-'),
+              packing: beetle.status === 'SpawnSet' ? (beetle.packingPressure || '-') : (lastRec.packingPressure || '-')
+            };
+          }) : [];
+        });
+        return updatedGroup;
       });
-      return updatedGroup;
-    });
+    } catch (err) {
+      console.error("enhancedStats crash:", err);
+      return [];
+    }
   }, [beetles, scientificNameSearchTerm]);
 
   const getEnhancedStats = () => enhancedStats;
@@ -760,18 +765,24 @@ const App = () => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  // Stats
-  const stats = {
-    adults: (beetles || []).filter(b => b && b.status === 'Adult' && !b.archived).length,
-    larvae: (beetles || []).filter(b => b && b.status === 'Larva' && !b.archived).length,
-    spawnSets: (beetles || []).filter(b => b && b.status === 'SpawnSet' && !b.archived).length,
-    pendingTasks: (beetles || []).reduce((acc, b) => {
-      if (!b) return acc;
-      const manual = (b.tasks || []).filter(t => !t.completed).length || 0;
-      const auto = (typeof getAutoTasks === 'function' ? getAutoTasks(b).length : 0);
-      return acc + manual + auto;
-    }, 0)
-  };
+  const stats = useMemo(() => {
+    try {
+      return {
+        adults: (beetles || []).filter(b => b && b.status === 'Adult' && !b.archived).length,
+        larvae: (beetles || []).filter(b => b && b.status === 'Larva' && !b.archived).length,
+        spawnSets: (beetles || []).filter(b => b && b.status === 'SpawnSet' && !b.archived).length,
+        pendingTasks: (beetles || []).reduce((acc, b) => {
+          if (!b) return acc;
+          const manual = (b.tasks || []).filter(t => !t.completed).length || 0;
+          const auto = (typeof getAutoTasks === 'function' ? getAutoTasks(b).length : 0);
+          return acc + manual + auto;
+        }, 0)
+      };
+    } catch (e) {
+      console.error("stats crash:", e);
+      return { adults: 0, larvae: 0, spawnSets: 0, pendingTasks: 0 };
+    }
+  }, [beetles]);
 
   const categories = { Adults: config.labels.Adult, Larvae: config.labels.Larva, SpawnSets: config.labels.SpawnSet, Pupas: config.labels.Pupa };
 
@@ -922,33 +933,40 @@ const App = () => {
 
   // 一次検索・グループ化ロジック
   const groupedBeetles = useMemo(() => {
-    const baseList = beetles.filter(b => view === 'archive' ? b.archived : !b.archived)
-                           .filter(b => filterStatus === 'All' || b.status === filterStatus);
-    
-    const term = searchTerm.toLowerCase().trim();
-    const filtered = baseList.filter(b => {
-      if (!term) return true;
-      const initials = getInitials(b.scientificName);
-      const searchableValues = [b.scientificName, initials, b.species, b.locality];
-      return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
-    });
+    try {
+      if (!Array.isArray(beetles)) return [];
+      
+      const baseList = beetles.filter(b => b && (view === 'archive' ? b.archived : !b.archived))
+                             .filter(b => filterStatus === 'All' || b.status === filterStatus);
+      
+      const term = (searchTerm || '').toLowerCase().trim();
+      const filtered = baseList.filter(b => {
+        if (!term) return true;
+        const initials = getInitials(b.scientificName);
+        const searchableValues = [b.scientificName, initials, b.species, b.locality];
+        return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
+      });
 
-    const grouped = filtered.reduce((acc, b) => {
-      const key = `${b.scientificName || 'NoSci'}-${b.species || 'NoSpecies'}-${b.locality || 'NoLoc'}`;
-      if (!acc[key]) {
-        acc[key] = { 
-          id: key, 
-          scientificName: b.scientificName, 
-          species: b.species, 
-          locality: b.locality, 
-          initials: getInitials(b.scientificName),
-          items: [] 
-        };
-      }
-      acc[key].items.push(b);
-      return acc;
-    }, {});
-    return Object.values(grouped);
+      const grouped = filtered.reduce((acc, b) => {
+        const key = `${b.scientificName || 'NoSci'}-${b.species || 'NoSpecies'}-${b.locality || 'NoLoc'}`;
+        if (!acc[key]) {
+          acc[key] = { 
+            id: key, 
+            scientificName: b.scientificName, 
+            species: b.species, 
+            locality: b.locality, 
+            initials: getInitials(b.scientificName),
+            items: [] 
+          };
+        }
+        acc[key].items.push(b);
+        return acc;
+      }, {});
+      return Object.values(grouped);
+    } catch (err) {
+      console.error("groupedBeetles crash:", err);
+      return [];
+    }
   }, [beetles, searchTerm, view, filterStatus]);
 
   // 二次検索・ソートロジック
