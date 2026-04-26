@@ -1923,6 +1923,7 @@ const App = () => {
             </button>
           </nav>
         </div>
+      </div>
 
         {/* Detail Modal */}
         {selectedBeetle && (
@@ -2499,7 +2500,6 @@ const App = () => {
             </div>
           </div>
         )}
-      </div>
 
       {/* Emergence Form Modal */}
       {showEmergenceForm && (
@@ -2783,8 +2783,9 @@ const App = () => {
                 <p className="text-[10px] text-amber-700 leading-snug">※ 体重は個体ごとに異なるため、一括記録では入力できません。個体詳細画面から個別に記録してください。</p>
               </div>
             </div>
+          </div>
 
-            <div className="p-6 border-t border-slate-50 shrink-0">
+          <div className="p-6 border-t border-slate-50 shrink-0">
               <button 
                 onClick={handleBatchRecordSubmit}
                 className="w-full bg-emerald-800 text-white py-4 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all"
