@@ -419,7 +419,7 @@ const App = () => {
           name: count > 1 ? `${baseName}-${String(i + 1).padStart(2, '0')}` : baseName,
           id: `${Date.now()}-${i}`,
           records: [],
-          tasks: formData.status === 'Larva' ? [{ id: Date.now() + i, type: '菌糸/マット交換', date: '', completed: false }] : []
+          tasks: [] // 新規登録時の自動タスク生成を完全に廃止
         });
       }
       setBeetles([...newEntries, ...beetles]);
@@ -766,6 +766,74 @@ const App = () => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
+  // 一次検索・グループ化ロジック (フックの順序を固定するため、Returnの前に配置)
+  const groupedBeetles = useMemo(() => {
+    try {
+      if (!Array.isArray(beetles)) return [];
+      
+      const baseList = beetles.filter(b => b && (view === 'archive' ? b.archived : !b.archived))
+                             .filter(b => filterStatus === 'All' || b.status === filterStatus);
+      
+      const term = (searchTerm || '').toLowerCase().trim();
+      const filtered = baseList.filter(b => {
+        if (!term) return true;
+        const initials = getInitials(b.scientificName);
+        const searchableValues = [b.scientificName, initials, b.species, b.locality];
+        return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
+      });
+
+      const grouped = filtered.reduce((acc, b) => {
+        const key = `${b.scientificName || 'NoSci'}-${b.species || 'NoSpecies'}-${b.locality || 'NoLoc'}`;
+        if (!acc[key]) {
+          acc[key] = { 
+            id: key, 
+            scientificName: b.scientificName, 
+            species: b.species, 
+            locality: b.locality, 
+            initials: getInitials(b.scientificName),
+            items: [] 
+          };
+        }
+        acc[key].items.push(b);
+        return acc;
+      }, {});
+      return Object.values(grouped);
+    } catch (err) {
+      console.error("groupedBeetles crash:", err);
+      return [];
+    }
+  }, [beetles, searchTerm, view, filterStatus]);
+
+  // 二次検索・ソートロジック (フックの順序を固定するため、Returnの前に配置)
+  const sortedSubItems = useMemo(() => {
+    if (!subSearchGroup) return [];
+    const term = subSearchTerm.toLowerCase().trim();
+    const filtered = subSearchGroup.items.filter(b => {
+      if (!term) return true;
+      const searchableValues = [b.name, b.locality, b.generation, b.substrate];
+      return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
+    });
+
+    return filtered.sort((a, b) => {
+      let valA, valB;
+      
+      if (subSortConfig.key === 'latestWeight') {
+        valA = a.records?.length > 0 ? a.records[a.records.length - 1].weight || 0 : 0;
+        valB = b.records?.length > 0 ? b.records[b.records.length - 1].weight || 0 : 0;
+      } else if (subSortConfig.key === 'lastRecordDate') {
+        valA = a.records?.length > 0 ? new Date(a.records[a.records.length - 1].date).getTime() : 0;
+        valB = b.records?.length > 0 ? new Date(b.records[b.records.length - 1].date).getTime() : 0;
+      } else {
+        valA = String(a[subSortConfig.key] || '').toLowerCase();
+        valB = String(b[subSortConfig.key] || '').toLowerCase();
+      }
+
+      if (valA < valB) return subSortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return subSortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [subSearchGroup, subSearchTerm, subSortConfig]);
+
   const stats = useMemo(() => {
     try {
       return {
@@ -931,74 +999,6 @@ const App = () => {
       </div>
     );
   }
-
-  // 一次検索・グループ化ロジック
-  const groupedBeetles = useMemo(() => {
-    try {
-      if (!Array.isArray(beetles)) return [];
-      
-      const baseList = beetles.filter(b => b && (view === 'archive' ? b.archived : !b.archived))
-                             .filter(b => filterStatus === 'All' || b.status === filterStatus);
-      
-      const term = (searchTerm || '').toLowerCase().trim();
-      const filtered = baseList.filter(b => {
-        if (!term) return true;
-        const initials = getInitials(b.scientificName);
-        const searchableValues = [b.scientificName, initials, b.species, b.locality];
-        return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
-      });
-
-      const grouped = filtered.reduce((acc, b) => {
-        const key = `${b.scientificName || 'NoSci'}-${b.species || 'NoSpecies'}-${b.locality || 'NoLoc'}`;
-        if (!acc[key]) {
-          acc[key] = { 
-            id: key, 
-            scientificName: b.scientificName, 
-            species: b.species, 
-            locality: b.locality, 
-            initials: getInitials(b.scientificName),
-            items: [] 
-          };
-        }
-        acc[key].items.push(b);
-        return acc;
-      }, {});
-      return Object.values(grouped);
-    } catch (err) {
-      console.error("groupedBeetles crash:", err);
-      return [];
-    }
-  }, [beetles, searchTerm, view, filterStatus]);
-
-  // 二次検索・ソートロジック
-  const sortedSubItems = useMemo(() => {
-    if (!subSearchGroup) return [];
-    const term = subSearchTerm.toLowerCase().trim();
-    const filtered = subSearchGroup.items.filter(b => {
-      if (!term) return true;
-      const searchableValues = [b.name, b.locality, b.generation, b.substrate];
-      return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
-    });
-
-    return filtered.sort((a, b) => {
-      let valA, valB;
-      
-      if (subSortConfig.key === 'latestWeight') {
-        valA = a.records?.length > 0 ? a.records[a.records.length - 1].weight || 0 : 0;
-        valB = b.records?.length > 0 ? b.records[b.records.length - 1].weight || 0 : 0;
-      } else if (subSortConfig.key === 'lastRecordDate') {
-        valA = a.records?.length > 0 ? new Date(a.records[a.records.length - 1].date).getTime() : 0;
-        valB = b.records?.length > 0 ? new Date(b.records[b.records.length - 1].date).getTime() : 0;
-      } else {
-        valA = String(a[subSortConfig.key] || '').toLowerCase();
-        valB = String(b[subSortConfig.key] || '').toLowerCase();
-      }
-
-      if (valA < valB) return subSortConfig.direction === 'asc' ? -1 : 1;
-      if (valA > valB) return subSortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }, [subSearchGroup, subSearchTerm, subSortConfig]);
 
   return (
     <>
@@ -1720,8 +1720,12 @@ const App = () => {
 
         {/* Detail Modal */}
         {selectedBeetle && (
-          <div className="fixed inset-0 bg-white z-20 flex flex-col">
-          <div className="bg-emerald-800 text-white p-4 pt-[calc(1rem+env(safe-area-inset-top))] flex justify-between items-center">
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-20 flex flex-col" onClick={() => setSelectedBeetle(null)}>
+            <div 
+              className="bg-white mt-12 flex-1 rounded-t-3xl overflow-hidden flex flex-col animate-slide-up"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="bg-emerald-800 text-white p-4 flex justify-between items-center">
               <h2 className="text-xl font-bold">{(categories[selectedBeetle.status + 's'] || '個体')}詳細</h2>
               <button onClick={() => setSelectedBeetle(null)}><X size={24} /></button>
             </div>
@@ -2070,8 +2074,11 @@ const App = () => {
 
         {/* Add Form Modal */}
         {showForm && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-30 flex items-end">
-            <div className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[90vh] overflow-y-auto">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 flex items-end" onClick={() => { setShowForm(false); setIsEditing(false); }}>
+            <div 
+              className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[95vh] overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
               <div className="flex justify-between items-center p-6 sticky top-0 bg-white/90 backdrop-blur-md z-20 border-b border-slate-100 rounded-t-3xl">
                 <h2 className="text-xl font-bold text-emerald-800">
                   {`${(categories[formData.status + 's'] || '個体')}${isEditing ? '情報の編集' : '登録'}`}
@@ -2305,8 +2312,11 @@ const App = () => {
 
       {/* Emergence Form Modal */}
       {showEmergenceForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-30 flex items-end">
-          <div className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 flex items-end" onClick={() => setShowEmergenceForm(false)}>
+          <div 
+            className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center p-6 sticky top-0 bg-white/90 backdrop-blur-md z-20 border-b border-slate-100 rounded-t-3xl">
               <h2 className="text-xl font-bold text-emerald-800">{formData.name} 羽化処理</h2>
               <button onClick={() => setShowEmergenceForm(false)} className="text-gray-400"><X size={24} /></button>
@@ -2355,8 +2365,11 @@ const App = () => {
 
       {/* Death Form Modal */}
       {showDeathForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-30 flex items-end">
-          <div className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 flex items-end" onClick={() => setShowDeathForm(false)}>
+          <div 
+            className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center p-6 sticky top-0 bg-white/90 backdrop-blur-md z-20 border-b border-slate-100 rounded-t-3xl">
               <h2 className="text-xl font-bold text-rose-800">{formData.name} 死亡処理</h2>
               <button onClick={() => setShowDeathForm(false)} className="text-gray-400"><X size={24} /></button>
@@ -2383,8 +2396,11 @@ const App = () => {
 
       {/* Statistical Graph Modal */}
       {statGraphInfo && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4" onClick={() => setStatGraphInfo(null)}>
+          <div 
+            className="bg-white w-full max-w-xl rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="p-6 border-b border-slate-100 flex justify-between items-center">
               <h3 className="font-black text-slate-800 leading-tight">{statGraphInfo.title}</h3>
               <button onClick={() => setStatGraphInfo(null)} className="p-2 bg-slate-100 rounded-full text-slate-400 hover:text-slate-600"><X size={20}/></button>
@@ -2485,8 +2501,11 @@ const App = () => {
 
       {/* Batch Record Modal */}
       {showBatchModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end">
-          <div className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[95vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end" onClick={() => setShowBatchModal(false)}>
+          <div 
+            className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[95vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center p-6 sticky top-0 bg-white/90 backdrop-blur-md z-20 border-b border-slate-100 rounded-t-3xl">
               <div>
                 <h2 className="text-xl font-black text-emerald-800">幼虫交換の一括記録</h2>

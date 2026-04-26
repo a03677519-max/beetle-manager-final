@@ -11,22 +11,7 @@ createRoot(document.getElementById('root')).render(
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).then(reg => {
-      // 定期的に更新をチェック
-      setInterval(() => { reg.update(); }, 60 * 60 * 1000);
-
-      reg.onupdatefound = () => {
-        const installingWorker = reg.installing;
-        installingWorker.onstatechange = () => {
-          if (installingWorker.state === 'installed') {
-            if (navigator.serviceWorker.controller) {
-              // インストール完了、かつ既存のコントローラーがある場合は更新
-              console.log('New content is available; please refresh.');
-              window.location.reload();
-            }
-          }
-        };
-      };
-    });
+    navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' })
+      .catch(err => console.error('SW registration failed:', err));
   });
 }
