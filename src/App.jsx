@@ -1923,7 +1923,6 @@ const App = () => {
             </button>
           </nav>
         </div>
-      </div>
 
         {/* Detail Modal */}
         {selectedBeetle && (
@@ -2263,6 +2262,7 @@ const App = () => {
                 </div>
               </div>
             </div>
+          </div>
         )}
 
         {/* Add Form Modal */}
