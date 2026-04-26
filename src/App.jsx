@@ -1,33 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import logoImg from './assets/logo.png'; // 画像をインポート
 import { Plus, Trash2, History, Save, X, ChevronRight, Scale, LayoutDashboard, Boxes, Network, ClipboardCheck, Archive, ArrowUpCircle, Sparkles, Thermometer, User, Home, List, Settings, Search, Droplets, Hammer, Calendar, Activity, Bug, Egg, FlaskConical, Ruler, Weight, Edit3, MessageSquare, Download, Upload, RefreshCw, ThermometerSnowflake, Image as ImageIcon, Camera, Ghost, BarChart2, Copy, ArrowUpDown, ChevronLeft, Crown } from 'lucide-react';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
-
-// Gemini APIの初期設定
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-
-// 主要なクワガタ・カブトムシの学名辞書 (オフライン対応 & エラー回避)
-const BEETLE_DICT = {
-  "オオクワガタ": "Dorcus hopei binodulosus",
-  "国産オオクワガタ": "Dorcus hopei binodulosus",
-  "コクワガタ": "Dorcus recticornis",
-  "ノコギリクワガタ": "Prosopocoilus inclinatus",
-  "ミヤマクワガタ": "Lucanus maculifemoratus",
-  "ヒラタクワガタ": "Dorcus titanus",
-  "カブトムシ": "Trypoxylus dichotomus",
-  "ヘラクレス・ヘラクレス": "Dynastes hercules hercules",
-  "ヘラクレスオオカブト": "Dynastes hercules",
-  "サタンオオカブト": "Dynastes satanas",
-  "タランドゥスオオツヤクワガタ": "Mesotopus tarandus",
-  "レギウスオオツヤクワガタ": "Mesotopus regius",
-  "ニジイロクワガタ": "Phalacrognathus muelleri",
-  "パプアキンイロクワガタ": "Lamprima adolphinae",
-  "パラワンオオヒラタ": "Dorcus titanus palawanicus",
-  "スマトラオオヒラタ": "Dorcus titanus yasuokai",
-  "アンタエウスオオクワガタ": "Dorcus antaeus"
-};
 
 // 学名のイニシャルを取得するヘルパー関数
 const getInitials = (sci) => {
@@ -61,9 +35,6 @@ const App = () => {
   const [selectedBeetle, setSelectedBeetle] = useState(null);
   const [newWeight, setNewWeight] = useState('');
   const [newTemp, setNewTemp] = useState('');
-  const [geminiKey, setGeminiKey] = useState(() => {
-    try { return localStorage.getItem('beetle_gemini_key') || ''; } catch { return ''; }
-  });
   const [sbToken, setSbToken] = useState(() => {
     try { return localStorage.getItem('beetle_sb_token') || ''; } catch { return ''; }
   });
@@ -156,11 +127,6 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('beetle_user_id', userId);
   }, [userId]);
-
-  // APIキーの保存
-  useEffect(() => {
-    localStorage.setItem('beetle_gemini_key', geminiKey);
-  }, [geminiKey]);
 
   useEffect(() => {
     localStorage.setItem('beetle_sb_token', sbToken);
@@ -289,54 +255,6 @@ const App = () => {
     navigator.clipboard.writeText(text)
       .then(() => alert('個体データをテキスト形式でコピーしました。'))
       .catch(err => alert('コピーに失敗しました: ' + err));
-  };
-
-  // Geminiを使用して学名を取得する関数
-  const fetchScientificName = async (speciesName) => {
-    const activeKey = (geminiKey && geminiKey.trim() !== '') ? geminiKey.trim() : apiKey?.trim();
-    if (!speciesName) return alert("種類名（和名）を入力してから実行してください。");
-
-    // 1. 主要種なら辞書から即座に返す (ネットワーク不要)
-    const localMatch = BEETLE_DICT[speciesName];
-    if (localMatch) {
-      setFormData(prev => ({ ...prev, scientificName: localMatch }));
-      return;
-    }
-
-    if (!activeKey) {
-      return alert("Gemini APIキーが設定されていません。設定タブでキーを入力してください。");
-    }
-
-    setIsFetchingAI(true);
-    try {
-      // エンドポイントを v1beta に、モデルを gemini-1.5-flash に固定
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `Return ONLY the scientific name in Latin for the beetle "${speciesName}". No commentary, no bold text, just the name. If unknown, return "Unknown".` }] }]
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "APIエラーが発生しました");
-      }
-
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/[`*]/g, "").trim();
-
-      if (text === "Unknown" || !text) {
-        alert("該当する学名が見つかりませんでした。");
-      } else {
-        setFormData(prev => ({ ...prev, scientificName: text }));
-      }
-    } catch (error) {
-      alert(`学名予測エラー: ${error.message}`);
-    } finally {
-      setIsFetchingAI(false);
-    }
   };
 
   // 画像の読み込み処理
@@ -745,11 +663,11 @@ const App = () => {
             const setName = beetles.find(b => b.id === setId)?.name || 'Unknown Set';
             const count = beetles.filter(b => b.parentSpawnSetId === setId).length;
             const beetle = beetles.find(b => b.id === setId);
-            const avgTemp = beetle ? getStatSummary((beetle.records || []).map(r => ({value: r.temperature}))).avg : '-';
-            const startDate = new Date(beetle.setDate);
+            const avgTemp = beetle ? getStatSummary((beetle.records || []).map(r => ({value: r.temperature}))).avg : '25.0';
+            const startDate = beetle?.setDate ? new Date(beetle.setDate) : new Date();
             const endDate = beetle.deathDate ? new Date(beetle.deathDate) : (beetle.emergenceDate ? new Date(beetle.emergenceDate) : new Date());
             const days = Math.max(1, Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24)));
-            const dayRate = (count / days).toFixed(2);
+            const dayRate = isNaN(days) ? "0.00" : (count / days).toFixed(2);
             
             // 産卵セットの環境データ取得
             group.spawnSetData.push({ 
@@ -786,7 +704,7 @@ const App = () => {
       const updatedGroup = { ...group };
       ['sizes', 'larvalPeriods', 'restingPeriods', 'lifespans', 'spawnSetRankings'].forEach(key => {
         updatedGroup[key] = (updatedGroup[key] || []).map(item => {
-          const beetle = beetleMap.get(item.name.split(' (')[0]);
+          const beetle = item.name ? beetleMap.get(item.name.split(' (')[0]) : null;
           if (!beetle) return item;
 
           const records = beetle.records || [];
@@ -1360,7 +1278,7 @@ const App = () => {
                   </h3>
                   <button onClick={() => fetchSbTemperature()} className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-all">
                     <RefreshCw size={10} className={isFetchingSb ? "animate-spin" : ""} />
-                    一括更新
+                    一括同期
                   </button>
                 </div>
                 {Object.keys(tempHistory).length > 0 ? (
@@ -2168,49 +2086,16 @@ const App = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-500 ml-1">種類</label>
-                  <div className="flex gap-2">
-                    <input
-                      value={formData.species || ''}
-                      placeholder="種類 (例: 国産オオクワガタ)" 
-                      list="species-options"
-                      className="flex-1 border p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        const history = beetles.filter(b => b.species === val);
-                        
-                        // 過去のデータから一意の値を抽出する関数
-                        const getUniqueValue = (key) => {
-                          const values = [...new Set(history.map(h => h[key]).filter(Boolean))];
-                          return values.length === 1 ? values[0] : '';
-                        };
-
-                        const updates = { species: val };
-
-                        // 学名の自動補完 (辞書優先、次に履歴)
-                        if (!formData.scientificName) {
-                          updates.scientificName = BEETLE_DICT[val] || getUniqueValue('scientificName');
-                        }
-                        // 産地の自動補完
-                        if (!formData.locality) {
-                          updates.locality = getUniqueValue('locality');
-                        }
-
-                        setFormData(prev => ({...prev, ...updates}));
-                      }}
-                    />
-                    <button 
-                      onClick={() => fetchScientificName(formData.species)}
-                      className="bg-emerald-50 text-emerald-600 px-4 rounded-xl border border-emerald-100 active:scale-95 transition-all flex items-center justify-center shrink-0 shadow-sm"
-                      disabled={isFetchingAI}
-                      title="学名を予測"
-                    >
-                      {isFetchingAI ? (
-                        <RefreshCw className="w-5 h-5 animate-spin" />
-                      ) : (
-                        <Sparkles className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
+                  <input
+                    value={formData.species || ''}
+                    placeholder="種類 (例: 国産オオクワガタ)" 
+                    list="species-options"
+                    className="w-full border p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData(prev => ({...prev, species: val}));
+                    }}
+                  />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-semibold text-gray-500 ml-1">学名 (自動入力可)</label>
