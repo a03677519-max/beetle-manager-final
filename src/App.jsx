@@ -8,6 +8,27 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
+// 主要なクワガタ・カブトムシの学名辞書 (オフライン対応 & エラー回避)
+const BEETLE_DICT = {
+  "オオクワガタ": "Dorcus hopei binodulosus",
+  "国産オオクワガタ": "Dorcus hopei binodulosus",
+  "コクワガタ": "Dorcus recticornis",
+  "ノコギリクワガタ": "Prosopocoilus inclinatus",
+  "ミヤマクワガタ": "Lucanus maculifemoratus",
+  "ヒラタクワガタ": "Dorcus titanus",
+  "カブトムシ": "Trypoxylus dichotomus",
+  "ヘラクレス・ヘラクレス": "Dynastes hercules hercules",
+  "ヘラクレスオオカブト": "Dynastes hercules",
+  "サタンオオカブト": "Dynastes satanas",
+  "タランドゥスオオツヤクワガタ": "Mesotopus tarandus",
+  "レギウスオオツヤクワガタ": "Mesotopus regius",
+  "ニジイロクワガタ": "Phalacrognathus muelleri",
+  "パプアキンイロクワガタ": "Lamprima adolphinae",
+  "パラワンオオヒラタ": "Dorcus titanus palawanicus",
+  "スマトラオオヒラタ": "Dorcus titanus yasuokai",
+  "アンタエウスオオクワガタ": "Dorcus antaeus"
+};
+
 const App = () => {
   // 1. データ消失を防止する堅牢な初期化
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('beetle_is_logged_in') === 'true');
@@ -59,7 +80,6 @@ const App = () => {
   const [batchTargets, setBatchTargets] = useState([]);
   const [selectedBatchIds, setSelectedBatchIds] = useState(new Set());
   const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
-  const [fabTimer, setFabTimer] = useState(null);
 
   const initialFormState = {
     name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: 'CB',
@@ -233,32 +253,47 @@ const App = () => {
 
   // Geminiを使用して学名を取得する関数
   const fetchScientificName = async (speciesName) => {
-    // 設定画面のキーを最優先、なければ環境変数のキーを使用（空白除去）
     const activeKey = (geminiKey && geminiKey.trim() !== '') ? geminiKey.trim() : apiKey?.trim();
-    
     if (!speciesName) return alert("種類名（和名）を入力してから実行してください。");
-    
+
+    // 1. 主要種なら辞書から即座に返す (ネットワーク不要)
+    const localMatch = BEETLE_DICT[speciesName];
+    if (localMatch) {
+      setFormData(prev => ({ ...prev, scientificName: localMatch }));
+      return;
+    }
+
     if (!activeKey) {
       return alert("Gemini APIキーが設定されていません。設定タブでキーを入力してください。");
     }
 
     setIsFetchingAI(true);
     try {
-      const dynamicAI = new GoogleGenerativeAI(activeKey);
-      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
-      const prompt = `Return ONLY the scientific name in Latin for the beetle "${speciesName}". No commentary, no bold text, just the name. If unknown, return "Unknown".`;
-      const result = await model.generateContent(prompt);
-      // 不要な記号（バッククォートなど）を除去
-      const response = await result.response;
-      const text = response.text().replace(/[`*]/g, "").trim();
-      
-      if (text === "Unknown" || text === "") {
+      // 2. SDKのエラーを回避するため、REST APIを直接fetchするアプローチに変更
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `Return ONLY the scientific name in Latin for the beetle "${speciesName}". No commentary, no bold text, just the name. If unknown, return "Unknown".` }] }]
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "APIエラーが発生しました");
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.replace(/[`*]/g, "").trim();
+
+      if (text === "Unknown" || !text) {
         alert("該当する学名が見つかりませんでした。");
       } else {
         setFormData(prev => ({ ...prev, scientificName: text }));
       }
     } catch (error) {
-      alert(`Gemini APIエラー: ${error.message || "通信に失敗しました。キーが有効か確認してください。"}`);
+      alert(`学名予測エラー: ${error.message}`);
     } finally {
       setIsFetchingAI(false);
     }
@@ -704,19 +739,6 @@ const App = () => {
     ...beetles.map(b => b.containerSize),
     ...beetles.flatMap(b => b.records?.map(r => r.containerSize) || [])
   ])].filter(Boolean);
-
-  const startFabTimer = () => {
-    const timer = setTimeout(() => {
-      setIsFabMenuOpen(true);
-      if (window.navigator.vibrate) window.navigator.vibrate(10);
-    }, 500);
-    setFabTimer(timer);
-  };
-
-  const cancelFabTimer = () => {
-    if (fabTimer) clearTimeout(fabTimer);
-    setFabTimer(null);
-  };
 
   const deleteBeetle = (id, e) => {
     e.stopPropagation();
@@ -1321,7 +1343,17 @@ const App = () => {
 
         {/* FAB Sub Menu Items */}
         {isFabMenuOpen && (
-          <div className="fixed bottom-[calc(12.5rem+env(safe-area-inset-bottom))] right-7 flex flex-col gap-3 items-end z-30">
+          <div className="fixed bottom-[calc(10.5rem+env(safe-area-inset-bottom))] right-7 flex flex-col gap-3 items-end z-30">
+            <button 
+              onClick={() => {
+                setShowForm(true);
+                setIsFabMenuOpen(false);
+              }}
+              className="flex items-center gap-3 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-xl border border-emerald-500 font-black text-xs animate-in zoom-in-50 slide-in-from-bottom-4 duration-200"
+            >
+              <Plus size={16} /> 新規個体を登録
+            </button>
+
             <button 
               onClick={() => {
                 const targets = beetles.filter(b => b.status === 'Larva' && !b.archived);
@@ -1331,7 +1363,7 @@ const App = () => {
                 setShowBatchModal(true);
                 setIsFabMenuOpen(false);
               }}
-              className="flex items-center gap-3 bg-white text-emerald-800 px-5 py-3 rounded-2xl shadow-xl border border-emerald-100 font-black text-xs animate-in zoom-in-50 slide-in-from-bottom-8 duration-300"
+              className="flex items-center gap-3 bg-white text-emerald-800 px-5 py-3 rounded-2xl shadow-xl border border-emerald-100 font-black text-xs animate-in zoom-in-50 slide-in-from-bottom-8 duration-200"
             >
               <RefreshCw size={16} className="text-emerald-600"/> 幼虫を一括交換記録
             </button>
@@ -1339,15 +1371,9 @@ const App = () => {
         )}
 
         {/* Floating Action Button */}
-        <div className="fixed bottom-[calc(2.1rem+env(safe-area-inset-bottom))] right-6 z-30">
+        <div className="fixed bottom-[calc(6.2rem+env(safe-area-inset-bottom))] right-6 z-30">
           <button 
-            onPointerDown={startFabTimer}
-            onPointerUp={() => {
-              cancelFabTimer();
-              if (!isFabMenuOpen) setShowForm(true);
-            }}
-            onPointerLeave={cancelFabTimer}
-            onClick={() => isFabMenuOpen && setIsFabMenuOpen(false)}
+            onClick={() => setIsFabMenuOpen(!isFabMenuOpen)}
             className={`w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-200 flex items-center justify-center active:scale-90 hover:scale-105 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isFabMenuOpen ? 'rotate-[135deg] bg-slate-800 shadow-none' : ''}`}
           >
             <Plus size={40} />
