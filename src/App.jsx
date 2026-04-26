@@ -65,9 +65,9 @@ const App = () => {
   const [tempHistory, setTempHistory] = useState(() => {
     try {
       const saved = localStorage.getItem('beetle_temp_history');
-      return saved ? JSON.parse(saved) : [];
+      return saved ? JSON.parse(saved) : {}; // デバイスIDごとのオブジェクトに変更
     } catch {
-      return [];
+      return {};
     }
   });
   const [config, setConfig] = useState(() => {
@@ -97,9 +97,11 @@ const App = () => {
   const [subSearchGroup, setSubSearchGroup] = useState(null); // { id, items, species, locality, ... }
   const [subSearchTerm, setSubSearchTerm] = useState('');
   const [subSortConfig, setSubSortConfig] = useState({ key: 'name', direction: 'asc' });
+  const [touchStart, setTouchStart] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const initialFormState = {
-    name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: '',
+    name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: '', isDigOut: false,
     parentMaleId: '', parentFemaleId: '', hatchDate: '', emergenceDate: '', feedingStartDate: '', deathDate: '',
     setDate: '', substrate: '', containerSize: '', packingPressure: '', moisture: 3, cohabitation: 'No', archived: false, notes: '', adultSize: '', parentSpawnSetId: '',
     count: 1, // 一括登録用のカウント
@@ -347,33 +349,37 @@ const App = () => {
     return { "Authorization": token, "sign": sign, "nonce": nonce, "t": t, "Content-Type": "application/json; charset=utf8" };
   };
 
-  // SwitchBot APIから温度を取得する関数
-  const fetchSbTemperature = async () => {
+  // SwitchBot APIから温度を取得する関数 (引数がない場合は全デバイス取得)
+  const fetchSbTemperature = async (targetId = null) => {
     if (!sbToken || !sbSecret) return alert("SwitchBotのトークンとシークレットを設定画面で入力してください。");
-    if (!selectedSbDeviceId) return alert("SwitchBotデバイスが選択されていません。設定画面で選択してください。");
+    
+    const deviceIds = targetId ? [targetId] : (availableSbDevices.length > 0 ? availableSbDevices.map(d => d.deviceId) : [selectedSbDeviceId].filter(Boolean));
+    if (deviceIds.length === 0) return alert("SwitchBotデバイスが選択されていません。");
 
     setIsFetchingSb(true);
     try {
       const headers = await getSwitchBotHeaders(sbToken, sbSecret);
+      const newHistories = { ...tempHistory };
 
-      // 状態（温度）の取得
-      const statusRes = await fetch(`/api/switchbot/v1.1/devices/${selectedSbDeviceId}/status`, { headers });
-      const statusData = await statusRes.json();
+      for (const id of deviceIds) {
+        const statusRes = await fetch(`/api/switchbot/v1.1/devices/${id}/status`, { headers });
+        const statusData = await statusRes.json();
 
-      if (statusData.statusCode === 100) {
-        const tempVal = statusData.body.temperature;
-        setNewTemp(tempVal.toString());
-        
-        // 自動プロット用の履歴保存
-        const entry = {
-          time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
-          displayDate: new Date().toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit' }),
-          temp: tempVal
-        };
-        setTempHistory(prev => [...prev, entry].slice(-30)); // 直近30件を保持
-      } else {
-        throw new Error(statusData.message);
+        if (statusData.statusCode === 100) {
+          const tempVal = statusData.body.temperature;
+          if (id === selectedSbDeviceId) setNewTemp(tempVal.toString());
+          
+          const entry = {
+            time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+            displayDate: new Date().toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit' }),
+            temp: tempVal
+          };
+
+          const history = newHistories[id] || [];
+          newHistories[id] = [...history, entry].slice(-30);
+        }
       }
+      setTempHistory(newHistories);
     } catch (error) {
       console.error("SwitchBot Error:", error);
       alert("SwitchBotからのデータ取得に失敗しました。CORS制限やキーの設定を確認してください。");
@@ -381,6 +387,20 @@ const App = () => {
       setIsFetchingSb(false);
     }
   };
+
+  // スワイプ更新ロジック
+  const handleTouchStart = (e) => setTouchStart(e.targetTouches[0].clientY);
+  const handleTouchMove = (e) => {
+    if (touchStart === null) return;
+    const currentTouch = e.targetTouches[0].clientY;
+    const pullDistance = currentTouch - touchStart;
+    if (pullDistance > 150 && window.scrollY === 0 && !isRefreshing) {
+      if (window.navigator.vibrate) window.navigator.vibrate(50);
+      setIsRefreshing(true);
+      window.location.reload();
+    }
+  };
+  const handleTouchEnd = () => setTouchStart(null);
 
   // SwitchBotデバイスリストを取得する関数
   const fetchSbDevices = async () => {
@@ -464,6 +484,7 @@ const App = () => {
           feedingStartDate: formData.feedingStartDate,
           gender: formData.gender,
           adultSize: formData.adultSize,
+          isDigOut: formData.isDigOut,
           archived: false, // 羽化したらアーカイブ解除
         };
       }
@@ -629,6 +650,8 @@ const App = () => {
           restingPeriods: [],
           sizes: [],
           temps: [],
+          lifespans: [],
+          spawnSetRankings: [],
           substrates: new Set(),
           spawnSetData: [], // { name, value }
           spawnSetIds: [] 
@@ -647,12 +670,21 @@ const App = () => {
         }
       }
       
-      // 休眠期間 (emergence -> feeding)
-      if (b.emergenceDate && b.feedingStartDate) {
+      // 休眠期間 (掘り出し以外)
+      if (b.emergenceDate && b.feedingStartDate && !b.isDigOut) {
         const start = new Date(b.emergenceDate);
         const end = new Date(b.feedingStartDate);
         if (!isNaN(start) && !isNaN(end)) {
           acc[name].restingPeriods.push({ name: b.name, value: Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) });
+        }
+      }
+
+      // 寿命 (掘り出し以外)
+      if (b.emergenceDate && b.deathDate && !b.isDigOut) {
+        const start = new Date(b.emergenceDate);
+        const end = new Date(b.deathDate);
+        if (!isNaN(start) && !isNaN(end)) {
+          acc[name].lifespans.push({ name: b.name, value: Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) });
         }
       }
 
@@ -680,15 +712,25 @@ const App = () => {
             const setName = beetles.find(b => b.id === setId)?.name || 'Unknown Set';
             const count = beetles.filter(b => b.parentSpawnSetId === setId).length;
             const beetle = beetles.find(b => b.id === setId);
+            const startDate = new Date(beetle.setDate);
+            const endDate = beetle.deathDate ? new Date(beetle.deathDate) : (beetle.emergenceDate ? new Date(beetle.emergenceDate) : new Date());
+            const days = Math.max(1, Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24)));
+            const dayRate = (count / days).toFixed(2);
             
             // 産卵セットの環境データ取得
             group.spawnSetData.push({ 
               name: setName, 
               value: count,
-              temp: beetle ? getStatSummary(beetle.records.map(r => ({value: r.temperature}))).avg : '-',
+              temp: beetle ? getStatSummary((beetle.records || []).map(r => ({value: r.temperature}))).avg : '-',
               moisture: beetle ? beetle.moisture : '-',
               packing: beetle ? beetle.packingPressure : '-',
               id: setId
+            });
+
+            group.spawnSetRankings.push({
+              name: `${setName} (${beetle.substrate})`,
+              value: parseFloat(dayRate),
+              unit: '頭/日'
             });
         });
     });
@@ -701,7 +743,7 @@ const App = () => {
     const stats = getScientificNameStats() || [];
     return stats.map(group => {
       const updatedGroup = { ...group };
-      ['sizes', 'larvalPeriods', 'restingPeriods'].forEach(key => {
+      ['sizes', 'larvalPeriods', 'restingPeriods', 'lifespans', 'spawnSetRankings'].forEach(key => {
         updatedGroup[key] = (updatedGroup[key] || []).map(item => {
           const beetle = beetles.find(b => b.name === item.name);
           if (!beetle) return item;
@@ -965,21 +1007,34 @@ const App = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-slate-50 pb-32 font-sans">
+      <div className="min-h-screen bg-slate-50 pb-32 font-sans" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
+        {isRefreshing && (
+          <div className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 pointer-events-none">
+            <div className="bg-emerald-600 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-bounce">
+              <RefreshCw size={16} className="animate-spin" />
+              <span className="text-xs font-black">更新中...</span>
+            </div>
+          </div>
+        )}
         {/* Header */}
-      <header className="bg-white text-emerald-900 border-b border-slate-200 p-4 pt-[calc(1rem+env(safe-area-inset-top))] sticky top-0 z-10">
+      <header className="bg-white text-emerald-900 border-b border-slate-200 px-4 py-3 pt-[calc(1rem+env(safe-area-inset-top))] sticky top-0 z-10">
           <div className="max-w-md mx-auto flex justify-between items-center">
-            <h1 
-              onClick={() => setActiveTab('home')} 
-              className="text-xl font-extrabold tracking-tight flex items-center gap-2 text-emerald-800 cursor-pointer select-none active:opacity-70 transition-opacity"
-            >
-              <img src={logoImg} alt="BeetleLog" className="w-10 h-10 rounded-xl object-contain shadow-sm" />
-              BeetleLog
-            </h1>
-            <div className="flex gap-1">
-              <button onClick={() => openFormWithStatus('Adult')} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl" title="成虫登録"><Bug size={24} /></button>
-              <button onClick={() => openFormWithStatus('Larva')} className="p-2 text-amber-600 hover:bg-amber-50 rounded-xl" title="幼虫登録"><Activity size={24} /></button>
-              <button onClick={() => openFormWithStatus('SpawnSet')} className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl" title="セット登録"><Egg size={24} /></button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setActiveTab('settings')} className={`p-1.5 rounded-xl transition-colors ${activeTab === 'settings' ? 'bg-emerald-50 text-emerald-700' : 'text-slate-400'}`}>
+                <Settings size={22} />
+              </button>
+              <h1 
+                onClick={() => setActiveTab('home')} 
+                className="text-lg font-black tracking-tight flex items-center gap-2 text-emerald-800 cursor-pointer select-none active:opacity-70 transition-opacity"
+              >
+                <img src={logoImg} alt="BeetleLog" className="w-8 h-8 rounded-lg object-contain shadow-sm" />
+                BeetleLog
+              </h1>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => openFormWithStatus('Adult')} className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">成</button>
+              <button onClick={() => openFormWithStatus('Larva')} className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">幼</button>
+              <button onClick={() => openFormWithStatus('SpawnSet')} className="w-8 h-8 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">産</button>
             </div>
           </div>
         </header>
@@ -1253,26 +1308,33 @@ const App = () => {
                     <ThermometerSnowflake className="text-blue-500" size={18} />
                     ルーム温度モニタ
                   </h3>
-                  <button onClick={fetchSbTemperature} className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-all">
+                  <button onClick={() => fetchSbTemperature()} className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-all">
                     <RefreshCw size={10} className={isFetchingSb ? "animate-spin" : ""} />
-                    今すぐ取得
+                    一括更新
                   </button>
                 </div>
-                {tempHistory.length > 0 ? (
-                  <div className="h-40 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={tempHistory}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="time" fontSize={10} stroke="#94a3b8" />
-                        <YAxis domain={['auto', 'auto']} fontSize={10} stroke="#94a3b8" unit="℃" />
-                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
-                        <Line type="monotone" dataKey="temp" name="温度" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }} activeDot={{ r: 6 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
+                {Object.keys(tempHistory).length > 0 ? (
+                  <div className="space-y-6">
+                    {availableSbDevices.filter(d => tempHistory[d.deviceId]).map(device => (
+                      <div key={device.deviceId} className="space-y-2">
+                        <p className="text-[10px] font-black text-slate-400 uppercase px-1">{device.deviceName}</p>
+                        <div className="h-32 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={tempHistory[device.deviceId]}>
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                              <XAxis dataKey="time" fontSize={9} stroke="#94a3b8" />
+                              <YAxis domain={['auto', 'auto']} fontSize={9} stroke="#94a3b8" unit="℃" />
+                              <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '10px' }} />
+                              <Line type="monotone" dataKey="temp" name="温度" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: '#3b82f6', strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="py-8 text-center border-2 border-dashed border-slate-50 rounded-2xl">
-                    <p className="text-xs text-slate-400 font-bold leading-relaxed">SwitchBotボタンから温度を取得すると<br/>ここに履歴が自動でプロットされます</p>
+                    <p className="text-xs text-slate-400 font-bold leading-relaxed">一括更新ボタンを押すと<br/>ここに履歴が自動でプロットされます</p>
                   </div>
                 )}
               </div>
@@ -1296,6 +1358,7 @@ const App = () => {
                   const offspringSum = getStatSummary(group.spawnSetData);
                   const larvalSum = getStatSummary(group.larvalPeriods);
                   const restingSum = getStatSummary(group.restingPeriods);
+                  const lifespanSum = getStatSummary(group.lifespans);
                   const isExpanded = expandedGroup === group.name;
 
                   return (
@@ -1339,6 +1402,20 @@ const App = () => {
                             >
                               <p className="text-[9px] font-bold text-blue-600 uppercase">休眠期間</p>
                               <p className="text-base font-black text-blue-700">{restingSum.avg}日</p>
+                            </button>
+                            <button 
+                              onClick={() => { setStatGraphInfo({ title: `${group.name} - 寿命比較`, data: group.lifespans, unit: '日', color: '#6366f1' }); setStatViewMode('graph'); }}
+                              className="bg-indigo-50 p-3 rounded-xl text-left"
+                            >
+                              <p className="text-[9px] font-bold text-indigo-600 uppercase">寿命</p>
+                              <p className="text-base font-black text-indigo-700">{lifespanSum.avg}日</p>
+                            </button>
+                            <button 
+                              onClick={() => { setStatGraphInfo({ title: `${group.name} - 産卵効率(日当り)ランキング`, data: group.spawnSetRankings, unit: '頭/日', color: '#ec4899' }); setStatViewMode('graph'); }}
+                              className="bg-pink-50 p-3 rounded-xl text-left"
+                            >
+                              <p className="text-[9px] font-bold text-pink-600 uppercase">産卵効率</p>
+                              <p className="text-base font-black text-pink-700">{getStatSummary(group.spawnSetRankings).max}頭/日</p>
                             </button>
                           </div>
 
@@ -1409,16 +1486,6 @@ const App = () => {
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase ml-1">API設定</label>
                   <div className="space-y-3 mt-2">
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                      <p className="text-[10px] text-slate-400 font-bold mb-1 italic">Gemini API Key (Google AI)</p>
-                      <input
-                        type="password"
-                        value={geminiKey}
-                        onChange={(e) => setGeminiKey(e.target.value)}
-                        className="text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
-                        placeholder="AIza..."
-                      />
-                    </div>
                     <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                       <p className="text-[10px] text-slate-400 font-bold mb-1">SwitchBot API Token</p>
                       <input
@@ -1541,7 +1608,7 @@ const App = () => {
 
         {/* FAB Sub Menu Items */}
         {isFabMenuOpen && (
-          <div className="fixed bottom-[calc(10.5rem+env(safe-area-inset-bottom))] right-7 flex flex-col gap-3 items-end z-30">
+          <div className="fixed bottom-[calc(7.5rem+env(safe-area-inset-bottom))] right-7 flex flex-col gap-3 items-end z-30">
             <button 
               onClick={() => {
                 setShowForm(true);
@@ -1568,53 +1635,46 @@ const App = () => {
           </div>
         )}
 
-        {/* Floating Action Button */}
-        <div className="fixed bottom-[calc(6.2rem+env(safe-area-inset-bottom))] right-6 z-30">
-          <button 
-            onClick={() => setIsFabMenuOpen(!isFabMenuOpen)}
-            className={`w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-200 flex items-center justify-center active:scale-90 hover:scale-105 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isFabMenuOpen ? 'rotate-[135deg] bg-slate-800 shadow-none' : ''}`}
-          >
-            <Plus size={40} />
-          </button>
-        </div>
-
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-20">
-        <nav className="bg-white/60 backdrop-blur-lg border-t border-white/20 px-6 py-4 pb-[calc(2rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)]">
+        <nav className="bg-white/60 backdrop-blur-lg border-t border-white/20 px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)]">
             <button onClick={() => { setActiveTab('home'); setFilterStatus('All'); }} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' && filterStatus === 'All' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
               <Home size={26} fill={activeTab === 'home' && filterStatus === 'All' ? "currentColor" : "none"} />
-              <span className="text-xs font-bold">ホーム</span>
+              <span className="text-[10px] font-bold">ホーム</span>
+            </button>
+
+            <button onClick={() => setActiveTab('stats')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'stats' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
+              <BarChart2 size={26} />
+              <span className="text-[10px] font-bold">分析</span>
+            </button>
+
+            {/* Integrated Plus Button */}
+            <button 
+              onClick={() => setIsFabMenuOpen(!isFabMenuOpen)}
+              className={`w-14 h-14 bg-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-200 flex items-center justify-center active:scale-90 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isFabMenuOpen ? 'rotate-[135deg] bg-slate-800' : ''}`}
+            >
+              <Plus size={32} />
             </button>
 
             {/* 個体数統計・フィルターボタン群 */}
-            <div className="flex bg-slate-100/50 p-1.5 rounded-2xl gap-1 border border-slate-200/50">
-              <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'Adult' ? 'All' : 'Adult'); }} className={`flex flex-col items-center px-4 py-1.5 rounded-xl transition-all ${filterStatus === 'Adult' && activeTab === 'home' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500'}`}>
-                <span className="text-[9px] font-bold leading-tight">成虫</span>
-                <span className="text-sm font-black">{stats.adults}</span>
+            <div className="flex bg-slate-100/50 p-1 rounded-xl gap-0.5 border border-slate-200/50">
+              <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'Adult' ? 'All' : 'Adult'); }} className={`flex flex-col items-center px-3 py-1 rounded-lg transition-all ${filterStatus === 'Adult' && activeTab === 'home' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500'}`}>
+                <span className="text-[8px] font-bold leading-tight">成</span>
+                <span className="text-xs font-black">{stats.adults}</span>
               </button>
-              <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'Larva' ? 'All' : 'Larva'); }} className={`flex flex-col items-center px-4 py-1.5 rounded-xl transition-all ${filterStatus === 'Larva' && activeTab === 'home' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500'}`}>
-                <span className="text-[9px] font-bold leading-tight">幼虫</span>
-                <span className="text-sm font-black">{stats.larvae}</span>
+              <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'Larva' ? 'All' : 'Larva'); }} className={`flex flex-col items-center px-3 py-1 rounded-lg transition-all ${filterStatus === 'Larva' && activeTab === 'home' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500'}`}>
+                <span className="text-[8px] font-bold leading-tight">幼</span>
+                <span className="text-xs font-black">{stats.larvae}</span>
               </button>
-              <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'SpawnSet' ? 'All' : 'SpawnSet'); }} className={`flex flex-col items-center px-4 py-1.5 rounded-xl transition-all ${filterStatus === 'SpawnSet' && activeTab === 'home' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-500'}`}>
-                <span className="text-[9px] font-bold leading-tight">セット</span>
-                <span className="text-sm font-black">{stats.spawnSets}</span>
+              <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'SpawnSet' ? 'All' : 'SpawnSet'); }} className={`flex flex-col items-center px-3 py-1 rounded-lg transition-all ${filterStatus === 'SpawnSet' && activeTab === 'home' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-500'}`}>
+                <span className="text-[8px] font-bold leading-tight">セ</span>
+                <span className="text-xs font-black">{stats.spawnSets}</span>
               </button>
-              <button onClick={() => setActiveTab('tasks')} className={`flex flex-col items-center px-4 py-1.5 rounded-xl transition-all ${activeTab === 'tasks' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500'}`}>
-                <span className="text-[9px] font-bold leading-tight">タスク</span>
-                <span className="text-sm font-black">{stats.pendingTasks}</span>
+              <button onClick={() => setActiveTab('tasks')} className={`flex flex-col items-center px-3 py-1 rounded-lg transition-all ${activeTab === 'tasks' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500'}`}>
+                <span className="text-[8px] font-bold leading-tight">タ</span>
+                <span className="text-xs font-black">{stats.pendingTasks}</span>
               </button>
             </div>
-
-            <button onClick={() => setActiveTab('stats')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'stats' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
-              <BarChart2 size={26} />
-              <span className="text-xs font-bold">分析</span>
-            </button>
-
-            <button onClick={() => setActiveTab('settings')} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'settings' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
-              <Settings size={26} />
-              <span className="text-xs font-bold">設定</span>
-            </button>
           </nav>
         </div>
 
@@ -2248,6 +2308,16 @@ const App = () => {
               <div className="space-y-1">
                 <label className="text-[10px] text-gray-400 uppercase ml-1">羽化日</label>
                 <input type="date" className="w-full border p-3 rounded-xl text-sm" value={formData.emergenceDate || ''} onChange={e => setFormData({...formData, emergenceDate: e.target.value})} />
+              </div>
+              <div className="flex items-center gap-2 px-1">
+                <input 
+                  type="checkbox" 
+                  id="isDigOutCheck" 
+                  checked={formData.isDigOut || false} 
+                  onChange={e => setFormData({...formData, isDigOut: e.target.checked})}
+                  className="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <label htmlFor="isDigOutCheck" className="text-xs font-bold text-slate-500">掘り出し日として登録 (正確な羽化日が不明)</label>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] text-gray-400 uppercase ml-1">後食開始日</label>
