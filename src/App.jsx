@@ -214,8 +214,8 @@ const App = () => {
       }
     }
 
-    const emergenceDateFormatted = beetle.emergenceDate ? beetle.emergenceDate : '　　　　　　　　　'; // 全角スペース10個
-    const feedingStartDateFormatted = beetle.feedingStartDate ? beetle.feedingStartDate : '　　　　　　　　　'; // 全角スペース10個
+    const emergenceDateFormatted = beetle.emergenceDate ? beetle.emergenceDate : '　　　　　　　　　　'; // 全角スペース10個
+    const feedingStartDateFormatted = beetle.feedingStartDate ? beetle.feedingStartDate : '　　　　　　　　　　'; // 全角スペース10個
 
     text += `\n　　　${emergenceDateFormatted} 羽化・堀　${feedingStartDateFormatted} 後食`;
 
