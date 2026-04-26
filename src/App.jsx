@@ -1040,8 +1040,13 @@ const App = () => {
                   <div className="space-y-4 animate-in slide-in-from-right duration-300">
                     <div className="flex items-center gap-2 mb-2">
                       <button onClick={() => setSubSearchGroup(null)} className="p-2 bg-white rounded-full shadow-sm text-slate-400"><ChevronLeft size={20}/></button>
-                      <div>
-                        <h4 className="text-sm font-black text-slate-800 leading-tight">{subSearchGroup.species}</h4>
+                      <div className="flex flex-col">
+                        <div className="flex items-baseline gap-2">
+                          <h4 className="text-sm font-black text-slate-800 leading-tight">{subSearchGroup.species}</h4>
+                          {subSearchGroup.scientificName && (
+                            <span className="text-[10px] text-emerald-600 italic font-medium">{subSearchGroup.scientificName}</span>
+                          )}
+                        </div>
                         <p className="text-[10px] text-slate-400 font-bold uppercase">{subSearchGroup.locality}</p>
                       </div>
                     </div>
@@ -1094,7 +1099,7 @@ const App = () => {
                               </div>
                               <div>
                                 <div className="flex items-center gap-2">
-                                  <span className="font-bold text-slate-800">{getInitials(beetle.scientificName)}{beetle.name}</span>
+                                  <span className="font-bold text-slate-800">{beetle.name}</span>
                                   {isOverdue && <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse">要交換</span>}
                                   {isMaxInSpecies && (
                                     <span className="flex items-center gap-0.5 bg-amber-100 text-amber-700 text-[9px] font-black px-1.5 py-0.5 rounded-full border border-amber-200">
@@ -1156,7 +1161,7 @@ const App = () => {
                                   </div>
                                 )}
                               </div>
-                              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{group.scientificName || '学名未設定'}</span>
+                              <span className="text-[10px] font-black text-emerald-600 tracking-widest italic">{group.scientificName || '学名未設定'}</span>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs text-slate-400 font-bold">{group.locality}</span>
                                 <div className="flex gap-1">
@@ -1579,7 +1584,7 @@ const App = () => {
                   <div className={`p-5 rounded-2xl mb-4 relative transition-all duration-500 border ${isMaxInSpecies ? 'bg-gradient-to-br from-amber-50 via-white to-amber-50 border-amber-200 shadow-lg shadow-amber-100/50' : 'bg-white border-slate-100 shadow-sm'}`}>
                     <div className="flex flex-col gap-1 mb-4">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-2xl font-black text-slate-800">{getInitials(selectedBeetle.scientificName)}{selectedBeetle.name}</h3>
+                        <h3 className="text-2xl font-black text-slate-800">{selectedBeetle.name}</h3>
                         {isMaxInSpecies && (
                           <div className="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200 shadow-sm">
                             <Crown size={14} fill="currentColor" />
