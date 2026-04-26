@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import logoImg from './assets/logo.png'; // 画像をインポート
-import { Plus, Trash2, History, Save, X, ChevronRight, Scale, LayoutDashboard, Boxes, Network, ClipboardCheck, Archive, ArrowUpCircle, Sparkles, Thermometer, User, Home, List, Settings, Search, Droplets, Hammer, Calendar, Activity, Bug, Egg, FlaskConical, Ruler, Weight, Edit3, MessageSquare, Download, Upload, RefreshCw, ThermometerSnowflake, Image as ImageIcon, Camera, Ghost, BarChart2, Copy } from 'lucide-react';
+import { Plus, Trash2, History, Save, X, ChevronRight, Scale, LayoutDashboard, Boxes, Network, ClipboardCheck, Archive, ArrowUpCircle, Sparkles, Thermometer, User, Home, List, Settings, Search, Droplets, Hammer, Calendar, Activity, Bug, Egg, FlaskConical, Ruler, Weight, Edit3, MessageSquare, Download, Upload, RefreshCw, ThermometerSnowflake, Image as ImageIcon, Camera, Ghost, BarChart2, Copy, ArrowUpDown, ChevronLeft, Crown } from 'lucide-react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 
@@ -27,6 +27,12 @@ const BEETLE_DICT = {
   "パラワンオオヒラタ": "Dorcus titanus palawanicus",
   "スマトラオオヒラタ": "Dorcus titanus yasuokai",
   "アンタエウスオオクワガタ": "Dorcus antaeus"
+};
+
+// 学名のイニシャルを取得するヘルパー関数
+const getInitials = (sci) => {
+  if (!sci) return "";
+  return sci.split(" ").filter(s => s.length > 0).map(s => s[0].toUpperCase()).join("");
 };
 
 const App = () => {
@@ -80,9 +86,12 @@ const App = () => {
   const [batchTargets, setBatchTargets] = useState([]);
   const [selectedBatchIds, setSelectedBatchIds] = useState(new Set());
   const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
+  const [subSearchGroup, setSubSearchGroup] = useState(null); // { id, items, species, locality, ... }
+  const [subSearchTerm, setSubSearchTerm] = useState('');
+  const [subSortConfig, setSubSortConfig] = useState({ key: 'name', direction: 'asc' });
 
   const initialFormState = {
-    name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: 'CB',
+    name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: '',
     parentMaleId: '', parentFemaleId: '', hatchDate: '', emergenceDate: '', feedingStartDate: '', deathDate: '',
     setDate: '', substrate: '', containerSize: '', packingPressure: '', moisture: 3, cohabitation: 'No', archived: false, notes: '', adultSize: '', parentSpawnSetId: '',
     count: 1, // 一括登録用のカウント
@@ -269,8 +278,8 @@ const App = () => {
 
     setIsFetchingAI(true);
     try {
-      // 安定版の v1 エンドポイントを使用するように変更
-      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+      // エンドポイントを v1beta に、モデルを gemini-1.5-flash に固定
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -729,6 +738,7 @@ const App = () => {
   // 重複を除いた既存の管理名と種類のリストを作成
   const existingNames = [...new Set(beetles.map(b => b.name))].filter(Boolean);
   const existingSpecies = [...new Set(beetles.map(b => b.species))].filter(Boolean);
+  const existingScientificNames = [...new Set(beetles.map(b => b.scientificName))].filter(Boolean);
   const existingLocalities = [...new Set(beetles.map(b => b.locality))].filter(Boolean);
   const existingGenerations = [...new Set(beetles.map(b => b.generation))].filter(Boolean);
   const existingSubstrates = [...new Set([
@@ -870,6 +880,67 @@ const App = () => {
     );
   }
 
+  // 一次検索・グループ化ロジック
+  const groupedBeetles = useMemo(() => {
+    const baseList = beetles.filter(b => view === 'archive' ? b.archived : !b.archived)
+                           .filter(b => filterStatus === 'All' || b.status === filterStatus);
+    
+    const term = searchTerm.toLowerCase().trim();
+    const filtered = baseList.filter(b => {
+      if (!term) return true;
+      const initials = getInitials(b.scientificName);
+      const searchableValues = [b.scientificName, initials, b.species, b.locality];
+      return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
+    });
+
+    const grouped = filtered.reduce((acc, b) => {
+      const key = `${b.scientificName || 'NoSci'}-${b.species || 'NoSpecies'}-${b.locality || 'NoLoc'}`;
+      if (!acc[key]) {
+        acc[key] = { 
+          id: key, 
+          scientificName: b.scientificName, 
+          species: b.species, 
+          locality: b.locality, 
+          initials: getInitials(b.scientificName),
+          items: [] 
+        };
+      }
+      acc[key].items.push(b);
+      return acc;
+    }, {});
+    return Object.values(grouped);
+  }, [beetles, searchTerm, view, filterStatus]);
+
+  // 二次検索・ソートロジック
+  const sortedSubItems = useMemo(() => {
+    if (!subSearchGroup) return [];
+    const term = subSearchTerm.toLowerCase().trim();
+    const filtered = subSearchGroup.items.filter(b => {
+      if (!term) return true;
+      const searchableValues = [b.name, b.locality, b.generation, b.substrate];
+      return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
+    });
+
+    return filtered.sort((a, b) => {
+      let valA, valB;
+      
+      if (subSortConfig.key === 'latestWeight') {
+        valA = a.records?.length > 0 ? a.records[a.records.length - 1].weight || 0 : 0;
+        valB = b.records?.length > 0 ? b.records[b.records.length - 1].weight || 0 : 0;
+      } else if (subSortConfig.key === 'lastRecordDate') {
+        valA = a.records?.length > 0 ? new Date(a.records[a.records.length - 1].date).getTime() : 0;
+        valB = b.records?.length > 0 ? new Date(b.records[b.records.length - 1].date).getTime() : 0;
+      } else {
+        valA = String(a[subSortConfig.key] || '').toLowerCase();
+        valB = String(b[subSortConfig.key] || '').toLowerCase();
+      }
+
+      if (valA < valB) return subSortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return subSortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [subSearchGroup, subSearchTerm, subSortConfig]);
+
   return (
     <>
       <div className="min-h-screen bg-slate-50 pb-32 font-sans">
@@ -964,75 +1035,144 @@ const App = () => {
                   </button>
                 )}
 
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 text-slate-400" size={18} />
-                  <input 
-                    type="text"
-                    placeholder="全項目で検索..."
-                    className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
+                {subSearchGroup ? (
+                  /* 二次検索ビュー */
+                  <div className="space-y-4 animate-in slide-in-from-right duration-300">
+                    <div className="flex items-center gap-2 mb-2">
+                      <button onClick={() => setSubSearchGroup(null)} className="p-2 bg-white rounded-full shadow-sm text-slate-400"><ChevronLeft size={20}/></button>
+                      <div>
+                        <h4 className="text-sm font-black text-slate-800 leading-tight">{subSearchGroup.species}</h4>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase">{subSearchGroup.locality}</p>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+                      <input 
+                        type="text"
+                        placeholder="管理名・産地・累代・マットで絞り込み..."
+                        className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500 outline-none shadow-sm"
+                        value={subSearchTerm}
+                        onChange={(e) => setSubSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-hide">
+                      {[
+                        { label: '管理名', key: 'name' },
+                        { label: '産地', key: 'locality' },
+                        { label: '累代', key: 'generation' },
+                        { label: 'マット', key: 'substrate' },
+                        { label: '体重', key: 'latestWeight' },
+                        { label: '記録日', key: 'lastRecordDate' }
+                      ].map(cfg => (
+                        <button
+                          key={cfg.key}
+                          onClick={() => setSubSortConfig({ key: cfg.key, direction: subSortConfig.key === cfg.key && subSortConfig.direction === 'asc' ? 'desc' : 'asc' })}
+                          className={`px-3 py-1.5 rounded-full text-[10px] font-black whitespace-nowrap border flex items-center gap-1 transition-all ${subSortConfig.key === cfg.key ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-100 text-slate-400'}`}
+                        >
+                          {cfg.label} <ArrowUpDown size={10} />
+                        </button>
+                      ))}
+                    </div>
+                    <div className="space-y-3">
+                      {sortedSubItems.map(beetle => {
+                        const records = beetle.records || [];
+                        const lastRecDate = records.length > 0 ? records[records.length - 1].date : null;
+                        const baseDate = lastRecDate ? new Date(lastRecDate) : (beetle.hatchDate ? new Date(beetle.hatchDate) : new Date(parseInt(beetle.id)));
+                        const isOverdue = !beetle.archived && (new Date() - baseDate > 90 * 24 * 60 * 60 * 1000);
 
-                <div className="space-y-3 pb-24">
-                  {(() => {
-                    const filtered = beetles
-                      .filter(b => view === 'archive' ? b.archived : !b.archived)
-                      .filter(b => filterStatus === 'All' || b.status === filterStatus)
-                      .filter(b => {
-                        const term = searchTerm.toLowerCase().trim();
-                        if (!term) return true;
-                        const searchableValues = [b.name, b.species, b.locality, b.generation, b.substrate, b.notes];
-                        return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
-                      });
+                        const currentSize = parseFloat(beetle.adultSize);
+                        const isMaxInSpecies = !isNaN(currentSize) && currentSize > 0 && 
+                          currentSize === beetles
+                            .filter(b => b.species === beetle.species)
+                            .reduce((max, b) => Math.max(max, parseFloat(b.adultSize) || 0), 0);
 
-                    if (filtered.length === 0) {
-                      return (
+                        return (
+                          <div key={beetle.id} onClick={() => setSelectedBeetle(beetle)} className={`p-4 rounded-2xl shadow-sm border flex justify-between items-center active:scale-[0.98] transition-all ${isMaxInSpecies ? 'border-amber-400 bg-amber-50/20 shadow-amber-100' : (isOverdue ? 'bg-rose-50/50 border-rose-200' : 'bg-white border-slate-100')}`}>
+                            <div className="flex gap-3 items-center">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg overflow-hidden shadow-inner ${!beetle.image && (beetle.status === 'Larva' ? 'bg-amber-50 text-amber-600' : isMaxInSpecies ? 'bg-amber-100 text-amber-600' : 'bg-emerald-50 text-emerald-600')}`}>
+                                {beetle.image ? <img src={beetle.image} alt="" className="w-full h-full object-cover" /> : (beetle.status === 'Larva' ? '🐛' : '✨')}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-slate-800">{getInitials(beetle.scientificName)}{beetle.name}</span>
+                                  {isOverdue && <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse">要交換</span>}
+                                  {isMaxInSpecies && (
+                                    <span className="flex items-center gap-0.5 bg-amber-100 text-amber-700 text-[9px] font-black px-1.5 py-0.5 rounded-full border border-amber-200">
+                                      <Crown size={8} fill="currentColor" />
+                                      MAX
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase">{beetle.locality} / {beetle.generation}</p>
+                              </div>
+                            </div>
+                            <ChevronRight className={isMaxInSpecies ? "text-amber-400" : isOverdue ? "text-rose-400" : "text-slate-300"} size={18} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  /* 一次検索・グループリストビュー */
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-3 text-slate-400" size={18} />
+                      <input 
+                        type="text"
+                        placeholder="種類・学名(Dhh等)・産地で検索..."
+                        className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-3 pb-24">
+                      {groupedBeetles.length === 0 ? (
                         <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
                           <Search className="mx-auto text-slate-200 mb-3" size={48} />
-                          <p className="text-sm text-slate-400 font-bold">
-                            {(searchTerm.trim() || filterStatus !== 'All') ? '該当する個体がいません' : '登録されている個体がありません'}
-                          </p>
+                          <p className="text-sm text-slate-400 font-bold">該当する項目がいません</p>
                         </div>
-                      );
-                    }
+                      ) : (
+                        groupedBeetles.map(group => {
+                          const counts = group.items.reduce((acc, item) => {
+                            acc[item.status] = (acc[item.status] || 0) + 1;
+                            return acc;
+                          }, {});
 
-                    return filtered.map(beetle => {
-                      const records = beetle.records || [];
-                      const lastRecDate = records.length > 0 ? records[records.length - 1].date : null;
-                      const baseDate = lastRecDate ? new Date(lastRecDate) : (beetle.hatchDate ? new Date(beetle.hatchDate) : new Date(parseInt(beetle.id)));
-                      const isOverdue = !beetle.archived && (new Date() - baseDate > 90 * 24 * 60 * 60 * 1000);
+                          const maxAdultSize = group.items.reduce((max, item) => {
+                            const size = parseFloat(item.adultSize);
+                            return (!isNaN(size) && size > max) ? size : max;
+                          }, 0);
 
-                      return (
-                      <div 
-                        key={beetle.id}
-                        onClick={() => setSelectedBeetle(beetle)}
-                        className={`p-4 rounded-2xl shadow-sm border flex justify-between items-center active:scale-[0.98] transition-all ${isOverdue ? 'bg-rose-50/50 border-rose-200' : 'bg-white border-slate-100'}`}
-                      >
-                      <div className="flex gap-3 items-center">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl overflow-hidden shadow-inner ${!beetle.image && (beetle.status === 'Larva' ? 'bg-amber-50 text-amber-600' : beetle.status === 'SpawnSet' ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600')}`}>
-                          {beetle.image ? (
-                            <img src={beetle.image} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                            beetle.status === 'Larva' ? '🐛' : beetle.status === 'SpawnSet' ? '🥚' : '✨'
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-slate-800">{beetle.name}</span>
-                            {isOverdue && <span className="bg-rose-600 text-white text-[9px] font-black px-2 py-0.5 rounded-full animate-pulse">要交換</span>}
+                          return (
+                          <div key={group.id} onClick={() => { setSubSearchGroup(group); setSubSearchTerm(''); }} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center active:scale-[0.98] transition-all relative overflow-hidden">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-black text-slate-800 text-lg">{group.species}</span>
+                                {maxAdultSize > 0 && (
+                                  <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2 py-0.5 rounded-full border border-amber-100 shadow-sm">
+                                    <Crown size={10} fill="currentColor" />
+                                    <span className="text-[9px] font-black">{maxAdultSize}mm</span>
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{group.scientificName || '学名未設定'}</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-slate-400 font-bold">{group.locality}</span>
+                                <div className="flex gap-1">
+                                  {counts.Adult > 0 && <span className="bg-emerald-50 text-emerald-600 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-emerald-100">{counts.Adult} 成</span>}
+                                  {counts.Larva > 0 && <span className="bg-amber-50 text-amber-600 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-amber-100">{counts.Larva} 幼</span>}
+                                  {counts.SpawnSet > 0 && <span className="bg-rose-50 text-rose-600 text-[9px] font-black px-1.5 py-0.5 rounded-md border border-rose-100">{counts.SpawnSet} セ</span>}
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight className="text-slate-300" size={20} />
                           </div>
-                          <p className="text-xs text-slate-500 font-bold leading-tight">{beetle.species}</p>
-                          <p className="text-[10px] text-slate-400 italic leading-tight">{beetle.scientificName}</p>
-                        </div>
-                      </div>
-                      <ChevronRight className={isOverdue ? "text-rose-400" : "text-slate-300"} size={18} />
+                        )})
+                      )}
                     </div>
-                    );
-                    });
-                  })()}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1428,13 +1568,29 @@ const App = () => {
               <button onClick={() => setSelectedBeetle(null)}><X size={24} /></button>
             </div>
             <div className="p-4 flex-1 overflow-y-auto">
-              <div className="bg-white p-5 rounded-2xl mb-4 relative shadow-sm border border-slate-100">
-                <div className="flex flex-col gap-1 mb-4">
-                  <h3 className="text-2xl font-black text-slate-800">{selectedBeetle.name}</h3>
-                  <p className="text-sm font-bold text-emerald-600">{selectedBeetle.species}</p>
-                  <p className="text-xs italic text-slate-400">{selectedBeetle.scientificName}</p>
-                </div>
-                
+              {(() => {
+                const currentSize = parseFloat(selectedBeetle.adultSize);
+                const isMaxInSpecies = !isNaN(currentSize) && currentSize > 0 && 
+                  currentSize === beetles
+                    .filter(b => b.species === selectedBeetle.species)
+                    .reduce((max, b) => Math.max(max, parseFloat(b.adultSize) || 0), 0);
+
+                return (
+                  <div className={`p-5 rounded-2xl mb-4 relative transition-all duration-500 border ${isMaxInSpecies ? 'bg-gradient-to-br from-amber-50 via-white to-amber-50 border-amber-200 shadow-lg shadow-amber-100/50' : 'bg-white border-slate-100 shadow-sm'}`}>
+                    <div className="flex flex-col gap-1 mb-4">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-2xl font-black text-slate-800">{getInitials(selectedBeetle.scientificName)}{selectedBeetle.name}</h3>
+                        {isMaxInSpecies && (
+                          <div className="flex items-center gap-1 bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200 shadow-sm">
+                            <Crown size={14} fill="currentColor" />
+                            <span className="text-[10px] font-black">種内最大</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm font-bold text-emerald-600">{selectedBeetle.species}</p>
+                      <p className="text-xs italic text-slate-400">{selectedBeetle.scientificName}</p>
+                    </div>
+
                 <div className="space-y-1">
                   <InfoRow label="産地" value={selectedBeetle.locality} />
                   <InfoRow label="累代" value={selectedBeetle.generation} />
@@ -1534,7 +1690,8 @@ const App = () => {
                   <button onClick={() => toggleArchive(selectedBeetle.id)} className="text-gray-400 p-1" title="アーカイブ"><Archive size={20}/></button>
                   <button onClick={(e) => deleteBeetle(selectedBeetle.id, e)} className="text-rose-600 p-1 hover:bg-rose-50 rounded-lg transition-colors" title="削除"><Trash2 size={20}/></button>
                 </div>
-              </div>
+              </div>);
+              })()}
 
               {renderLineage(selectedBeetle)}
 
@@ -1815,7 +1972,29 @@ const App = () => {
                       placeholder="種類 (例: 国産オオクワガタ)" 
                       list="species-options"
                       className="flex-1 border p-3 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-                      onChange={(e) => setFormData({...formData, species: e.target.value})}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const history = beetles.filter(b => b.species === val);
+                        
+                        // 過去のデータから一意の値を抽出する関数
+                        const getUniqueValue = (key) => {
+                          const values = [...new Set(history.map(h => h[key]).filter(Boolean))];
+                          return values.length === 1 ? values[0] : '';
+                        };
+
+                        const updates = { species: val };
+
+                        // 学名の自動補完 (辞書優先、次に履歴)
+                        if (!formData.scientificName) {
+                          updates.scientificName = BEETLE_DICT[val] || getUniqueValue('scientificName');
+                        }
+                        // 産地の自動補完
+                        if (!formData.locality) {
+                          updates.locality = getUniqueValue('locality');
+                        }
+
+                        setFormData(prev => ({...prev, ...updates}));
+                      }}
                     />
                     <button 
                       onClick={() => fetchScientificName(formData.species)}
@@ -1837,6 +2016,7 @@ const App = () => {
                     placeholder="例: Dorcus hopei binodulosus"
                     value={formData.scientificName || ''}
                     className="w-full border p-3 rounded-xl bg-gray-50"
+                    list="scientific-name-options"
                     onChange={(e) => setFormData({...formData, scientificName: e.target.value})}
                   />
                 </div>
@@ -1857,7 +2037,14 @@ const App = () => {
                       list="generation-options"
                       className="w-full border p-3 rounded-xl" 
                       value={formData.generation || ''} 
-                      onChange={e => setFormData({...formData, generation: e.target.value})} />
+                      onChange={e => {
+                        let val = e.target.value;
+                        // 変更候補 (例: CBF1 → CBF2) が選択された場合は、後の値を採用
+                        if (val.includes(' → ')) val = val.split(' → ')[1];
+                        // CBFまたはWFが選択された際、'1'をデフォルト付与
+                        if (val === 'CBF' || val === 'WF') val = val + '1';
+                        setFormData({...formData, generation: val});
+                      }} />
                   </div>
                 </div>
 
@@ -2259,23 +2446,66 @@ const App = () => {
           <option key={species} value={species} />
         ))}
       </datalist>
+      <datalist id="scientific-name-options">
+        {(formData.species 
+          ? [...new Set(beetles.filter(b => b.species === formData.species).map(b => b.scientificName))]
+          : existingScientificNames
+        ).filter(Boolean).map(name => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>
       <datalist id="locality-options">
-        {existingLocalities.map(loc => (
+        {(formData.species 
+          ? [...new Set(beetles.filter(b => b.species === formData.species).map(b => b.locality))]
+          : existingLocalities
+        ).filter(Boolean).map(loc => (
           <option key={loc} value={loc} />
         ))}
       </datalist>
       <datalist id="generation-options">
-        {existingGenerations.map(gen => (
-          <option key={gen} value={gen} />
-        ))}
+        {(() => {
+          let options = ['CB', 'WD', 'CBF', 'WF'];
+          const current = (formData.generation || '').toUpperCase();
+          const basePrefix = current.startsWith('CBF') ? 'CBF' : current.startsWith('WF') ? 'WF' : null;
+
+          if (basePrefix) {
+            const range = Array.from({length: 20}, (_, i) => `${basePrefix}${i + 1}`);
+            options = [...options, ...range];
+            
+            // 入力済みの値(例: CBF1)がある場合、変更候補(例: CBF1 → CBF2)を追加してフィルタを回避
+            if (current !== basePrefix && range.includes(current)) {
+              options = [...options, ...range.filter(v => v !== current).map(v => `${current} → ${v}`)];
+            }
+          }
+
+          const historyGens = formData.species 
+            ? [...new Set(beetles.filter(b => b.species === formData.species).map(b => b.generation))]
+            : existingGenerations;
+            
+          return [...new Set([...options, ...historyGens])].filter(Boolean).map(gen => (
+            <option key={gen} value={gen} />
+          ));
+        })()}
       </datalist>
       <datalist id="substrate-options">
-        {existingSubstrates.map(sub => (
+        {((selectedBeetle?.species || formData.species)
+          ? [...new Set([
+              ...beetles.filter(b => b.species === (selectedBeetle?.species || formData.species)).map(b => b.substrate),
+              ...beetles.filter(b => b.species === (selectedBeetle?.species || formData.species)).flatMap(b => b.records?.map(r => r.substrate) || [])
+            ])]
+          : existingSubstrates
+        ).filter(Boolean).map(sub => (
           <option key={sub} value={sub} />
         ))}
       </datalist>
       <datalist id="container-options">
-        {existingContainers.map(cont => (
+        {((selectedBeetle?.species || formData.species)
+          ? [...new Set([
+              ...beetles.filter(b => b.species === (selectedBeetle?.species || formData.species)).map(b => b.containerSize),
+              ...beetles.filter(b => b.species === (selectedBeetle?.species || formData.species)).flatMap(b => b.records?.map(r => r.containerSize) || [])
+            ])]
+          : existingContainers
+        ).filter(Boolean).map(cont => (
           <option key={cont} value={cont} />
         ))}
       </datalist>
