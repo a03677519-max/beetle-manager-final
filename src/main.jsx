@@ -9,8 +9,13 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// Service Worker Registration with Update Logic
+// Service Worker Registration with Strong Update Logic
 if ('serviceWorker' in navigator) {
+  // 新しいワーカーが制御を開始した時にリロードを実行
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(reg => {
       reg.onupdatefound = () => {
