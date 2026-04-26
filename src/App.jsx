@@ -175,8 +175,8 @@ const App = () => {
 
   // 統計ヘルパー関数 (他の関数から参照されるため、先に定義)
   const getStatSummary = (arr) => {
-    if (!arr || !arr.length) return { avg: '-', min: '-', max: '-' };
-    const values = arr.map(item => item.value).filter(v => typeof v === 'number' && !isNaN(v));
+    if (!Array.isArray(arr) || arr.length === 0) return { avg: '-', min: '-', max: '-' };
+    const values = arr.map(item => item?.value).filter(v => typeof v === 'number' && !isNaN(v));
     if (values.length === 0) return { avg: '-', min: '-', max: '-' };
     return {
       avg: (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1),
@@ -630,11 +630,11 @@ const App = () => {
         };
       }
       
-      acc[name].count++;
+      acc[name].count = (acc[name].count || 0) + 1;
       if (b.species) acc[name].speciesNames.add(b.species);
       
       // 幼虫期間 (hatch -> emergence)
-      if (b.hatchDate && b.emergenceDate) {
+      if (b.hatchDate && b.emergenceDate && !b.hatchDate.includes('セット')) {
         const start = new Date(b.hatchDate);
         const end = new Date(b.emergenceDate);
         if (!isNaN(start) && !isNaN(end)) {
@@ -663,7 +663,7 @@ const App = () => {
       if (b.adultSize) acc[name].sizes.push({ name: b.name, value: parseFloat(b.adultSize) });
 
       // 温度とマットの履歴
-      (b.records || []).forEach(r => {
+      (b?.records || []).forEach(r => {
         if (r.temperature) acc[name].temps.push(parseFloat(r.temperature));
         if (r.substrate) acc[name].substrates.add(r.substrate);
       });
@@ -674,13 +674,13 @@ const App = () => {
       return acc;
     }, {});
 
-    const filteredGroups = Object.values(grouped).filter(group => 
-      group.name.toLowerCase().includes(scientificNameSearchTerm.toLowerCase())
+    const filteredGroups = Object.values(grouped).filter(group =>
+      group?.name?.toLowerCase().includes(scientificNameSearchTerm.toLowerCase())
     );
 
     // 産卵データの構築と環境データの紐付け
     filteredGroups.forEach(group => {
-        group.spawnSetIds.forEach(setId => {
+        (group.spawnSetIds || []).forEach(setId => {
             const beetle = beetles.find(b => b && b.id === setId);
             if (!beetle) return;
 
@@ -703,7 +703,7 @@ const App = () => {
               id: setId
             });
 
-            if (beetle) group.spawnSetRankings.push({
+            group.spawnSetRankings.push({
               name: `${setName} (${beetle.substrate})`,
               value: parseFloat(dayRate),
               unit: '頭/日',
@@ -720,14 +720,14 @@ const App = () => {
 
   // 学名データの収集ロジックを微調整 (IDを含める)
   const enhancedStats = useMemo(() => {
-    const stats = (typeof getScientificNameStats === 'function' ? getScientificNameStats() : []) || [];
+    const stats = getScientificNameStats() || [];
     // 高速検索用マップの作成（計算負荷による画面の固まりを防止）
     const beetleMap = new Map((beetles || []).filter(b => b && b.name).map(b => [b.name, b]));
 
     return stats.map(group => {
       const updatedGroup = { ...group };
       ['sizes', 'larvalPeriods', 'restingPeriods', 'lifespans', 'spawnSetRankings'].forEach(key => {
-        updatedGroup[key] = (updatedGroup[key] || []).map(item => {
+        updatedGroup[key] = Array.isArray(updatedGroup[key]) ? updatedGroup[key].map(item => {
           if (!item || !item.name) return item;
           const beetle = beetleMap.get(item.name.split(' (')[0]);
           if (!beetle) return item;
@@ -742,7 +742,7 @@ const App = () => {
             moisture: beetle.status === 'SpawnSet' ? (beetle.moisture || '-') : (lastRec.moisture || '-'),
             packing: beetle.status === 'SpawnSet' ? (beetle.packingPressure || '-') : (lastRec.packingPressure || '-')
           };
-        });
+        }) : [];
       });
       return updatedGroup;
     });
@@ -1399,7 +1399,7 @@ const App = () => {
                           {/* Spawning Analysis & Golden Ratio (Combined) */}
                           {group.spawnSetRankings.length > 0 && (() => {
                             const best = [...group.spawnSetRankings].sort((a, b) => b.value - a.value)[0];
-                            const bestBeetle = beetles.find(b => b.name === best.name.split(' (')[0]);
+                            const bestBeetle = best ? beetles.find(b => b && b.name === best.name?.split(' (')[0]) : null;
                             return (
                               <div className="mb-4 p-4 bg-amber-50 rounded-2xl border border-amber-200">
                                 <div 
