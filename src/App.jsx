@@ -98,6 +98,7 @@ const App = () => {
   });
   const [draggedIdx, setDraggedIdx] = useState(null);
   const [isSortingMode, setIsSortingMode] = useState(false);
+  const [showSbGraphs, setShowSbGraphs] = useState(true);
 
   const initialFormState = {
     name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: '', isDigOut: false,
@@ -129,9 +130,23 @@ const App = () => {
   };
 
   const getGuide = (group) => {
+    // 実際の産卵セットデータから産卵効率の一番良かったものを取得
+    const sortedRankings = [...group.spawnSetRankings].sort((a, b) => b.value - a.value);
+    const best = sortedRankings[0];
+    if (best && best.value > 0) {
+      return {
+        content: `最高実績データより算出 (効率: ${best.value}頭/日) - 温度: ${best.temp}℃ / 水分: ${best.moisture} / 詰圧: ${best.packing}`,
+        isGuideline: false
+      };
+    }
+
+    // データがない場合は従来のプリセットを参照
     const name = group.name + (Array.from(group.speciesNames).join(' '));
-    const match = Object.keys(breedingGuides).find(key => name.includes(key));
-    return breedingGuides[match] || breedingGuides.default;
+    const match = Object.keys(breedingGuides).find(key => name.toLowerCase().includes(key.toLowerCase()));
+    return {
+      content: breedingGuides[match] || breedingGuides.default,
+      isGuideline: true
+    };
   };
 
   // 並べ替えハンドラ
@@ -1355,16 +1370,21 @@ const App = () => {
                     <ThermometerSnowflake className="text-blue-500" size={18} />
                     ルーム温度モニタ
                   </h3>
-                  <button onClick={() => fetchSbTemperature()} className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-all">
-                    <RefreshCw size={10} className={isFetchingSb ? "animate-spin" : ""} />
-                    一括同期
-                  </button>
+                  <div className="flex gap-2">
+                    <button onClick={() => fetchSbTemperature()} className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-all">
+                      <RefreshCw size={10} className={isFetchingSb ? "animate-spin" : ""} />
+                      一括同期
+                    </button>
+                    <button onClick={() => setShowSbGraphs(!showSbGraphs)} className="p-1.5 bg-slate-100 text-slate-500 rounded-lg active:scale-90 transition-all">
+                      {showSbGraphs ? <ChevronLeft size={16} className="-rotate-90" /> : <BarChart2 size={16} />}
+                    </button>
+                  </div>
                 </div>
-                {Object.keys(tempHistory).length > 0 ? (
+                {showSbGraphs && Object.keys(tempHistory).length > 0 ? (
                   <div className="space-y-6">
                     {availableSbDevices.filter(d => tempHistory[d.deviceId]).map(device => (
                       <div key={device.deviceId} className="space-y-2">
-                        <p className="text-[10px] font-black text-slate-400 uppercase px-1">{device.deviceName}</p>
+                        <p className="text-xs font-black text-slate-600 uppercase px-1">{device.deviceName}</p>
                         <div className="h-32 w-full">
                           <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={tempHistory[device.deviceId]}>
@@ -1379,7 +1399,7 @@ const App = () => {
                       </div>
                     ))}
                   </div>
-                ) : (
+                ) : showSbGraphs && (
                   <div className="py-8 text-center border-2 border-dashed border-slate-50 rounded-2xl">
                     <p className="text-xs text-slate-400 font-bold leading-relaxed">一括更新ボタンを押すと<br/>ここに履歴が自動でプロットされます</p>
                   </div>
@@ -1429,53 +1449,47 @@ const App = () => {
                           <div className="grid grid-cols-2 gap-2 mb-4">
                             {statCardOrder.map((key, idx) => {
                               const isDragging = draggedIdx === idx;
-                              let card = null;
-                              if (key === 'size') card = (
-                                <button key="size" draggable onDragStart={() => onDragStart(idx)} onDragOver={onDragOver} onDrop={() => onDrop(idx)}
-                                  onClick={() => { setStatGraphInfo({ title: `${group.name} - サイズ比較`, data: group.sizes, unit: 'mm', color: '#10b981' }); setStatViewMode('graph'); }}
-                                  className={`bg-emerald-50 p-3 rounded-xl text-left active:scale-95 transition-all ${isDragging ? 'opacity-30 border-2 border-dashed border-emerald-300' : ''}`}
-                                >
-                                  <p className="text-[9px] font-bold text-emerald-600 uppercase flex justify-between">サイズ <ArrowUpDown size={8}/></p>
-                                  <p className="text-base font-black text-emerald-700">{sizeSum.avg}mm</p>
-                                </button>
-                              );
-                              if (key === 'larval') card = (
-                                <button key="larval" draggable onDragStart={() => onDragStart(idx)} onDragOver={onDragOver} onDrop={() => onDrop(idx)}
-                                  onClick={() => { setStatGraphInfo({ title: `${group.name} - 幼虫期間比較`, data: group.larvalPeriods, unit: '日', color: '#f59e0b' }); setStatViewMode('graph'); }}
-                                  className={`bg-amber-50 p-3 rounded-xl text-left active:scale-95 transition-all ${isDragging ? 'opacity-30 border-2 border-dashed border-amber-300' : ''}`}
-                                >
-                                  <p className="text-[9px] font-bold text-amber-600 uppercase flex justify-between">幼虫期間 <ArrowUpDown size={8}/></p>
-                                  <p className="text-base font-black text-amber-700">{larvalSum.avg}日</p>
-                                </button>
-                              );
-                              if (key === 'resting') card = (
-                                <button key="resting" draggable onDragStart={() => onDragStart(idx)} onDragOver={onDragOver} onDrop={() => onDrop(idx)}
-                                  onClick={() => { setStatGraphInfo({ title: `${group.name} - 休眠期間比較`, data: group.restingPeriods, unit: '日', color: '#3b82f6' }); setStatViewMode('graph'); }}
-                                  className={`bg-blue-50 p-3 rounded-xl text-left active:scale-95 transition-all ${isDragging ? 'opacity-30 border-2 border-dashed border-blue-300' : ''}`}
-                                >
-                                  <p className="text-[9px] font-bold text-blue-600 uppercase flex justify-between">休眠期間 <ArrowUpDown size={8}/></p>
-                                  <p className="text-base font-black text-blue-700">{restingSum.avg}日</p>
-                                </button>
-                              );
-                              if (key === 'lifespan') card = (
-                                <button key="lifespan" draggable onDragStart={() => onDragStart(idx)} onDragOver={onDragOver} onDrop={() => onDrop(idx)}
-                                  onClick={() => { setStatGraphInfo({ title: `${group.name} - 寿命比較`, data: group.lifespans, unit: '日', color: '#6366f1' }); setStatViewMode('graph'); }}
-                                  className={`bg-indigo-50 p-3 rounded-xl text-left active:scale-95 transition-all ${isDragging ? 'opacity-30 border-2 border-dashed border-indigo-300' : ''}`}
-                                >
-                                  <p className="text-[9px] font-bold text-indigo-600 uppercase flex justify-between">寿命 <ArrowUpDown size={8}/></p>
-                                  <p className="text-base font-black text-indigo-700">{lifespanSum.avg}日</p>
-                                </button>
-                              );
-                              if (key === 'spawn') card = (
-                                <button key="spawn" draggable onDragStart={() => onDragStart(idx)} onDragOver={onDragOver} onDrop={() => onDrop(idx)}
-                                  onClick={() => { setStatGraphInfo({ title: `${group.name} - 産卵効率ランキング`, data: group.spawnSetRankings, unit: '頭/日', color: '#ec4899' }); setStatViewMode('graph'); }}
-                                  className={`bg-pink-50 p-3 rounded-xl text-left active:scale-95 transition-all ${isDragging ? 'opacity-30 border-2 border-dashed border-pink-300' : ''}`}
-                                >
-                                  <p className="text-[9px] font-bold text-pink-600 uppercase flex justify-between">産卵効率 <ArrowUpDown size={8}/></p>
-                                  <p className="text-base font-black text-pink-700">{getStatSummary(group.spawnSetRankings).max}頭/日</p>
-                                </button>
-                              );
-                              return card;
+                              const btnProps = {
+                                draggable: true,
+                                onDragStart: () => onDragStart(idx),
+                                onDragOver: onDragOver,
+                                onDrop: () => onDrop(idx),
+                                className: `p-3 rounded-xl text-left active:scale-95 transition-all ${isDragging ? 'opacity-30 border-2 border-dashed border-slate-300' : ''}`
+                              };
+
+                              switch (key) {
+                                case 'size': return (
+                                  <button key="size" {...btnProps} onClick={() => { setStatGraphInfo({ title: `${group.name} - サイズ比較`, data: group.sizes, unit: 'mm', color: '#10b981' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-emerald-50`}>
+                                    <p className="text-[9px] font-bold text-emerald-600 uppercase flex justify-between">サイズ <ArrowUpDown size={8}/></p>
+                                    <p className="text-base font-black text-emerald-700">{sizeSum.avg}mm</p>
+                                  </button>
+                                );
+                                case 'larval': return (
+                                  <button key="larval" {...btnProps} onClick={() => { setStatGraphInfo({ title: `${group.name} - 幼虫期間比較`, data: group.larvalPeriods, unit: '日', color: '#f59e0b' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-amber-50`}>
+                                    <p className="text-[9px] font-bold text-amber-600 uppercase flex justify-between">幼虫期間 <ArrowUpDown size={8}/></p>
+                                    <p className="text-base font-black text-amber-700">{larvalSum.avg}日</p>
+                                  </button>
+                                );
+                                case 'resting': return (
+                                  <button key="resting" {...btnProps} onClick={() => { setStatGraphInfo({ title: `${group.name} - 休眠期間比較`, data: group.restingPeriods, unit: '日', color: '#3b82f6' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-blue-50`}>
+                                    <p className="text-[9px] font-bold text-blue-600 uppercase flex justify-between">休眠期間 <ArrowUpDown size={8}/></p>
+                                    <p className="text-base font-black text-blue-700">{restingSum.avg}日</p>
+                                  </button>
+                                );
+                                case 'lifespan': return (
+                                  <button key="lifespan" {...btnProps} onClick={() => { setStatGraphInfo({ title: `${group.name} - 寿命比較`, data: group.lifespans, unit: '日', color: '#6366f1' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-indigo-50`}>
+                                    <p className="text-[9px] font-bold text-indigo-600 uppercase flex justify-between">寿命 <ArrowUpDown size={8}/></p>
+                                    <p className="text-base font-black text-indigo-700">{lifespanSum.avg}日</p>
+                                  </button>
+                                );
+                                case 'spawn': return (
+                                  <button key="spawn" {...btnProps} onClick={() => { setStatGraphInfo({ title: `${group.name} - 産卵効率ランキング`, data: group.spawnSetRankings, unit: '頭/日', color: '#ec4899' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-pink-50`}>
+                                    <p className="text-[9px] font-bold text-pink-600 uppercase flex justify-between">産卵効率 <ArrowUpDown size={8}/></p>
+                                    <p className="text-base font-black text-pink-700">{getStatSummary(group.spawnSetRankings).max}頭/日</p>
+                                  </button>
+                                );
+                                default: return null;
+                              }
                             })}
                           </div>
 
@@ -1486,7 +1500,15 @@ const App = () => {
                               <span className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Breeding Guide (飼育の目安)</span>
                             </div>
                             <p className="text-[11px] text-emerald-900 leading-relaxed font-medium">
-                              {getGuide(group)}
+                              {(() => {
+                                const guide = getGuide(group);
+                                return (
+                                  <span className="flex items-start gap-1.5">
+                                    {guide.isGuideline && <span className="shrink-0 bg-emerald-200 text-emerald-700 text-[8px] font-black px-1 rounded-sm mt-0.5 border border-emerald-300/50">目安</span>}
+                                    <span>{guide.content}</span>
+                                  </span>
+                                );
+                              })()}
                             </p>
                             <div className="mt-2 flex gap-1">
                               <span className="text-[8px] bg-white/60 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100 font-bold">成功率重視</span>
@@ -1921,7 +1943,6 @@ const App = () => {
                       title="前の段階に戻す"
                     ><History size={20}/></button>
                   )}
-                  <button onClick={() => toggleArchive(selectedBeetle.id)} className="text-gray-400 p-1" title="アーカイブ"><Archive size={20}/></button>
                   <button onClick={(e) => deleteBeetle(selectedBeetle.id, e)} className="text-rose-600 p-1 hover:bg-rose-50 rounded-lg transition-colors" title="削除"><Trash2 size={20}/></button>
                 </div>
               </div>);
@@ -2127,18 +2148,6 @@ const App = () => {
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
-
-            <div className="p-4 border-t">
-              <h3 className="font-bold mb-2 flex items-center gap-2"><ClipboardCheck size={18}/> タスク</h3>
-              <div className="space-y-2">
-                {(selectedBeetle.tasks || []).map(task => (
-                  <div key={task.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                    <input type="checkbox" checked={task.completed} onChange={() => toggleTask(selectedBeetle.id, task.id)} className="w-5 h-5" />
-                    <span className={task.completed ? 'line-through text-gray-400' : ''}>{task.type}</span>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
