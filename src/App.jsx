@@ -499,15 +499,23 @@ const App = () => {
     if (!userId.trim()) return alert('ユーザーIDを入力してください');
     
     // ユーザー別のデータをロード
-    const saved = localStorage.getItem(`beetle_pwa_data_${userId}`);
-    if (saved) {
-      setBeetles(JSON.parse(saved));
-    } else {
+    try {
+      const saved = localStorage.getItem(`beetle_pwa_data_${userId}`);
+      if (saved && saved !== "undefined") {
+        const parsed = JSON.parse(saved);
+        setBeetles(Array.isArray(parsed) ? parsed : []);
+      } else {
+        setBeetles([]);
+      }
+      setIsLoggedIn(true);
+      setIsDataLoaded(true); 
+    } catch (err) {
+      console.error("Login error:", err);
+      alert("データの読み込みに失敗しました。");
       setBeetles([]);
+      setIsLoggedIn(true);
+      setIsDataLoaded(true);
     }
-    
-    setIsLoggedIn(true);
-    setIsDataLoaded(true); // ログイン時にデータロード完了とする
   };
 
   const handleLogout = () => {
@@ -564,13 +572,13 @@ const App = () => {
   // 自動タスク（期限切れアラート）の取得
   const getAutoTasks = (beetle) => {
     const autoTasks = [];
-    if (beetle.archived) return autoTasks;
+    if (!beetle || beetle.archived) return autoTasks;
 
     const now = new Date();
-
+    const records = beetle.records || [];
     if (beetle.status === 'Larva') {
-      const lastRecordDate = beetle.records.length > 0 
-        ? new Date(beetle.records[beetle.records.length - 1].date)
+      const lastRecordDate = records.length > 0 
+        ? new Date(records[records.length - 1].date)
         : (beetle.hatchDate ? new Date(beetle.hatchDate) : new Date(parseInt(beetle.id)));
       
       const limitDate = new Date(lastRecordDate);
@@ -642,7 +650,7 @@ const App = () => {
       if (b.adultSize) acc[name].sizes.push({ name: b.name, value: parseFloat(b.adultSize) });
 
       // 温度とマットの履歴
-      b.records.forEach(r => {
+      (b.records || []).forEach(r => {
         if (r.temperature) acc[name].temps.push(parseFloat(r.temperature));
         if (r.substrate) acc[name].substrates.add(r.substrate);
       });
@@ -660,17 +668,20 @@ const App = () => {
     // 産卵データの構築と環境データの紐付け
     filteredGroups.forEach(group => {
         group.spawnSetIds.forEach(setId => {
-            const setName = beetles.find(b => b.id === setId)?.name || 'Unknown Set';
-            const count = beetles.filter(b => b.parentSpawnSetId === setId).length;
-            const beetle = beetles.find(b => b.id === setId);
-            const avgTemp = beetle ? getStatSummary((beetle.records || []).map(r => ({value: r.temperature}))).avg : '25.0';
+            const beetle = beetles.find(b => b && b.id === setId);
+            if (!beetle) return;
+
+            const setName = beetle.name || 'Unknown Set';
+            const count = beetles.filter(b => b && b.parentSpawnSetId === setId).length;
+            const records = beetle?.records || [];
+            const avgTemp = beetle ? getStatSummary(records.map(r => ({value: r.temperature}))).avg : '25.0';
             const startDate = beetle?.setDate ? new Date(beetle.setDate) : new Date();
-            const endDate = beetle.deathDate ? new Date(beetle.deathDate) : (beetle.emergenceDate ? new Date(beetle.emergenceDate) : new Date());
+            const endDate = beetle?.deathDate ? new Date(beetle.deathDate) : (beetle?.emergenceDate ? new Date(beetle.emergenceDate) : new Date());
             const days = Math.max(1, Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24)));
             const dayRate = isNaN(days) ? "0.00" : (count / days).toFixed(2);
             
             // 産卵セットの環境データ取得
-            group.spawnSetData.push({ 
+            if (beetle) group.spawnSetData.push({ 
               name: setName, 
               value: count,
               temp: beetle ? getStatSummary((beetle.records || []).map(r => ({value: r.temperature}))).avg : '-',
@@ -679,7 +690,7 @@ const App = () => {
               id: setId
             });
 
-            group.spawnSetRankings.push({
+            if (beetle) group.spawnSetRankings.push({
               name: `${setName} (${beetle.substrate})`,
               value: parseFloat(dayRate),
               unit: '頭/日',
@@ -696,15 +707,16 @@ const App = () => {
 
   // 学名データの収集ロジックを微調整 (IDを含める)
   const enhancedStats = useMemo(() => {
-    const stats = getScientificNameStats() || [];
+    const stats = (typeof getScientificNameStats === 'function' ? getScientificNameStats() : []) || [];
     // 高速検索用マップの作成（計算負荷による画面の固まりを防止）
-    const beetleMap = new Map(beetles.map(b => [b.name, b]));
+    const beetleMap = new Map(beetles.filter(b => b && b.name).map(b => [b.name, b]));
 
     return stats.map(group => {
       const updatedGroup = { ...group };
       ['sizes', 'larvalPeriods', 'restingPeriods', 'lifespans', 'spawnSetRankings'].forEach(key => {
         updatedGroup[key] = (updatedGroup[key] || []).map(item => {
-          const beetle = item.name ? beetleMap.get(item.name.split(' (')[0]) : null;
+          if (!item || !item.name) return item;
+          const beetle = beetleMap.get(item.name.split(' (')[0]);
           if (!beetle) return item;
 
           const records = beetle.records || [];
