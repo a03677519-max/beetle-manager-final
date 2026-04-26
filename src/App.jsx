@@ -37,8 +37,12 @@ const getInitials = (sci) => {
 
 const App = () => {
   // 1. データ消失を防止する堅牢な初期化
-  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem('beetle_is_logged_in') === 'true');
-  const [userId, setUserId] = useState(() => localStorage.getItem('beetle_user_id') || '');
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    try { return localStorage.getItem('beetle_is_logged_in') === 'true'; } catch { return false; }
+  });
+  const [userId, setUserId] = useState(() => {
+    try { return localStorage.getItem('beetle_user_id') || ''; } catch { return ''; }
+  });
   
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [beetles, setBeetles] = useState(() => {
@@ -46,7 +50,7 @@ const App = () => {
       const currentId = localStorage.getItem('beetle_user_id');
       if (!currentId) return [];
       const saved = localStorage.getItem(`beetle_pwa_data_${currentId}`);
-      if (saved) return JSON.parse(saved);
+      if (saved && saved !== "undefined") return JSON.parse(saved);
     } catch (e) {
       console.error("Data loading error:", e);
     }
@@ -57,11 +61,24 @@ const App = () => {
   const [selectedBeetle, setSelectedBeetle] = useState(null);
   const [newWeight, setNewWeight] = useState('');
   const [newTemp, setNewTemp] = useState('');
-  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('beetle_gemini_key') || '');
-  const [sbToken, setSbToken] = useState(() => localStorage.getItem('beetle_sb_token') || '');
-  const [sbSecret, setSbSecret] = useState(() => localStorage.getItem('beetle_sb_secret') || '');
-  const [selectedSbDeviceId, setSelectedSbDeviceId] = useState(() => localStorage.getItem('beetle_sb_device_id') || '');
-  const [availableSbDevices, setAvailableSbDevices] = useState(() => { try { return JSON.parse(localStorage.getItem('beetle_sb_devices')) || []; } catch { return []; } });
+  const [geminiKey, setGeminiKey] = useState(() => {
+    try { return localStorage.getItem('beetle_gemini_key') || ''; } catch { return ''; }
+  });
+  const [sbToken, setSbToken] = useState(() => {
+    try { return localStorage.getItem('beetle_sb_token') || ''; } catch { return ''; }
+  });
+  const [sbSecret, setSbSecret] = useState(() => {
+    try { return localStorage.getItem('beetle_sb_secret') || ''; } catch { return ''; }
+  });
+  const [selectedSbDeviceId, setSelectedSbDeviceId] = useState(() => {
+    try { return localStorage.getItem('beetle_sb_device_id') || ''; } catch { return ''; }
+  });
+  const [availableSbDevices, setAvailableSbDevices] = useState(() => {
+    try {
+      const saved = localStorage.getItem('beetle_sb_devices');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [tempHistory, setTempHistory] = useState(() => {
     try {
       const saved = localStorage.getItem('beetle_temp_history');
@@ -71,15 +88,14 @@ const App = () => {
     }
   });
   const [config, setConfig] = useState(() => {
-    const saved = localStorage.getItem('beetle_app_config');
-    return saved ? JSON.parse(saved) : {
-      labels: {
-        Adult: '成虫',
-        Larva: '幼虫',
-        SpawnSet: '産卵セット',
-        Pupa: '蛹'
-      }
-    };
+    try {
+      const saved = localStorage.getItem('beetle_app_config');
+      return saved ? JSON.parse(saved) : {
+        labels: { Adult: '成虫', Larva: '幼虫', SpawnSet: '産卵セット', Pupa: '蛹' }
+      };
+    } catch {
+      return { labels: { Adult: '成虫', Larva: '幼虫', SpawnSet: '産卵セット', Pupa: '蛹' } };
+    }
   });
   const [activeTab, setActiveTab] = useState('home'); // 'home' | 'tasks' | 'stats' | 'settings'
   const [view, setView] = useState('list'); // 'list' | 'archive'

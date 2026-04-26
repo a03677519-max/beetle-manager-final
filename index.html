@@ -11,7 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>BeetleLog</title>
     <script>
-      // 強力な自己修復ロジック: CSS/JSの読み込み失敗(404)を検知したら即リセット
+      // アセットの読み込み失敗(404)を検知したら即リセット
       window.addEventListener('error', function(e) {
         if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
           console.error('Asset 404 detected. Wiping PWA cache...');
@@ -29,13 +29,27 @@
 
       // 描画失敗の監視
       window.addEventListener('load', function() {
+        const REFRESH_KEY = 'beetle_reload_count';
         setTimeout(function() {
           var root = document.getElementById('root');
-          if (root && root.innerHTML === '') {
-            console.warn('Empty root. Forcing reload...');
-            window.location.reload(true);
+          // rootが空、またはReactが初期化に失敗している場合
+          if (!root || root.innerHTML.trim() === '' || root.innerHTML.includes('<!--')) {
+            let count = parseInt(localStorage.getItem(REFRESH_KEY) || '0');
+            if (count > 2) {
+              // 3回以上失敗した場合はストレージをクリアして緊急復旧
+              console.error('Persistent blank screen detected. Hard resetting...');
+              localStorage.clear();
+              sessionStorage.clear();
+              if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+              }
+            }
+            localStorage.setItem(REFRESH_KEY, count + 1);
+            window.location.reload();
+          } else {
+            localStorage.removeItem(REFRESH_KEY);
           }
-        }, 2500);
+        }, 3000);
       });
 
       // 入力時やジェスチャーによる意図しないズームを抑制・自動調整する機能
