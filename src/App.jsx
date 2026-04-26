@@ -98,7 +98,17 @@ const App = () => {
   });
   const [draggedIdx, setDraggedIdx] = useState(null);
   const [isSortingMode, setIsSortingMode] = useState(false);
+  const [draggedIdxSb, setDraggedIdxSb] = useState(null);
+  const [longPressTimer, setLongPressTimer] = useState(null);
   const [showSbGraphs, setShowSbGraphs] = useState(true);
+
+  // 温度計の並び順ステート
+  const [sbDeviceOrder, setSbDeviceOrder] = useState(() => {
+    try {
+      const saved = localStorage.getItem('beetle_sb_device_order');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
 
   const initialFormState = {
     name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: '', isDigOut: false,
@@ -152,6 +162,28 @@ const App = () => {
   // 並べ替えハンドラ
   const onDragStart = (idx) => setDraggedIdx(idx);
   const onDragOver = (e) => e.preventDefault();
+  
+  // 温度計の並べ替えハンドラ
+  const onDragStartSb = (idx) => setDraggedIdxSb(idx);
+  const onDropSb = (idx) => {
+    const devices = availableSbDevices.filter(d => tempHistory[d.deviceId]);
+    const order = devices.map(d => d.deviceId);
+    const item = order.splice(draggedIdxSb, 1)[0];
+    order.splice(idx, 0, item);
+    setSbDeviceOrder(order);
+    setDraggedIdxSb(null);
+  };
+
+  const sortedSbDevices = useMemo(() => {
+    const devices = availableSbDevices.filter(d => tempHistory[d.deviceId]);
+    if (sbDeviceOrder.length === 0) return devices;
+    return [...devices].sort((a, b) => {
+      const idxA = sbDeviceOrder.indexOf(a.deviceId);
+      const idxB = sbDeviceOrder.indexOf(b.deviceId);
+      return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+    });
+  }, [availableSbDevices, tempHistory, sbDeviceOrder]);
+
   const onDrop = (idx) => {
     const newOrder = [...statCardOrder];
     const item = newOrder.splice(draggedIdx, 1)[0];
@@ -198,6 +230,11 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('beetle_stat_card_order', JSON.stringify(statCardOrder));
   }, [statCardOrder]);
+
+  // 温度計の並び順の保存
+  useEffect(() => {
+    localStorage.setItem('beetle_sb_device_order', JSON.stringify(sbDeviceOrder));
+  }, [sbDeviceOrder]);
 
   // SwitchBotデバイスIDの保存
   useEffect(() => {
@@ -1365,12 +1402,20 @@ const App = () => {
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-4">
               {/* SwitchBot Temperature Monitor */}
               <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm mb-2">
-                <div className="flex justify-between items-center mb-4 px-1">
+                <div className="flex justify-between items-center mb-4 px-1 sticky top-0 bg-white/80 backdrop-blur-md py-1 z-10">
                   <h3 className="font-black text-slate-700 flex items-center gap-2">
                     <ThermometerSnowflake className="text-blue-500" size={18} />
                     ルーム温度モニタ
                   </h3>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
+                    {isSortingMode && (
+                      <button 
+                        onClick={() => setIsSortingMode(false)}
+                        className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full animate-pulse"
+                      >
+                        完了
+                      </button>
+                    )}
                     <button onClick={() => fetchSbTemperature()} className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-all">
                       <RefreshCw size={10} className={isFetchingSb ? "animate-spin" : ""} />
                       一括同期
@@ -1381,10 +1426,42 @@ const App = () => {
                   </div>
                 </div>
                 {showSbGraphs && Object.keys(tempHistory).length > 0 ? (
-                  <div className="space-y-6">
-                    {availableSbDevices.filter(d => tempHistory[d.deviceId]).map(device => (
-                      <div key={device.deviceId} className="space-y-2">
-                        <p className="text-xs font-black text-slate-600 uppercase px-1">{device.deviceName}</p>
+                  <div className="grid grid-cols-1 gap-6">
+                    {sortedSbDevices.map((device, idx) => {
+                      const isDragging = draggedIdxSb === idx;
+                      const handlePointerDown = () => {
+                        if (isSortingMode) return;
+                        const timer = setTimeout(() => {
+                          setIsSortingMode(true);
+                          if (window.navigator.vibrate) window.navigator.vibrate(80);
+                        }, 600);
+                        setLongPressTimer(timer);
+                      };
+                      const handlePointerUp = () => {
+                        if (longPressTimer) clearTimeout(longPressTimer);
+                      };
+
+                      return (
+                      <div 
+                        key={device.deviceId} 
+                        draggable={isSortingMode}
+                        onDragStart={(e) => {
+                          onDragStartSb(idx);
+                          if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+                        }}
+                        onDragOver={onDragOver}
+                        onDrop={() => onDropSb(idx)}
+                        onPointerDown={handlePointerDown}
+                        onPointerUp={handlePointerUp}
+                        onPointerLeave={handlePointerUp}
+                        className={`space-y-2 p-3 rounded-2xl transition-all relative ${
+                          isSortingMode ? 'animate-wiggle ring-2 ring-blue-500/30 ring-offset-1 bg-blue-50/30' : 'bg-slate-50/50'
+                        } ${isDragging ? 'opacity-30 scale-95 border-2 border-dashed border-slate-200' : ''}`}
+                      >
+                        <div className="flex justify-between items-center px-1">
+                          <p className="text-sm font-black text-slate-700 uppercase">{device.deviceName}</p>
+                          {isSortingMode && <ArrowUpDown size={12} className="text-slate-300" />}
+                        </div>
                         <div className="h-32 w-full">
                           <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={tempHistory[device.deviceId]}>
@@ -1397,7 +1474,7 @@ const App = () => {
                           </ResponsiveContainer>
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 ) : showSbGraphs && (
                   <div className="py-8 text-center border-2 border-dashed border-slate-50 rounded-2xl">
@@ -1443,47 +1520,78 @@ const App = () => {
                           <p className="text-[10px] font-bold text-slate-400 mb-3 border-b border-slate-50 pb-1">{Array.from(group.speciesNames).join(' / ') || '種名未設定'}</p>
                           
                           <div className="flex justify-between items-center mb-2">
-                            <p className="text-[9px] font-black text-slate-300 uppercase">Analysis Items (長押しで並べ替え可)</p>
+                            <p className="text-[9px] font-black text-slate-300 uppercase">
+                              Analysis Items {isSortingMode ? '(並べ替え中...)' : '(長押しで並べ替え)'}
+                            </p>
+                            {isSortingMode && (
+                              <button 
+                                onClick={() => setIsSortingMode(false)}
+                                className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full animate-pulse shadow-sm"
+                              >
+                                完了
+                              </button>
+                            )}
                           </div>
                           
                           <div className="grid grid-cols-2 gap-2 mb-4">
                             {statCardOrder.map((key, idx) => {
                               const isDragging = draggedIdx === idx;
+                              
+                              const handlePointerDown = () => {
+                                if (isSortingMode) return;
+                                const timer = setTimeout(() => {
+                                  setIsSortingMode(true);
+                                  if (window.navigator.vibrate) window.navigator.vibrate(80);
+                                }, 600);
+                                setLongPressTimer(timer);
+                              };
+                              const handlePointerUp = () => {
+                                if (longPressTimer) clearTimeout(longPressTimer);
+                              };
+
                               const btnProps = {
-                                draggable: true,
-                                onDragStart: () => onDragStart(idx),
+                                draggable: isSortingMode,
+                                onDragStart: (e) => {
+                                  onDragStart(idx);
+                                  if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
+                                },
                                 onDragOver: onDragOver,
                                 onDrop: () => onDrop(idx),
-                                className: `p-3 rounded-xl text-left active:scale-95 transition-all ${isDragging ? 'opacity-30 border-2 border-dashed border-slate-300' : ''}`
+                                onPointerDown: handlePointerDown,
+                                onPointerUp: handlePointerUp,
+                                onPointerLeave: handlePointerUp,
+                                className: `p-3 rounded-xl text-left transition-all relative ${
+                                  isSortingMode ? 'animate-wiggle ring-2 ring-emerald-500/30 ring-offset-1' : 'active:scale-95'
+                                } ${isDragging ? 'opacity-30 border-2 border-dashed border-slate-300 shadow-inner' : ''}`
                               };
 
                               switch (key) {
                                 case 'size': return (
-                                  <button key="size" {...btnProps} onClick={() => { setStatGraphInfo({ title: `${group.name} - サイズ比較`, data: group.sizes, unit: 'mm', color: '#10b981' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-emerald-50`}>
+                                  <button key="size" {...btnProps} onClick={() => { if (isSortingMode) return; setStatGraphInfo({ title: `${group.name} - サイズ比較`, data: group.sizes, unit: 'mm', color: '#10b981' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-emerald-50`}>
                                     <p className="text-[9px] font-bold text-emerald-600 uppercase flex justify-between">サイズ <ArrowUpDown size={8}/></p>
                                     <p className="text-base font-black text-emerald-700">{sizeSum.avg}mm</p>
                                   </button>
                                 );
                                 case 'larval': return (
-                                  <button key="larval" {...btnProps} onClick={() => { setStatGraphInfo({ title: `${group.name} - 幼虫期間比較`, data: group.larvalPeriods, unit: '日', color: '#f59e0b' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-amber-50`}>
+                                  <button key="larval" {...btnProps} onClick={() => { if (isSortingMode) return; setStatGraphInfo({ title: `${group.name} - 幼虫期間比較`, data: group.larvalPeriods, unit: '日', color: '#f59e0b' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-amber-50`}>
                                     <p className="text-[9px] font-bold text-amber-600 uppercase flex justify-between">幼虫期間 <ArrowUpDown size={8}/></p>
                                     <p className="text-base font-black text-amber-700">{larvalSum.avg}日</p>
                                   </button>
                                 );
                                 case 'resting': return (
-                                  <button key="resting" {...btnProps} onClick={() => { setStatGraphInfo({ title: `${group.name} - 休眠期間比較`, data: group.restingPeriods, unit: '日', color: '#3b82f6' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-blue-50`}>
+                                  <button key="resting" {...btnProps} onClick={() => { if (isSortingMode) return; setStatGraphInfo({ title: `${group.name} - 休眠期間比較`, data: group.restingPeriods, unit: '日', color: '#3b82f6' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-blue-50`}>
                                     <p className="text-[9px] font-bold text-blue-600 uppercase flex justify-between">休眠期間 <ArrowUpDown size={8}/></p>
                                     <p className="text-base font-black text-blue-700">{restingSum.avg}日</p>
                                   </button>
                                 );
                                 case 'lifespan': return (
-                                  <button key="lifespan" {...btnProps} onClick={() => { setStatGraphInfo({ title: `${group.name} - 寿命比較`, data: group.lifespans, unit: '日', color: '#6366f1' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-indigo-50`}>
+                                  <button key="lifespan" {...btnProps} onClick={() => { if (isSortingMode) return; setStatGraphInfo({ title: `${group.name} - 寿命比較`, data: group.lifespans, unit: '日', color: '#6366f1' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-indigo-50`}>
                                     <p className="text-[9px] font-bold text-indigo-600 uppercase flex justify-between">寿命 <ArrowUpDown size={8}/></p>
                                     <p className="text-base font-black text-indigo-700">{lifespanSum.avg}日</p>
                                   </button>
                                 );
                                 case 'spawn': return (
-                                  <button key="spawn" {...btnProps} onClick={() => { setStatGraphInfo({ title: `${group.name} - 産卵効率ランキング`, data: group.spawnSetRankings, unit: '頭/日', color: '#ec4899' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-pink-50`}>
+                                  <button key="spawn" {...btnProps} onClick={() => { if (isSortingMode) return; setStatGraphInfo({ title: `${group.name} - 産卵効率ランキング`, data: group.spawnSetRankings, unit: '頭/日', color: '#ec4899' }); setStatViewMode('graph'); }} className={`${btnProps.className} bg-pink-50`}>
                                     <p className="text-[9px] font-bold text-pink-600 uppercase flex justify-between">産卵効率 <ArrowUpDown size={8}/></p>
                                     <p className="text-base font-black text-pink-700">{getStatSummary(group.spawnSetRankings).max}頭/日</p>
                                   </button>
@@ -1818,8 +1926,12 @@ const App = () => {
 
         {/* Detail Modal */}
         {selectedBeetle && (
-          <div className="fixed inset-0 bg-white z-20 flex flex-col">
-          <div className="bg-emerald-800 text-white p-4 pt-[calc(1rem+env(safe-area-inset-top))] flex justify-between items-center">
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-20 flex flex-col" onClick={() => setSelectedBeetle(null)}>
+            <div 
+              className="bg-white mt-12 flex-1 rounded-t-3xl overflow-hidden flex flex-col animate-slide-up"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="bg-emerald-800 text-white p-4 flex justify-between items-center">
               <h2 className="text-xl font-bold">{(categories[selectedBeetle.status + 's'] || '個体')}詳細</h2>
               <button onClick={() => setSelectedBeetle(null)}><X size={24} /></button>
             </div>
@@ -1851,7 +1963,7 @@ const App = () => {
                   <InfoRow label="産地" value={selectedBeetle.locality} />
                   <InfoRow label="累代" value={selectedBeetle.generation} />
                   <InfoRow label="性別" value={selectedBeetle.gender === 'Male' ? 'オス ♂' : selectedBeetle.gender === 'Female' ? 'メス ♀' : '不明'} />
-                  <InfoRow label="状態" value={categories[selectedBeetle.status + 's'] || selectedBeetle.status} />
+                  <InfoRow label="状態" value={config.labels[selectedBeetle.status] || '未設定'} />
 
                   {/* 状態別の項目 */}
                   {selectedBeetle.status === 'Larva' && (
@@ -2157,22 +2269,19 @@ const App = () => {
         {showForm && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 flex items-end" onClick={() => { setShowForm(false); setIsEditing(false); }}>
             <div 
-              className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[95vh] overflow-y-auto"
+              className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[95vh] flex flex-col overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
-              <div className="flex justify-between items-center p-6 sticky top-0 bg-white/90 backdrop-blur-md z-20 border-b border-slate-100 rounded-t-3xl">
-                <h2 className="text-xl font-bold text-emerald-800">
-                  {`${(categories[formData.status + 's'] || '個体')}${isEditing ? '情報の編集' : '登録'}`}
+              <div className="flex justify-between items-center p-6 border-b border-slate-100 shrink-0">
+                <h2 className="text-xl font-black text-emerald-800">
+                  {`${(config.labels[formData.status] || '個体')}${isEditing ? 'の編集' : '登録'}`}
                 </h2>
-                <button 
-                  onClick={() => { setShowForm(false); setIsEditing(false); }} 
-                  className="text-gray-400"
-                >
+                <button onClick={() => { setShowForm(false); setIsEditing(false); }} className="text-gray-400">
                   <X size={24} />
                 </button>
               </div>
               
-              <div className="p-6 space-y-4">
+              <div className="p-6 space-y-4 overflow-y-auto flex-1 pb-10">
                 {/* 画像アップロードセクション */}
               <div className="mb-6 flex justify-center">
                 <div className="relative group">
@@ -2379,12 +2488,14 @@ const App = () => {
                   <input type="date" className="w-full border p-2 rounded-xl text-sm" value={formData.deathDate || ''} onChange={e => setFormData({...formData, deathDate: e.target.value})} />
                 </div>
               </div>
-              <button 
-                onClick={handleAddBeetle}
-                className="w-full bg-emerald-800 text-white py-4 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition mb-6"
-              >
-                {isEditing ? '更新して登録' : '登録する'}
-              </button>
+              <div className="p-6 border-t border-slate-50 shrink-0 bg-white">
+                <button 
+                  onClick={handleAddBeetle}
+                  className="w-full bg-emerald-800 text-white py-4 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition"
+                >
+                  {isEditing ? '保存する' : '登録する'}
+                </button>
+              </div>
               </div>
             </div>
           </div>
@@ -2395,14 +2506,14 @@ const App = () => {
       {showEmergenceForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 flex items-end" onClick={() => setShowEmergenceForm(false)}>
           <div 
-            className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[90vh] overflow-y-auto"
+            className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[90vh] flex flex-col overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center p-6 sticky top-0 bg-white/90 backdrop-blur-md z-20 border-b border-slate-100 rounded-t-3xl">
-              <h2 className="text-xl font-bold text-emerald-800">{formData.name} 羽化処理</h2>
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 shrink-0">
+              <h2 className="text-xl font-black text-emerald-800">{formData.name} 羽化処理</h2>
               <button onClick={() => setShowEmergenceForm(false)} className="text-gray-400"><X size={24} /></button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-1">
                 <label className="text-[10px] text-gray-400 uppercase ml-1">羽化日</label>
                 <input type="date" className="w-full border p-3 rounded-xl text-sm" value={formData.emergenceDate || ''} onChange={e => setFormData({...formData, emergenceDate: e.target.value})} />
@@ -2433,9 +2544,11 @@ const App = () => {
                 <label className="text-[10px] text-gray-400 uppercase ml-1">サイズ (mm)</label>
                 <input type="number" placeholder="例: 80" className="w-full border p-3 rounded-xl text-sm" value={formData.adultSize || ''} onChange={e => setFormData({...formData, adultSize: e.target.value})} />
               </div>
+            </div>
+            <div className="p-6 border-t border-slate-50 shrink-0">
               <button 
                 onClick={handleEmergenceSubmit}
-                className="w-full bg-emerald-800 text-white py-4 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition mb-4"
+                className="w-full bg-emerald-800 text-white py-4 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition"
               >
                 羽化情報を登録
               </button>
@@ -2448,14 +2561,14 @@ const App = () => {
       {showDeathForm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 flex items-end" onClick={() => setShowDeathForm(false)}>
           <div 
-            className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[90vh] overflow-y-auto"
+            className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[90vh] flex flex-col overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center p-6 sticky top-0 bg-white/90 backdrop-blur-md z-20 border-b border-slate-100 rounded-t-3xl">
-              <h2 className="text-xl font-bold text-rose-800">{formData.name} 死亡処理</h2>
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 shrink-0">
+              <h2 className="text-xl font-black text-rose-800">{formData.name} 死亡処理</h2>
               <button onClick={() => setShowDeathForm(false)} className="text-gray-400"><X size={24} /></button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="space-y-1">
                 <label className="text-[10px] text-gray-400 uppercase ml-1">死亡日</label>
                 <input type="date" className="w-full border p-3 rounded-xl text-sm" value={formData.deathDate || ''} onChange={e => setFormData({...formData, deathDate: e.target.value})} />
@@ -2464,9 +2577,11 @@ const App = () => {
                 <label className="text-[10px] text-gray-400 uppercase ml-1">備考</label>
                 <textarea placeholder="死亡原因など..." className="w-full border p-3 rounded-xl text-sm h-24" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} />
               </div>
+            </div>
+            <div className="p-6 border-t border-slate-50 shrink-0">
               <button 
                 onClick={handleDeathSubmit}
-                className="w-full bg-rose-800 text-white py-4 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition mb-4"
+                className="w-full bg-rose-800 text-white py-4 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition"
               >
                 死亡情報を登録
               </button>
@@ -2584,10 +2699,10 @@ const App = () => {
       {showBatchModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end" onClick={() => setShowBatchModal(false)}>
           <div 
-            className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[95vh] overflow-y-auto"
+            className="bg-white w-full rounded-t-3xl animate-slide-up max-h-[95vh] flex flex-col overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center p-6 sticky top-0 bg-white/90 backdrop-blur-md z-20 border-b border-slate-100 rounded-t-3xl">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100 shrink-0">
               <div>
                 <h2 className="text-xl font-black text-emerald-800">幼虫交換の一括記録</h2>
                 <p className="text-[10px] font-bold text-slate-400">{selectedBatchIds.size} / {batchTargets.length} 頭を選択中</p>
@@ -2595,7 +2710,7 @@ const App = () => {
               <button onClick={() => setShowBatchModal(false)} className="text-gray-400"><X size={24} /></button>
             </div>
             
-            <div className="px-6 py-4">
+            <div className="px-6 py-4 flex-1 overflow-y-auto space-y-4">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-[10px] text-slate-500 font-bold uppercase">対象個体の選択</label>
                 <div className="flex gap-2">
@@ -2618,9 +2733,7 @@ const App = () => {
                   );
                 })}
               </div>
-            </div>
-            
-            <div className="p-6 space-y-4">
+
               <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl">
                 <div className="space-y-1 col-span-2">
                   <label className="text-[10px] text-slate-500 font-bold uppercase">交換日</label>
@@ -2670,10 +2783,12 @@ const App = () => {
               <div className="p-4 bg-amber-50 rounded-xl">
                 <p className="text-[10px] text-amber-700 leading-snug">※ 体重は個体ごとに異なるため、一括記録では入力できません。個体詳細画面から個別に記録してください。</p>
               </div>
+            </div>
 
+            <div className="p-6 border-t border-slate-50 shrink-0">
               <button 
                 onClick={handleBatchRecordSubmit}
-                className="w-full bg-emerald-800 text-white py-4 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all mb-8"
+                className="w-full bg-emerald-800 text-white py-4 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all"
               >
                 {selectedBatchIds.size}頭に記録を適用する
               </button>

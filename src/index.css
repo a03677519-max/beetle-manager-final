@@ -12,4 +12,12 @@
   #root {
     min-height: 100vh;
   }
+  @keyframes wiggle {
+    0% { transform: rotate(-1deg); }
+    50% { transform: rotate(1.2deg); }
+    100% { transform: rotate(-1deg); }
+  }
+  .animate-wiggle {
+    animation: wiggle 0.25s infinite;
+  }
 }
