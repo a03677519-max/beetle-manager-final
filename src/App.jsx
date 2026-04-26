@@ -1923,6 +1923,7 @@ const App = () => {
             </button>
           </nav>
         </div>
+      </div>
 
         {/* Detail Modal */}
         {selectedBeetle && (
