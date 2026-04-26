@@ -611,7 +611,7 @@ const App = () => {
 
   // 学名ごとの統計データを計算
   const getScientificNameStats = () => {
-    const grouped = (beetles || []).filter(Boolean).reduce((acc, b) => {
+    const grouped = (beetles || []).filter(b => b && typeof b === 'object').reduce((acc, b) => {
       const name = b.scientificName || '学名未設定';
       if (!acc[name]) {
         acc[name] = {
@@ -630,11 +630,12 @@ const App = () => {
         };
       }
       
-      acc[name].count = (acc[name].count || 0) + 1;
+      const targetGroup = acc[name];
+      targetGroup.count = (targetGroup.count || 0) + 1;
       if (b.species) acc[name].speciesNames.add(b.species);
       
       // 幼虫期間 (hatch -> emergence)
-      if (b.hatchDate && b.emergenceDate && !b.hatchDate.includes('セット')) {
+      if (b.hatchDate && b.emergenceDate && typeof b.hatchDate === 'string' && !b.hatchDate.includes('セット')) {
         const start = new Date(b.hatchDate);
         const end = new Date(b.emergenceDate);
         if (!isNaN(start) && !isNaN(end)) {
@@ -660,7 +661,7 @@ const App = () => {
         }
       }
 
-      if (b.adultSize) acc[name].sizes.push({ name: b.name, value: parseFloat(b.adultSize) });
+      if (b.adultSize && b.name) acc[name].sizes.push({ name: b.name, value: parseFloat(b.adultSize) });
 
       // 温度とマットの履歴
       (b?.records || []).forEach(r => {

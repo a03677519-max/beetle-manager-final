@@ -11,46 +11,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>BeetleLog</title>
     <script>
-      // アセットの読み込み失敗(404)を検知したら即リセット
+      // リロードループ防止のため、アセットエラー判定を厳密に
       window.addEventListener('error', function(e) {
         if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
-          console.error('Asset 404 detected. Wiping PWA cache...');
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(regs) {
-              for(let r of regs) r.unregister();
-              caches.keys().then(function(keys) {
-                for(let k of keys) caches.delete(k);
-                window.location.reload(true);
-              });
-            });
-          }
+          // 404などの重大な読み込み失敗のみ記録
+          console.error('Asset load error:', e.target.src || e.target.href);
         }
       }, true);
 
       // 描画失敗の監視
       window.addEventListener('load', function() {
         const REFRESH_KEY = 'beetle_reload_count';
+        // ページ読み込み後、判定まで少し猶予を持たせる
         setTimeout(function() {
           var root = document.getElementById('root');
-          // rootが空、またはReactが初期化に失敗している場合
-          // コメントノードのみの状態(<!-- -->)も許容し、完全に空の場合のみ判定
-          if (!root || root.innerHTML.replace(/<!--.*?-->/g, '').trim() === '') {
+          // コメントやスペースを除去して、本当に中身が空か判定
+          var content = root ? root.innerHTML.replace(/<!--.*?-->/g, '').trim() : '';
+          if (root && content === '') {
             let count = parseInt(localStorage.getItem(REFRESH_KEY) || '0');
-            if (count > 2) {
+            if (count >= 3) {
               // 3回以上失敗した場合はストレージをクリアして緊急復旧
               console.error('Persistent blank screen detected. Hard resetting...');
               localStorage.clear();
-              sessionStorage.clear();
-              if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
-              }
+              window.location.reload();
+              return;
             }
             localStorage.setItem(REFRESH_KEY, count + 1);
             window.location.reload();
           } else {
             localStorage.removeItem(REFRESH_KEY);
           }
-        }, 5000); // 判定時間を5秒に延長
+        }, 6000); // 判定時間を6秒に延長
       });
 
       // 入力時やジェスチャーによる意図しないズームを抑制・自動調整する機能
