@@ -2262,7 +2262,6 @@ const App = () => {
                 </div>
               </div>
             </div>
-          </div>
         )}
 
         {/* Add Form Modal */}
@@ -2499,7 +2498,6 @@ const App = () => {
             </div>
           </div>
         )}
-      </div>
 
       {/* Emergence Form Modal */}
       {showEmergenceForm && (
