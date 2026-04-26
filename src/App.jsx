@@ -1923,6 +1923,7 @@ const App = () => {
             </button>
           </nav>
         </div>
+      </div>
 
         {/* Detail Modal */}
         {selectedBeetle && (
@@ -2496,6 +2497,8 @@ const App = () => {
                   {isEditing ? '保存する' : '登録する'}
                 </button>
               </div>
+            </div>
+          </div>
         )}
       </div>
 
