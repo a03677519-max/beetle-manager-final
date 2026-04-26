@@ -243,7 +243,7 @@ const App = () => {
     setIsFetchingAI(true);
     try {
       const dynamicAI = new GoogleGenerativeAI(activeKey);
-      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
+      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const prompt = `Return ONLY the scientific name in Latin for the beetle "${speciesName}". No commentary, no bold text, just the name. If unknown, return "Unknown".`;
       const result = await model.generateContent(prompt);
       // 不要な記号（バッククォートなど）を除去
@@ -821,7 +821,7 @@ const App = () => {
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
                   placeholder="IDを入力..."
-                  className="text-sm font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
+                  className="text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
                   required
                 />
               </div>
@@ -837,7 +837,7 @@ const App = () => {
     <>
       <div className="min-h-screen bg-slate-50 pb-32 font-sans">
         {/* Header */}
-      <header className="bg-white text-emerald-900 border-b border-slate-200 p-4 pt-[calc(env(safe-area-inset-top))] sticky top-0 z-10">
+      <header className="bg-white text-emerald-900 border-b border-slate-200 p-4 pt-[calc(1rem+env(safe-area-inset-top))] sticky top-0 z-10">
           <div className="max-w-md mx-auto flex justify-between items-center">
             <h1 
               onClick={() => setActiveTab('home')} 
@@ -932,7 +932,7 @@ const App = () => {
                   <input 
                     type="text"
                     placeholder="全項目で検索..."
-                    className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm"
+                    className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -1049,7 +1049,7 @@ const App = () => {
                 <input 
                   type="text"
                   placeholder="学名で検索..."
-                  className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm"
+                  className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-base focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-sm"
                   value={scientificNameSearchTerm}
                   onChange={(e) => setScientificNameSearchTerm(e.target.value)}
                 />
@@ -1147,7 +1147,7 @@ const App = () => {
                     <input
                       value={userId}
                       onChange={(e) => setUserId(e.target.value)}
-                      className="text-sm font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
+                      className="text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
                     />
                   </div>
                 </div>
@@ -1164,7 +1164,7 @@ const App = () => {
                             ...config,
                             labels: { ...config.labels, [key]: e.target.value }
                           })}
-                          className="text-xs font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
+                          className="text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
                         />
                       </div>
                     ))}
@@ -1180,7 +1180,7 @@ const App = () => {
                         type="password"
                         value={geminiKey}
                         onChange={(e) => setGeminiKey(e.target.value)}
-                        className="text-xs font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
+                        className="text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
                         placeholder="AIza..."
                       />
                     </div>
@@ -1190,7 +1190,7 @@ const App = () => {
                         type="password"
                         value={sbToken}
                         onChange={(e) => setSbToken(e.target.value)}
-                        className="text-xs font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
+                        className="text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
                         placeholder="Token..."
                       />
                     </div>
@@ -1200,7 +1200,7 @@ const App = () => {
                         type="password"
                         value={sbSecret}
                         onChange={(e) => setSbSecret(e.target.value)}
-                        className="text-xs font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
+                        className="text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
                         placeholder="Secret..."
                       />
                     </div>
@@ -1215,7 +1215,7 @@ const App = () => {
                       <select
                         value={selectedSbDeviceId}
                         onChange={(e) => setSelectedSbDeviceId(e.target.value)}
-                        className="flex-1 text-xs font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
+                        className="flex-1 text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
                         disabled={isFetchingSbDevices}
                       >
                         <option value="">デバイスを選択してください</option>
@@ -1306,7 +1306,7 @@ const App = () => {
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-20">
-        <nav className="bg-white/90 backdrop-blur-lg border-t border-slate-100 px-6 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+        <nav className="bg-white/90 backdrop-blur-lg border-t border-slate-100 px-6 py-4 pb-[calc(2rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
             <button onClick={() => { setActiveTab('home'); setFilterStatus('All'); }} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' && filterStatus === 'All' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
               <Home size={26} fill={activeTab === 'home' && filterStatus === 'All' ? "currentColor" : "none"} />
               <span className="text-xs font-bold">ホーム</span>
@@ -1347,7 +1347,7 @@ const App = () => {
         {/* Detail Modal */}
         {selectedBeetle && (
           <div className="fixed inset-0 bg-white z-20 flex flex-col">
-          <div className="bg-emerald-800 text-white p-4 pt-[calc(env(safe-area-inset-top))] flex justify-between items-center">
+          <div className="bg-emerald-800 text-white p-4 pt-[calc(1rem+env(safe-area-inset-top))] flex justify-between items-center">
               <h2 className="text-xl font-bold">{(categories[selectedBeetle.status + 's'] || '個体')}詳細</h2>
               <button onClick={() => setSelectedBeetle(null)}><X size={24} /></button>
             </div>
@@ -1507,14 +1507,14 @@ const App = () => {
                     <div className="grid grid-cols-2 gap-2 mb-2 bg-white p-3 rounded-xl border border-slate-100">
                       <div className="space-y-1 col-span-2">
                         <label className="text-[10px] text-slate-400 uppercase">交換日 / 記録日</label>
-                        <input type="date" className="w-full text-xs border p-2 rounded-lg" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
+                        <input type="date" className="w-full text-base border p-2 rounded-lg" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
                       </div>
                       <div className="space-y-1 col-span-2">
                         <label className="text-[10px] text-slate-400 uppercase">使用マット</label>
                         <input 
                           placeholder="例: G-pot" 
                           list="substrate-options"
-                          className="w-full text-xs border p-2 rounded-lg" 
+                          className="w-full text-base border p-2 rounded-lg" 
                           value={newLog.substrate} 
                           onChange={e => setNewLog({...newLog, substrate: e.target.value})} />
                       </div> 
@@ -1531,13 +1531,13 @@ const App = () => {
                         <input 
                           placeholder="例: 800cc" 
                           list="container-options"
-                          className="w-full text-xs border p-2 rounded-lg" 
+                          className="w-full text-base border p-2 rounded-lg" 
                           value={newLog.containerSize} 
                           onChange={e => setNewLog({...newLog, containerSize: e.target.value})} />
                       </div>
                       <div className="space-y-1 col-span-2">
                         <label className="text-[10px] text-slate-400 uppercase">雌雄判別</label>
-                        <select className="w-full text-xs border p-2 rounded-lg" value={selectedBeetle.sexDetermined} onChange={e => setBeetles(beetles.map(b => b.id === selectedBeetle.id ? {...b, sexDetermined: e.target.value} : b))}>
+                        <select className="w-full text-base border p-2 rounded-lg" value={selectedBeetle.sexDetermined} onChange={e => setBeetles(beetles.map(b => b.id === selectedBeetle.id ? {...b, sexDetermined: e.target.value} : b))}>
                           <option value="Unknown">不明</option>
                           <option value="Male">オス</option>
                           <option value="Female">メス</option>
@@ -1556,7 +1556,7 @@ const App = () => {
                     value={newWeight}
                     onChange={(e) => setNewWeight(e.target.value)}
                     placeholder={selectedBeetle.status === 'Larva' ? "体重 (g) (任意)" : "サイズ (mm) (任意)"}
-                    className="flex-1 border border-gray-300 rounded-lg p-2"
+                    className="flex-1 border border-gray-300 rounded-lg p-2 text-base"
                   />
                   <div className="relative flex-1">
                     <input 
@@ -1564,7 +1564,7 @@ const App = () => {
                       value={newTemp}
                       onChange={(e) => setNewTemp(e.target.value)}
                     placeholder="温度 (℃) (任意)" 
-                      className="w-full border border-gray-300 rounded-lg p-2 pr-8"
+                      className="w-full border border-gray-300 rounded-lg p-2 pr-8 text-base"
                     />
                     <button 
                       onClick={fetchSbTemperature}
