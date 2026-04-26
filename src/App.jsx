@@ -58,6 +58,8 @@ const App = () => {
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [batchTargets, setBatchTargets] = useState([]);
   const [selectedBatchIds, setSelectedBatchIds] = useState(new Set());
+  const [isFabMenuOpen, setIsFabMenuOpen] = useState(false);
+  const [fabTimer, setFabTimer] = useState(null);
 
   const initialFormState = {
     name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: 'CB',
@@ -243,7 +245,7 @@ const App = () => {
     setIsFetchingAI(true);
     try {
       const dynamicAI = new GoogleGenerativeAI(activeKey);
-      const model = dynamicAI.getGenerativeModel({ model: "gemini-pro" }, { apiVersion: "v1" });
+      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
       const prompt = `Return ONLY the scientific name in Latin for the beetle "${speciesName}". No commentary, no bold text, just the name. If unknown, return "Unknown".`;
       const result = await model.generateContent(prompt);
       // 不要な記号（バッククォートなど）を除去
@@ -702,6 +704,19 @@ const App = () => {
     ...beetles.map(b => b.containerSize),
     ...beetles.flatMap(b => b.records?.map(r => r.containerSize) || [])
   ])].filter(Boolean);
+
+  const startFabTimer = () => {
+    const timer = setTimeout(() => {
+      setIsFabMenuOpen(true);
+      if (window.navigator.vibrate) window.navigator.vibrate(10);
+    }, 500);
+    setFabTimer(timer);
+  };
+
+  const cancelFabTimer = () => {
+    if (fabTimer) clearTimeout(fabTimer);
+    setFabTimer(null);
+  };
 
   const deleteBeetle = (id, e) => {
     e.stopPropagation();
@@ -1296,13 +1311,48 @@ const App = () => {
           )}
         </main>
 
+        {/* FAB Menu Backdrop */}
+        {isFabMenuOpen && (
+          <div 
+            className="fixed inset-0 bg-slate-900/10 backdrop-blur-[2px] z-20 animate-in fade-in duration-300"
+            onClick={() => setIsFabMenuOpen(false)}
+          />
+        )}
+
+        {/* FAB Sub Menu Items */}
+        {isFabMenuOpen && (
+          <div className="fixed bottom-[calc(12.5rem+env(safe-area-inset-bottom))] right-7 flex flex-col gap-3 items-end z-30">
+            <button 
+              onClick={() => {
+                const targets = beetles.filter(b => b.status === 'Larva' && !b.archived);
+                if (targets.length === 0) return alert('記録可能な幼虫がいません');
+                setBatchTargets(targets);
+                setSelectedBatchIds(new Set(targets.map(t => t.id)));
+                setShowBatchModal(true);
+                setIsFabMenuOpen(false);
+              }}
+              className="flex items-center gap-3 bg-white text-emerald-800 px-5 py-3 rounded-2xl shadow-xl border border-emerald-100 font-black text-xs animate-in zoom-in-50 slide-in-from-bottom-8 duration-300"
+            >
+              <RefreshCw size={16} className="text-emerald-600"/> 幼虫を一括交換記録
+            </button>
+          </div>
+        )}
+
         {/* Floating Action Button */}
-        <button 
-          onClick={() => setShowForm(true)}
-          className="fixed bottom-[calc(5.8rem+env(safe-area-inset-bottom))] right-6 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-200 flex items-center justify-center active:scale-90 hover:scale-105 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-30"
-        >
-          <Plus size={40} />
-        </button>
+        <div className="fixed bottom-[calc(2.1rem+env(safe-area-inset-bottom))] right-6 z-30">
+          <button 
+            onPointerDown={startFabTimer}
+            onPointerUp={() => {
+              cancelFabTimer();
+              if (!isFabMenuOpen) setShowForm(true);
+            }}
+            onPointerLeave={cancelFabTimer}
+            onClick={() => isFabMenuOpen && setIsFabMenuOpen(false)}
+            className={`w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-200 flex items-center justify-center active:scale-90 hover:scale-105 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isFabMenuOpen ? 'rotate-[135deg] bg-slate-800 shadow-none' : ''}`}
+          >
+            <Plus size={40} />
+          </button>
+        </div>
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-20">
