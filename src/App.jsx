@@ -269,8 +269,8 @@ const App = () => {
 
     setIsFetchingAI(true);
     try {
-      // 2. SDKのエラーを回避するため、REST APIを直接fetchするアプローチに変更
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
+      // 安定版の v1 エンドポイントを使用するように変更
+      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${activeKey}`;
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
