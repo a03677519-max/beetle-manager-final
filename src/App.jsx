@@ -87,6 +87,7 @@ const App = () => {
   const [subSortConfig, setSubSortConfig] = useState({ key: 'name', direction: 'asc' });
   const [touchStart, setTouchStart] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pullOffset, setPullOffset] = useState(0);
 
   const initialFormState = {
     name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: '', isDigOut: false,
