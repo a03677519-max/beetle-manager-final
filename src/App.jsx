@@ -243,7 +243,7 @@ const App = () => {
     setIsFetchingAI(true);
     try {
       const dynamicAI = new GoogleGenerativeAI(activeKey);
-      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1beta" });
+      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" }, { apiVersion: "v1" });
       const prompt = `Return ONLY the scientific name in Latin for the beetle "${speciesName}". No commentary, no bold text, just the name. If unknown, return "Unknown".`;
       const result = await model.generateContent(prompt);
       // 不要な記号（バッククォートなど）を除去
@@ -837,7 +837,7 @@ const App = () => {
     <>
       <div className="min-h-screen bg-slate-50 pb-32 font-sans">
         {/* Header */}
-      <header className="bg-white text-emerald-900 border-b border-slate-200 p-4 pt-[calc(1rem+env(safe-area-inset-top))] sticky top-0 z-10">
+      <header className="bg-white text-emerald-900 border-b border-slate-200 p-4 pt-[calc(env(safe-area-inset-top))] sticky top-0 z-10">
           <div className="max-w-md mx-auto flex justify-between items-center">
             <h1 
               onClick={() => setActiveTab('home')} 
@@ -1347,7 +1347,7 @@ const App = () => {
         {/* Detail Modal */}
         {selectedBeetle && (
           <div className="fixed inset-0 bg-white z-20 flex flex-col">
-          <div className="bg-emerald-800 text-white p-4 pt-[calc(1rem+env(safe-area-inset-top))] flex justify-between items-center">
+          <div className="bg-emerald-800 text-white p-4 pt-[calc(env(safe-area-inset-top))] flex justify-between items-center">
               <h2 className="text-xl font-bold">{(categories[selectedBeetle.status + 's'] || '個体')}詳細</h2>
               <button onClick={() => setSelectedBeetle(null)}><X size={24} /></button>
             </div>
