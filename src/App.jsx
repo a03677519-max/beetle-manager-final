@@ -24,7 +24,8 @@ const App = () => {
       const currentId = localStorage.getItem('beetle_user_id');
       if (!currentId) return [];
       const saved = localStorage.getItem(`beetle_pwa_data_${currentId}`);
-      if (saved && saved !== "undefined") return JSON.parse(saved);
+      const parsed = saved && saved !== "undefined" ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
       console.error("Data loading error:", e);
     }
@@ -171,6 +172,18 @@ const App = () => {
       console.log("Auto-backup snapshot created for today.");
     }
   }, [beetles, config, userId]);
+
+  // 統計ヘルパー関数 (他の関数から参照されるため、先に定義)
+  const getStatSummary = (arr) => {
+    if (!arr || !arr.length) return { avg: '-', min: '-', max: '-' };
+    const values = arr.map(item => item.value).filter(v => typeof v === 'number' && !isNaN(v));
+    if (values.length === 0) return { avg: '-', min: '-', max: '-' };
+    return {
+      avg: (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1),
+      min: Math.min(...values).toFixed(1),
+      max: Math.max(...values).toFixed(1)
+    };
+  };
 
   // Web Share API を使用してデータを共有・保存する関数
   const shareData = async () => {
@@ -572,7 +585,7 @@ const App = () => {
   // 自動タスク（期限切れアラート）の取得
   const getAutoTasks = (beetle) => {
     const autoTasks = [];
-    if (!beetle || beetle.archived) return autoTasks;
+    if (!beetle || beetle.archived || !beetle.id) return autoTasks;
 
     const now = new Date();
     const records = beetle.records || [];
@@ -598,7 +611,7 @@ const App = () => {
 
   // 学名ごとの統計データを計算
   const getScientificNameStats = () => {
-    const grouped = beetles.reduce((acc, b) => {
+    const grouped = (beetles || []).filter(Boolean).reduce((acc, b) => {
       const name = b.scientificName || '学名未設定';
       if (!acc[name]) {
         acc[name] = {
@@ -709,7 +722,7 @@ const App = () => {
   const enhancedStats = useMemo(() => {
     const stats = (typeof getScientificNameStats === 'function' ? getScientificNameStats() : []) || [];
     // 高速検索用マップの作成（計算負荷による画面の固まりを防止）
-    const beetleMap = new Map(beetles.filter(b => b && b.name).map(b => [b.name, b]));
+    const beetleMap = new Map((beetles || []).filter(b => b && b.name).map(b => [b.name, b]));
 
     return stats.map(group => {
       const updatedGroup = { ...group };
@@ -737,16 +750,6 @@ const App = () => {
 
   const getEnhancedStats = () => enhancedStats;
 
-  const getStatSummary = (arr) => {
-    if (!arr || !arr.length) return { avg: '-', min: '-', max: '-' };
-    const values = arr.map(item => item.value);
-    return {
-      avg: (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1),
-      min: Math.min(...values).toFixed(1),
-      max: Math.max(...values).toFixed(1)
-    };
-  };
-
   // 羽化までの日数計算
   const calculateDaysToEmergence = (beetle) => {
     const start = beetle.hatchDate ? new Date(beetle.hatchDate) : new Date(parseInt(beetle.id));
@@ -758,12 +761,13 @@ const App = () => {
 
   // Stats
   const stats = {
-    adults: beetles.filter(b => b.status === 'Adult' && !b.archived).length,
-    larvae: beetles.filter(b => b.status === 'Larva' && !b.archived).length,
-    spawnSets: beetles.filter(b => b.status === 'SpawnSet' && !b.archived).length,
-    pendingTasks: beetles.reduce((acc, b) => {
-      const manual = b.tasks?.filter(t => !t.completed).length || 0;
-      const auto = getAutoTasks(b).length;
+    adults: (beetles || []).filter(b => b && b.status === 'Adult' && !b.archived).length,
+    larvae: (beetles || []).filter(b => b && b.status === 'Larva' && !b.archived).length,
+    spawnSets: (beetles || []).filter(b => b && b.status === 'SpawnSet' && !b.archived).length,
+    pendingTasks: (beetles || []).reduce((acc, b) => {
+      if (!b) return acc;
+      const manual = (b.tasks || []).filter(t => !t.completed).length || 0;
+      const auto = (typeof getAutoTasks === 'function' ? getAutoTasks(b).length : 0);
       return acc + manual + auto;
     }, 0)
   };

@@ -33,7 +33,8 @@
         setTimeout(function() {
           var root = document.getElementById('root');
           // rootが空、またはReactが初期化に失敗している場合
-          if (!root || root.innerHTML.trim() === '' || root.innerHTML.includes('<!--')) {
+          // コメントノードのみの状態(<!-- -->)も許容し、完全に空の場合のみ判定
+          if (!root || root.innerHTML.replace(/<!--.*?-->/g, '').trim() === '') {
             let count = parseInt(localStorage.getItem(REFRESH_KEY) || '0');
             if (count > 2) {
               // 3回以上失敗した場合はストレージをクリアして緊急復旧
