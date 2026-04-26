@@ -11,43 +11,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>BeetleLog</title>
     <script>
-      // リロードループ防止のため、アセットエラー判定を厳密に
-      window.addEventListener('error', function(e) {
-        if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
-          // 404などの重大な読み込み失敗のみ記録
-          console.error('Asset load error:', e.target.src || e.target.href);
-        }
-      }, true);
-
-      // 描画失敗の監視
-      window.addEventListener('load', function() {
-        const REFRESH_KEY = 'beetle_reload_count';
-        // ページ読み込み後、判定まで少し猶予を持たせる
-        setTimeout(function() {
-          var root = document.getElementById('root');
-          // コメントやスペースを除去して、本当に中身が空か判定
-          var content = root ? root.innerHTML.replace(/<!--.*?-->/g, '').trim() : '';
-          if (root && content === '') {
-            let count = parseInt(localStorage.getItem(REFRESH_KEY) || '0');
-            if (count >= 3) {
-              // 3回以上失敗した場合はストレージをクリアして緊急復旧
-              console.error('Persistent blank screen detected. Hard resetting...');
-              localStorage.clear();
-              window.location.reload();
-              return;
-            }
-            localStorage.setItem(REFRESH_KEY, count + 1);
-            window.location.reload();
-          } else {
-            localStorage.removeItem(REFRESH_KEY);
-          }
-        }, 6000); // 判定時間を6秒に延長
-      });
-
       // 入力時やジェスチャーによる意図しないズームを抑制・自動調整する機能
       document.addEventListener('touchstart', (e) => {
         if (e.touches.length > 1) {
-          e.preventDefault(); // 2本指以上のピンチズームを禁止
+          e.preventDefault();
         }
       }, { passive: false });
 
@@ -58,7 +25,6 @@
       // 入力フォームからフォーカスが外れた際に、画面のズレや余計な余白をリセット
       document.addEventListener('focusout', () => {
         window.scrollTo(0, 0);
-        // スケールを強制的に1に戻すための再適用
         const viewport = document.querySelector('meta[name="viewport"]');
         if (viewport) {
           viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';

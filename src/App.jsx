@@ -1035,11 +1035,13 @@ const App = () => {
                 <div>
                   <h3 className="font-bold text-slate-700 mb-3 px-1">最近のタスク</h3>
                   <div className="bg-white rounded-2xl border border-slate-100 p-2 shadow-sm">
-                    {beetles.filter(b => !b.archived && (b.tasks?.some(t => !t.completed) || getAutoTasks(b).length > 0)).length > 0 ? (
-                      beetles.filter(b => !b.archived && (b.tasks?.some(t => !t.completed) || getAutoTasks(b).length > 0))
+                    {(beetles || []).filter(b => b && !b.archived && ((b.tasks || []).some(t => !t.completed) || (typeof getAutoTasks === 'function' && getAutoTasks(b).length > 0))).length > 0 ? (
+                      (beetles || []).filter(b => b && !b.archived && ((b.tasks || []).some(t => !t.completed) || (typeof getAutoTasks === 'function' && getAutoTasks(b).length > 0)))
                         .slice(0, 3)
                         .map(b => {
-                          const firstTask = (b.tasks || []).find(t => !t.completed) || getAutoTasks(b)[0];
+                          const autoTasks = typeof getAutoTasks === 'function' ? getAutoTasks(b) : [];
+                          const firstTask = (b.tasks || []).find(t => !t.completed) || autoTasks[0];
+                          if (!firstTask) return null;
                           return (
                             <div 
                               key={b.id} 
@@ -1047,12 +1049,12 @@ const App = () => {
                               className="p-3 border-b last:border-0 border-slate-50 flex justify-between items-center active:bg-slate-50 cursor-pointer transition-colors"
                             >
                               <div className="flex items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${firstTask.isAuto ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${firstTask?.isAuto ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
                                   <ClipboardCheck size={16} />
                                 </div>
                                 <div>
                                   <p className="text-sm font-bold text-slate-800">{b.name}</p>
-                                  <p className={`text-xs ${firstTask.isAuto ? 'text-rose-500 font-bold' : 'text-slate-500'}`}>{firstTask.type}</p>
+                                  <p className={`text-xs ${firstTask?.isAuto ? 'text-rose-500 font-bold' : 'text-slate-500'}`}>{firstTask?.type || 'タスク'}</p>
                                 </div>
                               </div>
                               <ChevronRight size={16} className="text-slate-300" />
