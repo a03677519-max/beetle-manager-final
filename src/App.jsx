@@ -5,8 +5,8 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 
 // 学名のイニシャルを取得するヘルパー関数
 const getInitials = (sci) => {
-  if (!sci) return "";
-  return sci.split(" ").filter(s => s.length > 0).map(s => s[0].toUpperCase()).join("");
+  if (typeof sci !== 'string' || !sci) return "";
+  return sci.trim().split(/\s+/).filter(s => s.length > 0).map(s => s[0].toUpperCase()).join("");
 };
 
 const App = () => {
@@ -634,13 +634,13 @@ const App = () => {
       
       const targetGroup = acc[name];
       targetGroup.count = (targetGroup.count || 0) + 1;
-      if (b.species) acc[name].speciesNames.add(b.species);
+      if (b.species) targetGroup.speciesNames.add(String(b.species));
       
       // 幼虫期間 (hatch -> emergence)
-      if (b.hatchDate && b.emergenceDate && typeof b.hatchDate === 'string' && !b.hatchDate.includes('セット')) {
+      if (b.hatchDate && b.emergenceDate && typeof b.hatchDate === 'string' && !String(b.hatchDate).includes('セット')) {
         const start = new Date(b.hatchDate);
         const end = new Date(b.emergenceDate);
-        if (!isNaN(start) && !isNaN(end)) {
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
           acc[name].larvalPeriods.push({ name: b.name, value: Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) });
         }
       }
@@ -649,7 +649,7 @@ const App = () => {
       if (b.emergenceDate && b.feedingStartDate && !b.isDigOut) {
         const start = new Date(b.emergenceDate);
         const end = new Date(b.feedingStartDate);
-        if (!isNaN(start) && !isNaN(end)) {
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
           acc[name].restingPeriods.push({ name: b.name, value: Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) });
         }
       }
@@ -658,7 +658,7 @@ const App = () => {
       if (b.emergenceDate && b.deathDate && !b.isDigOut) {
         const start = new Date(b.emergenceDate);
         const end = new Date(b.deathDate);
-        if (!isNaN(start) && !isNaN(end)) {
+        if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
           acc[name].lifespans.push({ name: b.name, value: Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24)) });
         }
       }
@@ -667,8 +667,8 @@ const App = () => {
 
       // 温度とマットの履歴
       (Array.isArray(b.records) ? b.records : []).forEach(r => {
-        if (r.temperature) acc[name].temps.push(parseFloat(r.temperature));
-        if (r.substrate) acc[name].substrates.add(r.substrate);
+        if (r && r.temperature) acc[name].temps.push(parseFloat(r.temperature));
+        if (r && r.substrate) acc[name].substrates.add(String(r.substrate));
       });
 
       // 産卵セットIDを保持

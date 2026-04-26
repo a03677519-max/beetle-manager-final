@@ -9,13 +9,7 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// PWA 自己修復 & アップデートロジック
 if ('serviceWorker' in navigator) {
-  // 新しいワーカーが制御を開始した時にリロードを実行
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    window.location.reload();
-  });
-
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).then(reg => {
       // 定期的に更新をチェック
