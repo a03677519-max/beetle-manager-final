@@ -8,7 +8,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
     <link rel="apple-touch-icon" href="/logo192.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>BeetleLog</title>
     <script>
       // 強力な自己修復ロジック: CSS/JSの読み込み失敗(404)を検知したら即リセット
@@ -36,6 +36,27 @@
             window.location.reload(true);
           }
         }, 2500);
+      });
+
+      // 入力時やジェスチャーによる意図しないズームを抑制・自動調整する機能
+      document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) {
+          e.preventDefault(); // 2本指以上のピンチズームを禁止
+        }
+      }, { passive: false });
+
+      document.addEventListener('gesturestart', (e) => {
+        e.preventDefault(); // iOSのジェスチャーによるズームを禁止
+      });
+
+      // 入力フォームからフォーカスが外れた際に、画面のズレや余計な余白をリセット
+      document.addEventListener('focusout', () => {
+        window.scrollTo(0, 0);
+        // スケールを強制的に1に戻すための再適用
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+          viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+        }
       });
     </script>
   </head>
