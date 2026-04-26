@@ -8,5 +8,12 @@ export default defineConfig({
   server: {
     host: true, 
     port: 5173,
+    proxy: {
+      '/api/switchbot': {
+        target: 'https://api.switch-bot.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/switchbot/, '')
+      }
+    }
   },
 })

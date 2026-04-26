@@ -14,6 +14,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/switchbot/:path*",
+      "destination": "https://api.switch-bot.com/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

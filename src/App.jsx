@@ -62,6 +62,14 @@ const App = () => {
   const [sbSecret, setSbSecret] = useState(() => localStorage.getItem('beetle_sb_secret') || '');
   const [selectedSbDeviceId, setSelectedSbDeviceId] = useState(() => localStorage.getItem('beetle_sb_device_id') || '');
   const [availableSbDevices, setAvailableSbDevices] = useState(() => { try { return JSON.parse(localStorage.getItem('beetle_sb_devices')) || []; } catch { return []; } });
+  const [tempHistory, setTempHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem('beetle_temp_history');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [config, setConfig] = useState(() => {
     const saved = localStorage.getItem('beetle_app_config');
     return saved ? JSON.parse(saved) : {
@@ -153,6 +161,11 @@ const App = () => {
   useEffect(() => {
     localStorage.setItem('beetle_sb_device_id', selectedSbDeviceId);
   }, [selectedSbDeviceId]);
+
+  useEffect(() => {
+    localStorage.setItem('beetle_temp_history', JSON.stringify(tempHistory));
+  }, [tempHistory]);
+
   useEffect(() => {
     localStorage.setItem('beetle_sb_devices', JSON.stringify(availableSbDevices));
   }, [availableSbDevices]);
@@ -344,11 +357,20 @@ const App = () => {
       const headers = await getSwitchBotHeaders(sbToken, sbSecret);
 
       // 状態（温度）の取得
-      const statusRes = await fetch(`https://api.switch-bot.com/v1.1/devices/${selectedSbDeviceId}/status`, { headers });
+      const statusRes = await fetch(`/api/switchbot/v1.1/devices/${selectedSbDeviceId}/status`, { headers });
       const statusData = await statusRes.json();
 
       if (statusData.statusCode === 100) {
-        setNewTemp(statusData.body.temperature.toString());
+        const tempVal = statusData.body.temperature;
+        setNewTemp(tempVal.toString());
+        
+        // 自動プロット用の履歴保存
+        const entry = {
+          time: new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }),
+          displayDate: new Date().toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit' }),
+          temp: tempVal
+        };
+        setTempHistory(prev => [...prev, entry].slice(-30)); // 直近30件を保持
       } else {
         throw new Error(statusData.message);
       }
@@ -367,7 +389,7 @@ const App = () => {
     setIsFetchingSbDevices(true);
     try {
       const headers = await getSwitchBotHeaders(sbToken, sbSecret);
-      const devRes = await fetch("https://api.switch-bot.com/v1.1/devices", { headers });
+      const devRes = await fetch("/api/switchbot/v1.1/devices", { headers });
       const devData = await devRes.json();
 
       if (devData.statusCode === 100) {
@@ -1224,6 +1246,37 @@ const App = () => {
           {/* Tab: Stats (Scientific Name Aggregation) */}
           {activeTab === 'stats' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-4">
+              {/* SwitchBot Temperature Monitor */}
+              <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm mb-2">
+                <div className="flex justify-between items-center mb-4 px-1">
+                  <h3 className="font-black text-slate-700 flex items-center gap-2">
+                    <ThermometerSnowflake className="text-blue-500" size={18} />
+                    ルーム温度モニタ
+                  </h3>
+                  <button onClick={fetchSbTemperature} className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-all">
+                    <RefreshCw size={10} className={isFetchingSb ? "animate-spin" : ""} />
+                    今すぐ取得
+                  </button>
+                </div>
+                {tempHistory.length > 0 ? (
+                  <div className="h-40 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={tempHistory}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                        <XAxis dataKey="time" fontSize={10} stroke="#94a3b8" />
+                        <YAxis domain={['auto', 'auto']} fontSize={10} stroke="#94a3b8" unit="℃" />
+                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} />
+                        <Line type="monotone" dataKey="temp" name="温度" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center border-2 border-dashed border-slate-50 rounded-2xl">
+                    <p className="text-xs text-slate-400 font-bold leading-relaxed">SwitchBotボタンから温度を取得すると<br/>ここに履歴が自動でプロットされます</p>
+                  </div>
+                )}
+              </div>
+
               <h2 className="text-xl font-bold text-slate-800 px-1">系統・学名別統計</h2>
               
               <div className="relative mb-4">
