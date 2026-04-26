@@ -1,22 +1,18 @@
 const CACHE_NAME = 'beetlelog-v1';
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/logo192.png',
-  '/favicon.ico'
-];
 
+// インストール時に古いキャッシュを即座に破棄
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
+  const url = new URL(event.request.url);
+  // index.html または ルートへのリクエストは常にネットワークから取得
+  if (url.origin === self.origin && (url.pathname === '/' || url.pathname === '/index.html')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+  event.respondWith(caches.match(event.request).then((res) => res || fetch(event.request)));
 });

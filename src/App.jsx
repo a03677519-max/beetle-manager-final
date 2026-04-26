@@ -638,8 +638,9 @@ const App = () => {
           const beetle = beetles.find(b => b.name === item.name);
           if (!beetle) return item;
 
-          const avgTemp = getStatSummary((beetle.records || []).map(r => ({ value: r.temperature }))).avg;
-          const lastRec = beetle.records.length > 0 ? beetle.records[beetle.records.length - 1] : {};
+          const records = beetle.records || [];
+          const avgTemp = getStatSummary(records.map(r => ({ value: r.temperature }))).avg;
+          const lastRec = records.length > 0 ? records[records.length - 1] : {};
 
           return {
             ...item,
@@ -961,7 +962,8 @@ const App = () => {
                     }
 
                     return filtered.map(beetle => {
-                      const lastRecDate = beetle.records?.length > 0 ? beetle.records[beetle.records.length - 1].date : null;
+                      const records = beetle.records || [];
+                      const lastRecDate = records.length > 0 ? records[records.length - 1].date : null;
                       const baseDate = lastRecDate ? new Date(lastRecDate) : (beetle.hatchDate ? new Date(beetle.hatchDate) : new Date(parseInt(beetle.id)));
                       const isOverdue = !beetle.archived && (new Date() - baseDate > 90 * 24 * 60 * 60 * 1000);
 

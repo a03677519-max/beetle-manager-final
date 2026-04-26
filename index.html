@@ -11,44 +11,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BeetleLog</title>
     <script>
-      // 白画面（WSoD）対策: 3秒待っても描画されない場合はキャッシュを消して強制リロード
-      const checkMount = () => {
-        setTimeout(() => {
-          const root = document.getElementById('root');
-          if (root && (root.innerHTML === '' || root.children.length === 0)) {
-            console.warn('App failed to mount. Purging caches...');
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (let registration of registrations) registration.unregister();
-                caches.keys().then(names => {
-                  for (let name of names) caches.delete(name);
-                  window.location.reload(true);
-                });
-              });
-            } else {
-              window.location.reload(true);
-            }
-          }
-        }, 3000);
-      };
-
-      if (document.readyState === 'complete') { checkMount(); } else { window.addEventListener('load', checkMount); }
-
-      // 古いハッシュ名のファイル読み込み失敗（404）時の自動復旧
-      window.addEventListener('error', (e) => {
+      // 強力な自己修復ロジック: CSS/JSの読み込み失敗(404)を検知したら即リセット
+      window.addEventListener('error', function(e) {
         if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
-          console.error('Resource load failed (404). Purging Service Worker and Caches...');
+          console.error('Asset 404 detected. Wiping PWA cache...');
           if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-              for (let r of registrations) r.unregister();
-              caches.keys().then(keys => {
-                for (let k of keys) caches.delete(k);
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              for(let r of regs) r.unregister();
+              caches.keys().then(function(keys) {
+                for(let k of keys) caches.delete(k);
                 window.location.reload(true);
               });
             });
           }
         }
       }, true);
+
+      // 描画失敗の監視
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          var root = document.getElementById('root');
+          if (root && root.innerHTML === '') {
+            console.warn('Empty root. Forcing reload...');
+            window.location.reload(true);
+          }
+        }, 2500);
+      });
     </script>
   </head>
   <body>
