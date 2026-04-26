@@ -243,7 +243,7 @@ const App = () => {
     setIsFetchingAI(true);
     try {
       const dynamicAI = new GoogleGenerativeAI(activeKey);
-      const model = dynamicAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = dynamicAI.getGenerativeModel({ model: "gemini-pro" }, { apiVersion: "v1" });
       const prompt = `Return ONLY the scientific name in Latin for the beetle "${speciesName}". No commentary, no bold text, just the name. If unknown, return "Unknown".`;
       const result = await model.generateContent(prompt);
       // 不要な記号（バッククォートなど）を除去
@@ -1299,14 +1299,14 @@ const App = () => {
         {/* Floating Action Button */}
         <button 
           onClick={() => setShowForm(true)}
-          className="fixed bottom-[calc(11.5rem+env(safe-area-inset-bottom))] right-6 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-200 flex items-center justify-center active:scale-95 transition-all z-30"
+          className="fixed bottom-[calc(5.8rem+env(safe-area-inset-bottom))] right-6 w-16 h-16 bg-emerald-600 text-white rounded-full shadow-lg shadow-emerald-200 flex items-center justify-center active:scale-90 hover:scale-105 transition-transform duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] z-30"
         >
           <Plus size={40} />
         </button>
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-20">
-        <nav className="bg-white/90 backdrop-blur-lg border-t border-slate-100 px-6 py-4 pb-[calc(2rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)]">
+        <nav className="bg-white/60 backdrop-blur-lg border-t border-white/20 px-6 py-4 pb-[calc(2rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)]">
             <button onClick={() => { setActiveTab('home'); setFilterStatus('All'); }} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' && filterStatus === 'All' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
               <Home size={26} fill={activeTab === 'home' && filterStatus === 'All' ? "currentColor" : "none"} />
               <span className="text-xs font-bold">ホーム</span>
