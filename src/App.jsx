@@ -712,6 +712,7 @@ const App = () => {
             const setName = beetles.find(b => b.id === setId)?.name || 'Unknown Set';
             const count = beetles.filter(b => b.parentSpawnSetId === setId).length;
             const beetle = beetles.find(b => b.id === setId);
+            const avgTemp = beetle ? getStatSummary((beetle.records || []).map(r => ({value: r.temperature}))).avg : '-';
             const startDate = new Date(beetle.setDate);
             const endDate = beetle.deathDate ? new Date(beetle.deathDate) : (beetle.emergenceDate ? new Date(beetle.emergenceDate) : new Date());
             const days = Math.max(1, Math.ceil(Math.abs(endDate - startDate) / (1000 * 60 * 60 * 24)));
@@ -730,7 +731,10 @@ const App = () => {
             group.spawnSetRankings.push({
               name: `${setName} (${beetle.substrate})`,
               value: parseFloat(dayRate),
-              unit: '頭/日'
+              unit: '頭/日',
+              temp: avgTemp,
+              moisture: beetle?.moisture || '-',
+              packing: beetle?.packingPressure || '-'
             });
         });
     });
@@ -1419,6 +1423,19 @@ const App = () => {
                             </button>
                           </div>
 
+                          {group.spawnSetRankings.length > 0 && (
+                            <div className="mb-4 p-3 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="bg-amber-500 text-white p-1 rounded-lg"><Crown size={14} fill="currentColor" /></div>
+                                <span className="text-[10px] font-black text-amber-800 uppercase">産卵黄金比</span>
+                              </div>
+                              {(() => {
+                                const best = [...group.spawnSetRankings].sort((a, b) => b.value - a.value)[0];
+                                return <p className="text-[10px] font-bold text-amber-700">{best.temp}℃ / 水{best.moisture} / 圧{best.packing}</p>;
+                              })()}
+                            </div>
+                          )}
+
                           <button 
                             onClick={() => {
                               const targets = beetles.filter(b => b.scientificName === group.name && b.status === 'Larva' && !b.archived);
@@ -1608,7 +1625,7 @@ const App = () => {
 
         {/* FAB Sub Menu Items */}
         {isFabMenuOpen && (
-          <div className="fixed bottom-[calc(7.5rem+env(safe-area-inset-bottom))] right-7 flex flex-col gap-3 items-end z-30">
+          <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 flex flex-col gap-3 items-end z-30">
             <button 
               onClick={() => {
                 setShowForm(true);
@@ -1637,44 +1654,43 @@ const App = () => {
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-20">
-        <nav className="bg-white/60 backdrop-blur-lg border-t border-white/20 px-4 py-3 pb-[calc(1.5rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)]">
+        <nav className="bg-white/60 backdrop-blur-lg border-t border-white/20 px-2 py-3 pb-[calc(1rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)]">
             <button onClick={() => { setActiveTab('home'); setFilterStatus('All'); }} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' && filterStatus === 'All' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
               <Home size={26} fill={activeTab === 'home' && filterStatus === 'All' ? "currentColor" : "none"} />
               <span className="text-[10px] font-bold">ホーム</span>
             </button>
 
+            <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'Adult' ? 'All' : 'Adult'); }} className={`flex flex-col items-center gap-1 transition-all ${filterStatus === 'Adult' && activeTab === 'home' ? 'text-emerald-600 scale-110' : 'text-slate-400'}`}>
+              <Bug size={24} />
+              <span className="text-[10px] font-bold">成</span>
+            </button>
+
+            <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'Larva' ? 'All' : 'Larva'); }} className={`flex flex-col items-center gap-1 transition-all ${filterStatus === 'Larva' && activeTab === 'home' ? 'text-amber-500 scale-110' : 'text-slate-400'}`}>
+              <Activity size={24} />
+              <span className="text-[10px] font-bold">幼</span>
+            </button>
+
+            <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'SpawnSet' ? 'All' : 'SpawnSet'); }} className={`flex flex-col items-center gap-1 transition-all ${filterStatus === 'SpawnSet' && activeTab === 'home' ? 'text-rose-500 scale-110' : 'text-slate-400'}`}>
+              <Egg size={24} />
+              <span className="text-[10px] font-bold">産</span>
+            </button>
+
+            <button onClick={() => setActiveTab('tasks')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'tasks' ? 'text-slate-800 scale-110' : 'text-slate-400'}`}>
+              <ClipboardCheck size={24} />
+              <span className="text-[10px] font-bold">タスク</span>
+            </button>
+
             <button onClick={() => setActiveTab('stats')} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'stats' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
-              <BarChart2 size={26} />
+              <BarChart2 size={24} />
               <span className="text-[10px] font-bold">分析</span>
             </button>
 
-            {/* Integrated Plus Button */}
             <button 
               onClick={() => setIsFabMenuOpen(!isFabMenuOpen)}
-              className={`w-14 h-14 bg-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-200 flex items-center justify-center active:scale-90 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] ${isFabMenuOpen ? 'rotate-[135deg] bg-slate-800' : ''}`}
+              className={`w-10 h-10 bg-emerald-600 text-white rounded-xl shadow-md flex items-center justify-center active:scale-90 transition-all duration-300 ${isFabMenuOpen ? 'rotate-[135deg] bg-slate-800' : ''}`}
             >
-              <Plus size={32} />
+              <Plus size={24} />
             </button>
-
-            {/* 個体数統計・フィルターボタン群 */}
-            <div className="flex bg-slate-100/50 p-1 rounded-xl gap-0.5 border border-slate-200/50">
-              <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'Adult' ? 'All' : 'Adult'); }} className={`flex flex-col items-center px-3 py-1 rounded-lg transition-all ${filterStatus === 'Adult' && activeTab === 'home' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500'}`}>
-                <span className="text-[8px] font-bold leading-tight">成</span>
-                <span className="text-xs font-black">{stats.adults}</span>
-              </button>
-              <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'Larva' ? 'All' : 'Larva'); }} className={`flex flex-col items-center px-3 py-1 rounded-lg transition-all ${filterStatus === 'Larva' && activeTab === 'home' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500'}`}>
-                <span className="text-[8px] font-bold leading-tight">幼</span>
-                <span className="text-xs font-black">{stats.larvae}</span>
-              </button>
-              <button onClick={() => { setActiveTab('home'); setFilterStatus(filterStatus === 'SpawnSet' ? 'All' : 'SpawnSet'); }} className={`flex flex-col items-center px-3 py-1 rounded-lg transition-all ${filterStatus === 'SpawnSet' && activeTab === 'home' ? 'bg-rose-500 text-white shadow-sm' : 'text-slate-500'}`}>
-                <span className="text-[8px] font-bold leading-tight">セ</span>
-                <span className="text-xs font-black">{stats.spawnSets}</span>
-              </button>
-              <button onClick={() => setActiveTab('tasks')} className={`flex flex-col items-center px-3 py-1 rounded-lg transition-all ${activeTab === 'tasks' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-500'}`}>
-                <span className="text-[8px] font-bold leading-tight">タ</span>
-                <span className="text-xs font-black">{stats.pendingTasks}</span>
-              </button>
-            </div>
           </nav>
         </div>
 
