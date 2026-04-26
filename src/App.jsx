@@ -858,10 +858,10 @@ const App = () => {
 
           {/* Tab: Home */}
           {activeTab === 'home' && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
               {/* 検索中またはカテゴリ選択時は、結果に集中させるためタスクセクションを非表示にする */}
-              {!searchTerm && filterStatus === 'All' && (
-                <div className="mb-8">
+              {!searchTerm.trim() && filterStatus === 'All' && (
+                <div>
                   <h3 className="font-bold text-slate-700 mb-3 px-1">最近のタスク</h3>
                   <div className="bg-white rounded-2xl border border-slate-100 p-2 shadow-sm">
                     {beetles.filter(b => !b.archived && (b.tasks?.some(t => !t.completed) || getAutoTasks(b).length > 0)).length > 0 ? (
@@ -896,7 +896,7 @@ const App = () => {
               )}
 
               {/* Integrated List Section */}
-              <div className="space-y-4">
+              <div className={`space-y-4 ${searchTerm.trim() || filterStatus !== 'All' ? 'pt-0' : 'pt-1'}`}>
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-slate-700">個体リスト</h3>
@@ -943,33 +943,31 @@ const App = () => {
                       .filter(b => view === 'archive' ? b.archived : !b.archived)
                       .filter(b => filterStatus === 'All' || b.status === filterStatus)
                       .filter(b => {
-                        const term = searchTerm.toLowerCase();
+                        const term = searchTerm.toLowerCase().trim();
                         if (!term) return true;
                         const searchableValues = [b.name, b.species, b.locality, b.generation, b.substrate, b.notes];
                         return searchableValues.some(val => val && String(val).toLowerCase().includes(term));
                       });
 
-                    if (filtered.length === 0 && (searchTerm || filterStatus !== 'All')) {
+                    if (filtered.length === 0) {
                       return (
                         <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
-                          <Search className="mx-auto text-slate-200 mb-2" size={40} />
-                          <p className="text-sm text-slate-400 font-bold">該当する個体がいません</p>
+                          <Search className="mx-auto text-slate-200 mb-3" size={48} />
+                          <p className="text-sm text-slate-400 font-bold">
+                            {(searchTerm.trim() || filterStatus !== 'All') ? '該当する個体がいません' : '登録されている個体がありません'}
+                          </p>
                         </div>
                       );
                     }
 
                     return filtered.map(beetle => {
-                      const lastRecordDate = beetle.records.length > 0 
-                        ? new Date(beetle.records[beetle.records.length - 1].date)
-                        : (beetle.hatchDate ? new Date(beetle.hatchDate) : (beetle.setDate ? new Date(beetle.setDate) : new Date(parseInt(beetle.id))));
-                      
-                      const overdueLimit = new Date(lastRecordDate);
-                      overdueLimit.setMonth(overdueLimit.getMonth() + 3);
-                      const isOverdue = !beetle.archived && new Date() > overdueLimit;
+                      const lastRecDate = beetle.records?.length > 0 ? beetle.records[beetle.records.length - 1].date : null;
+                      const baseDate = lastRecDate ? new Date(lastRecDate) : (beetle.hatchDate ? new Date(beetle.hatchDate) : new Date(parseInt(beetle.id)));
+                      const isOverdue = !beetle.archived && (new Date() - baseDate > 90 * 24 * 60 * 60 * 1000);
 
                       return (
                       <div 
-                        key={beetle.id} 
+                        key={beetle.id}
                         onClick={() => setSelectedBeetle(beetle)}
                         className={`p-4 rounded-2xl shadow-sm border flex justify-between items-center active:scale-[0.98] transition-all ${isOverdue ? 'bg-rose-50/50 border-rose-200' : 'bg-white border-slate-100'}`}
                       >
@@ -993,7 +991,7 @@ const App = () => {
                       <ChevronRight className={isOverdue ? "text-rose-400" : "text-slate-300"} size={18} />
                     </div>
                     );
-                  });
+                    });
                   })()}
                 </div>
               </div>
