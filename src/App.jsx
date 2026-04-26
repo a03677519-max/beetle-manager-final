@@ -2496,7 +2496,6 @@ const App = () => {
                   {isEditing ? '保存する' : '登録する'}
                 </button>
               </div>
-              </div>
             </div>
           </div>
         )}
