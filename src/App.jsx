@@ -13,7 +13,8 @@ import {
   calculateBeetleStats, 
   getAutoTasks, 
   getStatSummary, 
-  CATEGORIES 
+  CATEGORIES,
+  parseBeetleText
 } from './beetleUtils.js';
 import BeetleFormModal from './BeetleFormModal.jsx';
 import { useSwitchBot } from './useSwitchBot.js';
@@ -47,7 +48,7 @@ const initialFormState = {
   name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: '', isDigOut: false,
   parentMaleId: '', parentFemaleId: '', hatchDate: '', emergenceDate: '', feedingStartDate: '', deathDate: '',
   setDate: '', substrate: '', containerSize: '', packingPressure: '', moisture: 3, cohabitation: 'No', archived: false, notes: '', adultSize: '', parentSpawnSetId: '',
-  count: 1, images: []
+  count: 1, images: [], records: [], temperature: ''
 };
 
 const initialState = {
@@ -95,7 +96,7 @@ const initialState = {
     newWeight: '',
     newTemp: '',
     editingRecord: null,
-    newLog: { date: new Date().toISOString().split('T')[0], substrate: '', packingPressure: '', moisture: 3, containerSize: '', stage: 'L1', logNotes: '' }
+    newLog: { date: new Date().toISOString().split('T')[0], substrate: '', packingPressure: 3, moisture: 3, containerSize: '', stage: 'L1', weight: '', gender: 'Unknown', logNotes: '' }
   }
 };
 
@@ -188,33 +189,17 @@ const App = () => {
     loadInitialData();
   }, []);
 
-  // 一般的な飼育ガイドデータ
-  const breedingGuides = {
-    default: "温度: 22-25℃ / 水分: 軽く握って形が崩れない程度 / 詰圧: 底3cmは硬詰め、上部は中詰め / ケース: 中〜大型",
-    "Dorcus": "温度: 23-25℃ / マット: 粒子細かめ / 詰圧: 強め / 材: クヌギ・コナラの柔らかめを埋め込み",
-    "Dynastes": "温度: 24-26℃ / マット: 完熟・黒枯れ系 / 容器: 15L以上の大型 / 水分: やや多め",
-    "hercules lichyi": "温度: 20-23℃ (低温管理が鍵) / マット: 完熟マット / 水分: 標準",
-    "オオクワガタ": "温度: 23-25℃ / マット: 粒子細かめ / 詰圧: 強め / 材: クヌギ・コナラ"
-  };
-
   const getGuide = (group) => {
     // 実際の産卵セットデータから産卵効率の一番良かったものを取得
     const sortedRankings = [...group.spawnSetRankings].sort((a, b) => b.value - a.value);
     const best = sortedRankings[0];
     if (best && best.value > 0) {
       return {
-        content: `最高実績データより算出 (効率: ${best.value}頭/日) - 温度: ${best.temp}℃ / 水分: ${best.moisture} / 詰圧: ${best.packing}`,
+        content: `最高実績: ${best.value}頭/日 - 温度: ${best.temp}℃ / 水分: ${best.moisture} / 詰圧: ${best.packing}`,
         isGuideline: false
       };
     }
-
-    // データがない場合は従来のプリセットを参照
-    const name = group.name + (Array.from(group.speciesNames).join(' '));
-    const match = Object.keys(breedingGuides).find(key => name.toLowerCase().includes(key.toLowerCase()));
-    return {
-      content: breedingGuides[match] || breedingGuides.default,
-      isGuideline: true
-    };
+    return { content: "データなし", isGuideline: false };
   };
 
   // 並べ替えハンドラ
@@ -328,6 +313,21 @@ const App = () => {
     }
   };
 
+  const handleImportFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text.includes('和名 ') || !text.includes('累代 ')) {
+        alert('有効な形式のテキストがクリップボードに見つかりません。');
+        return;
+      }
+      const parsedData = parseBeetleText(text);
+      const mergedData = { ...initialFormState, ...parsedData };
+      dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: mergedData } });
+    } catch (err) {
+      alert('クリップボードの読み取りに失敗しました。権限を許可してください。');
+    }
+  };
+
   const exportData = () => {
     const data = { beetles, config, userId, exportDate: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -426,6 +426,22 @@ const App = () => {
     dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { touchStart: null, pullOffset: 0 } });
   };
 
+  // ペーストによる自動入力（逆輸入）機能
+  useEffect(() => {
+    const handlePaste = (e) => {
+      // 新規登録フォームが開いている時のみ反応
+      if (!modals.form || form.isEditing) return;
+      
+      const text = e.clipboardData?.getData('text');
+      if (text && text.includes('和名 ') && text.includes('累代 ')) {
+        const parsedData = parseBeetleText(text);
+        dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: { ...initialFormState, ...parsedData } } });
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [modals.form, form.isEditing]);
+
   // モーダル表示時にボディのスクロールをロックする
   useEffect(() => {
     const isAnyModalOpen = Object.values(modals).some(val => 
@@ -469,7 +485,7 @@ const App = () => {
           ...data,
           id: Date.now() + i,
           name: data.name + suffix,
-          records: [],
+          records: data.records || [],
           tasks: []
         });
       }
@@ -717,25 +733,27 @@ const App = () => {
                     <div 
                       key={beetle.id} 
                       onClick={() => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: beetle })}
-                      className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-6 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.6)] shadow-inner active:scale-[0.97] transition-all relative overflow-hidden group cursor-pointer"
+                      className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2.5rem] p-6 shadow-2xl active:scale-[0.98] transition-all relative overflow-hidden group cursor-pointer"
                     >
-                      {/* Shine effect on hover */}
-                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 group-hover:animate-[sweep_3s_infinite]" />
+                      {/* グラデーションオーバーレイ */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-50" />
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 group-hover:animate-[sweep_3s_infinite]" />
                       
                       <div className="flex gap-4 items-start relative z-10">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border shadow-inner transition-transform group-hover:scale-110 duration-500 ${
-                          beetle.status === 'Larva' ? 'bg-amber-500/10 border-amber-500/20' : 
-                          beetle.status === 'Adult' ? 'bg-emerald-500/10 border-emerald-500/20' :
-                          'bg-rose-500/10 border-rose-500/20'
+                        <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center shrink-0 border shadow-lg transition-transform group-hover:scale-105 duration-500 ${
+                          beetle.status === 'Larva' ? 'bg-amber-500/20 border-amber-500/30 shadow-amber-500/10' : 
+                          beetle.status === 'Adult' ? 'bg-emerald-500/20 border-emerald-500/30 shadow-emerald-500/10' :
+                          'bg-rose-500/20 border-rose-500/30 shadow-rose-500/10'
                         }`}>
-                          {beetle.status === 'Larva' ? <Activity className="text-amber-400" size={22} /> : 
-                           beetle.status === 'SpawnSet' ? <Egg className="text-rose-400" size={22} /> :
-                           <Bug className="text-emerald-400" size={22} />}
+                          {beetle.status === 'Larva' ? <Activity className="text-amber-400" size={28} /> : 
+                           beetle.status === 'SpawnSet' ? <Egg className="text-rose-400" size={28} /> :
+                           <Bug className="text-emerald-400" size={28} />}
                         </div>
+                        
                         <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-1">
-                            <h3 className="text-lg font-black truncate pr-2 text-white">{beetle.name}</h3>
-                            <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-[0.15em] border ${
+                          <div className="flex justify-between items-center mb-1">
+                            <h3 className="text-xl font-black truncate pr-2 text-white tracking-tight">{beetle.name}</h3>
+                            <span className={`text-[7px] font-black px-2 py-1 rounded-lg uppercase tracking-widest border backdrop-blur-md ${
                               beetle.status === 'Larva' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
                               beetle.status === 'Adult' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
                               'bg-rose-500/10 text-rose-400 border-rose-500/30'
@@ -743,20 +761,20 @@ const App = () => {
                               {config.labels[beetle.status]}
                             </span>
                           </div>
-                          <p className="text-xs font-bold text-emerald-400/80 truncate mb-3">{beetle.species}</p>
+                          <p className="text-xs font-bold text-white/50 truncate mb-4 italic">{beetle.species}</p>
                           
-                          <div className="grid grid-cols-3 gap-2">
-                            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-2.5 border border-white/5 shadow-inner">
-                              <p className="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest mb-0.5">Locality</p>
-                              <p className="text-[9px] font-bold truncate text-white/90">{beetle.locality || '-'}</p>
+                          <div className="flex flex-wrap gap-2">
+                            <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 flex items-center gap-1.5">
+                              <Search size={10} className="text-white/30" />
+                              <span className="text-[10px] font-black text-white/80">{beetle.locality || '-'}</span>
                             </div>
-                            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-2.5 border border-white/5 shadow-inner">
-                              <p className="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest mb-0.5">Gen</p>
-                              <p className="text-[9px] font-bold text-white/90">{beetle.generation || '-'}</p>
+                            <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 flex items-center gap-1.5">
+                              <Crown size={10} className="text-white/30" />
+                              <span className="text-[10px] font-black text-white/80">{beetle.generation || '-'}</span>
                             </div>
-                            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-2.5 border border-white/5 shadow-inner">
-                              <p className="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest mb-0.5">Last Rec</p>
-                              <p className="text-[9px] font-black text-emerald-400">{beetle.records?.length > 0 ? `${beetle.records[beetle.records.length-1].weight}g` : '-'}</p>
+                            <div className="bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 flex items-center gap-1.5 ml-auto">
+                              <Scale size={10} className="text-emerald-400" />
+                              <span className="text-[10px] font-black text-emerald-400">{beetle.records?.length > 0 ? `${beetle.records[beetle.records.length-1].weight}g` : '-'}</span>
                             </div>
                           </div>
                         </div>
@@ -1494,6 +1512,7 @@ const App = () => {
         setFormData={(val) => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: val } })}
         isEditing={form.isEditing}
         onSave={handleSaveBeetle}
+        onImport={handleImportFromClipboard}
         existingNames={existingNames}
         existingSpecies={existingSpecies}
         existingScientificNames={existingScientificNames}

@@ -115,3 +115,57 @@ export const calculateDaysToEmergence = (beetle) => {
   if (!end) return null;
   return Math.ceil(Math.abs(end - start) / 86400000);
 };
+
+export const parseBeetleText = (text) => {
+  if (!text) return {};
+  const lines = text.split('\n');
+  const data = { records: [] };
+
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+
+    if (trimmed.startsWith('和名')) {
+      data.species = trimmed.replace('和名', '').trim();
+    } else if (trimmed.startsWith('学名')) {
+      data.scientificName = trimmed.replace('学名', '').trim();
+    } else if (trimmed.startsWith('産地')) {
+      data.locality = trimmed.replace('産地', '').trim();
+    } else if (trimmed.startsWith('累代')) {
+      const parts = trimmed.replace('累代', '').trim().split(/\s+/);
+      if (parts[0]) data.generation = parts[0];
+      if (parts[1]) data.name = parts[1];
+      if (parts[2]) data.hatchDate = parts[2];
+    } else if (line.startsWith(' ') && line.includes('水') && line.includes('圧')) {
+      // 5行目以降の履歴データのパース: " [date] [substrate] 水[moisture] 圧[packing] [size] [stage]"
+      const parts = trimmed.split(/\s+/);
+      if (parts.length >= 6) {
+        data.records.push({
+          id: Date.now() + idx,
+          date: parts[0],
+          substrate: parts[1],
+          moisture: parseInt(parts[2].replace('水', '')) || 3,
+          packingPressure: parts[3].replace('圧', ''),
+          containerSize: parts[4],
+          stage: parts[5]
+        });
+      }
+    } else if (line.includes('羽化・堀')) {
+      const parts = trimmed.split(/\s+/);
+      const dates = parts.filter(p => /^\d{4}-\d{2}-\d{2}$/.test(p));
+      if (dates[0]) {
+        data.emergenceDate = dates[0];
+        data.status = 'Adult';
+      }
+      if (dates[1]) data.feedingStartDate = dates[1];
+    }
+  });
+
+  if (!data.status) {
+    if (data.records.some(r => r.stage === 'Pupa')) data.status = 'Pupa';
+    else if (data.records.length > 0) data.status = 'Larva';
+    else data.status = 'Adult';
+  }
+
+  return data;
+};

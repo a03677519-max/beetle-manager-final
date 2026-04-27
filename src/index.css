@@ -59,4 +59,23 @@
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
   }
+
+  .picker-viewport {
+    mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 40%, black 60%, transparent);
+  }
+
+  .picker-wheel {
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .picker-wheel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .picker-item {
+    scroll-snap-align: center;
+  }
 }

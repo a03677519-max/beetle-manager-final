@@ -143,6 +143,16 @@ export const BeetleDetailModal = ({
             <div className="space-y-1 mt-4">
               <InfoRow label="産地" value={beetle.locality} />
               <InfoRow label="累代" value={beetle.generation} />
+              {beetle.status === 'Adult' && (
+                <>
+                  <InfoRow label="羽化日" value={`${beetle.emergenceDate || '-'} ${beetle.isDigOut ? '(掘出)' : '(羽化確認)'}`} />
+                  <InfoRow label="後食開始" value={beetle.feedingStartDate} />
+                  {larvalPeriodDays && <InfoRow label="幼虫期間" value={`${larvalPeriodDays} 日`} />}
+                </>
+              )}
+              {beetle.status === 'SpawnSet' && (
+                <InfoRow label="セット日" value={beetle.setDate} />
+              )}
             </div>
             <div className="space-y-3 mt-6">
               {beetle.hatchDate && (
@@ -228,14 +238,52 @@ export const BeetleDetailModal = ({
 
                <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
-                    <p className="text-[8px] text-white/40 font-black uppercase mb-1">Date</p>
+                    <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">Date</p>
                     <input type="date" className="w-full bg-transparent text-sm font-bold outline-none text-white" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
                   </div>
                   <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-[8px] text-white/40 font-black uppercase mb-1">Weight (g)</p>
+                      <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">Weight (g)</p>
                       <input type="number" step="0.1" className="w-full bg-transparent text-sm font-bold outline-none text-white" value={newWeight} onChange={e => setNewWeight(e.target.value)} placeholder="0.0" />
                     </div>
+                  </div>
+                  {beetle.status === 'Larva' && (
+                    <>
+                      <div className="bg-white/5 border border-white/10 p-4 rounded-2xl col-span-2 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <p className="text-[8px] text-emerald-400 font-black uppercase">Breeding Detail</p>
+                          <div className="flex gap-2">
+                            {['Unknown', 'Male', 'Female'].map(g => (
+                              <button key={g} onClick={() => setNewLog({...newLog, gender: g})} className={`px-2 py-0.5 rounded text-[8px] font-bold border transition-all ${newLog.gender === g ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-white/5 border-white/10 text-white/30'}`}>{g === 'Unknown' ? '?' : g === 'Male' ? '♂' : '♀'}</button>
+                            ))}
+                          </div>
+                        </div>
+                        <input className="w-full bg-white/5 p-2 rounded-xl text-[10px] outline-none border border-white/5" placeholder="使用マット/ボトル" value={newLog.substrate} onChange={e => setNewLog({...newLog, substrate: e.target.value})} />
+                        <div className="flex gap-2">
+                           <div className="flex-1 space-y-1">
+                             <p className="text-[7px] text-white/30 uppercase">Moisture</p>
+                             <div className="flex gap-1">
+                               {[1,2,3,4,5].map(v => <button key={v} onClick={() => setNewLog({...newLog, moisture: v})} className={`flex-1 py-1 rounded-md text-[8px] font-black border ${newLog.moisture === v ? 'bg-emerald-500 text-white' : 'bg-white/5 border-white/10 text-white/20'}`}>{v}</button>)}
+                             </div>
+                           </div>
+                           <div className="flex-1 space-y-1">
+                             <p className="text-[7px] text-white/30 uppercase">Packing</p>
+                             <div className="flex gap-1">
+                               {[1,2,3,4,5].map(v => <button key={v} onClick={() => setNewLog({...newLog, packingPressure: v})} className={`flex-1 py-1 rounded-md text-[8px] font-black border ${newLog.packingPressure === v ? 'bg-emerald-500 text-white' : 'bg-white/5 border-white/10 text-white/20'}`}>{v}</button>)}
+                             </div>
+                           </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between col-span-2">
+                    <div className="flex-1">
+                      <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">Temperature (℃)</p>
+                      <input type="number" step="0.1" className="w-full bg-transparent text-sm font-bold outline-none text-white" value={newTemp} onChange={e => setNewTemp(e.target.value)} placeholder="自動同期可" />
+                    </div>
+                    <button onClick={() => fetchSbTemp()} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-blue-400">
+                      <RefreshCw size={18} className={isFetchingSb ? "animate-spin" : ""} />
+                    </button>
                   </div>
                </div>
 
