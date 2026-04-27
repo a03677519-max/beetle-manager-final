@@ -29,15 +29,15 @@ const WheelPicker = ({ options, value, onChange, className = "" }) => {
 
   return (
     <div className={`relative h-[120px] overflow-hidden picker-viewport ${className}`}>
-      <div className="absolute top-1/2 left-0 right-0 h-10 -translate-y-1/2 bg-white/5 border-y border-white/10 pointer-events-none" />
+      <div className="absolute top-1/2 left-0 right-0 h-10 -translate-y-1/2 bg-white/10 border-y border-white/20 pointer-events-none z-10" />
       <div 
         ref={wheelRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto picker-wheel py-[40px]"
+        className="h-full overflow-y-auto picker-wheel py-[40px] px-2 overscroll-contain"
       >
         {options.map((opt, i) => (
-          <div key={i} className={`h-10 flex items-center justify-center text-sm font-black transition-colors picker-item ${opt === value ? 'text-white' : 'text-white/20'}`}>
-            {opt}
+          <div key={i} className={`h-10 flex items-center justify-center text-sm font-black transition-all picker-item ${opt === value ? 'text-white scale-110' : 'text-white/20'}`}>
+            {opt === '-' ? '-' : opt}
           </div>
         ))}
       </div>
@@ -62,8 +62,8 @@ const DateRollSelector = ({ label, value, onChange, accentColorClass }) => {
   };
 
   return (
-    <div className="space-y-1 col-span-2">
-      <label className={`text-[10px] ${accentColorClass} font-black uppercase tracking-widest ml-1`}>{label}</label>
+    <div className="space-y-2 col-span-2">
+      <label className={`text-[10px] ${accentColorClass} font-black uppercase tracking-widest ml-1`}>{label} (ロール式)</label>
       <div className="grid grid-cols-3 gap-1 bg-white/5 rounded-2xl p-1 border border-white/10">
         <WheelPicker 
           options={Array.from({length: 11}, (_, i) => (new Date().getFullYear() - 5 + i).toString())} 
@@ -158,10 +158,11 @@ const BeetleFormModal = ({
   const [gen1, setGen1] = useState('CB'); // WD, CB
   const [gen2, setGen2] = useState('CBF'); // -, WF, CBF
   const [gen3, setGen3] = useState('1'); // 1, 2, 3...
+  const [initialized, setInitialized] = useState(false);
 
   // 初期値の同期（編集時）
   useEffect(() => {
-    if (isEditing && formData.generation) {
+    if (isEditing && formData.generation && !initialized) {
       if (formData.generation === 'WD') {
         setGen1('WD'); setGen2('-'); setGen3('-');
       } else {
@@ -175,8 +176,9 @@ const BeetleFormModal = ({
           setGen3(num || '1');
         }
       }
+      setInitialized(true);
     }
-  }, [isOpen, isEditing]);
+  }, [isOpen, isEditing, formData.generation]);
 
   const updateGen = (g1, g2, g3) => {
     let res = "";

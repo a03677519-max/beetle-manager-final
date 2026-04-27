@@ -174,7 +174,7 @@ export const BeetleDetailModal = ({
           <div className="space-y-3">
             <div className="flex justify-between items-center px-1">
               <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest flex items-center gap-2">
-                <Camera size={12} /> Photo Gallery
+                <Camera size={12} /> フォトギャラリー
               </p>
               <label className="cursor-pointer bg-white/5 hover:bg-white/10 p-2 rounded-xl transition-colors border border-white/10 shadow-sm">
                 <Plus size={16} className={currentAccent.text} />
@@ -203,7 +203,7 @@ export const BeetleDetailModal = ({
               ) : (
                 <div className="w-full h-28 border-2 border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center text-white/20 italic gap-2">
                   <ImageIcon size={24} opacity={0.3} />
-                  <span className="text-[10px]">No Photos</span>
+                  <span className="text-[10px]">写真なし</span>
                 </div>
               )}
             </div>
@@ -214,7 +214,7 @@ export const BeetleDetailModal = ({
              {/* Charts */}
              {beetle.records && beetle.records.length > 0 && (
                <div className="bg-white/5 p-5 rounded-[2rem] border border-white/10 shadow-inner">
-                 <p className="text-[10px] font-black text-amber-400/60 uppercase tracking-widest mb-4 flex items-center gap-2"><Scale size={12}/> Growth Chart</p>
+                 <p className="text-[10px] font-black text-amber-400/60 uppercase tracking-widest mb-4 flex items-center gap-2"><Scale size={12}/> 成長グラフ</p>
                  <div className="h-48 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={beetle.records}>
@@ -232,18 +232,18 @@ export const BeetleDetailModal = ({
              {/* Add Record Form */}
              <div className="bg-white/5 p-6 rounded-[2.5rem] border border-white/10 shadow-inner space-y-5">
                <div className="flex justify-between items-center px-1">
-                 <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest">New Record</p>
+                 <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest">新規記録</p>
                  <button onClick={() => onAddRecord(beetle.id)} className={`px-5 py-2 rounded-xl font-black text-[10px] bg-emerald-500 text-white shadow-lg active:scale-95 transition-all`}>記録を保存</button>
                </div>
 
                <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
-                    <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">Date</p>
+                    <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">日付</p>
                     <input type="date" className="w-full bg-transparent text-sm font-bold outline-none text-white" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
                   </div>
                   <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">Weight (g)</p>
+                      <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">体重 (g)</p>
                       <input type="number" step="0.1" className="w-full bg-transparent text-sm font-bold outline-none text-white" value={newWeight} onChange={e => setNewWeight(e.target.value)} placeholder="0.0" />
                     </div>
                   </div>
@@ -251,7 +251,7 @@ export const BeetleDetailModal = ({
                     <>
                       <div className="bg-white/5 border border-white/10 p-4 rounded-2xl col-span-2 space-y-3">
                         <div className="flex justify-between items-center">
-                          <p className="text-[8px] text-emerald-400 font-black uppercase">Breeding Detail</p>
+                          <p className="text-[8px] text-emerald-400 font-black uppercase">管理詳細</p>
                           <div className="flex gap-2">
                             {['Unknown', 'Male', 'Female'].map(g => (
                               <button key={g} onClick={() => setNewLog({...newLog, gender: g})} className={`px-2 py-0.5 rounded text-[8px] font-bold border transition-all ${newLog.gender === g ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-white/5 border-white/10 text-white/30'}`}>{g === 'Unknown' ? '?' : g === 'Male' ? '♂' : '♀'}</button>
@@ -261,13 +261,13 @@ export const BeetleDetailModal = ({
                         <input className="w-full bg-white/5 p-2 rounded-xl text-[10px] outline-none border border-white/5" placeholder="使用マット/ボトル" value={newLog.substrate} onChange={e => setNewLog({...newLog, substrate: e.target.value})} />
                         <div className="flex gap-2">
                            <div className="flex-1 space-y-1">
-                             <p className="text-[7px] text-white/30 uppercase">Moisture</p>
+                             <p className="text-[7px] text-white/30 uppercase">水分</p>
                              <div className="flex gap-1">
                                {[1,2,3,4,5].map(v => <button key={v} onClick={() => setNewLog({...newLog, moisture: v})} className={`flex-1 py-1 rounded-md text-[8px] font-black border ${newLog.moisture === v ? 'bg-emerald-500 text-white' : 'bg-white/5 border-white/10 text-white/20'}`}>{v}</button>)}
                              </div>
                            </div>
                            <div className="flex-1 space-y-1">
-                             <p className="text-[7px] text-white/30 uppercase">Packing</p>
+                             <p className="text-[7px] text-white/30 uppercase">詰圧</p>
                              <div className="flex gap-1">
                                {[1,2,3,4,5].map(v => <button key={v} onClick={() => setNewLog({...newLog, packingPressure: v})} className={`flex-1 py-1 rounded-md text-[8px] font-black border ${newLog.packingPressure === v ? 'bg-emerald-500 text-white' : 'bg-white/5 border-white/10 text-white/20'}`}>{v}</button>)}
                              </div>
@@ -278,7 +278,7 @@ export const BeetleDetailModal = ({
                   )}
                   <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between col-span-2">
                     <div className="flex-1">
-                      <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">Temperature (℃)</p>
+                      <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">温度 (℃)</p>
                       <input type="number" step="0.1" className="w-full bg-transparent text-sm font-bold outline-none text-white" value={newTemp} onChange={e => setNewTemp(e.target.value)} placeholder="自動同期可" />
                     </div>
                     <button onClick={() => fetchSbTemp()} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-blue-400">
@@ -289,7 +289,7 @@ export const BeetleDetailModal = ({
 
                {/* ロール式（チップ）選択: ステージ */}
                <div className="space-y-2">
-                 <p className="text-[8px] text-white/40 font-black uppercase ml-1">Current Stage</p>
+                 <p className="text-[8px] text-white/40 font-black uppercase ml-1">現在の状態</p>
                  <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
                    {['L1', 'L2', 'L3', 'Pupa', 'Adult'].map(s => (
                      <button key={s} onClick={() => setNewLog({...newLog, stage: s})} className={`shrink-0 px-4 py-2 rounded-xl text-[10px] font-black border transition-all ${newLog.stage === s ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-white/5 border-white/10 text-white/30'}`}>{s}</button>
@@ -300,7 +300,7 @@ export const BeetleDetailModal = ({
 
              {/* History List */}
              <div className="space-y-3 pb-8">
-               <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest ml-1">Timeline Logs</p>
+               <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest ml-1">履歴一覧</p>
                {beetle.records && beetle.records.length > 0 ? (
                  [...beetle.records].reverse().map(rec => (
                    <div key={rec.id} className="bg-white/5 border border-white/10 p-5 rounded-[2rem] flex justify-between items-center group relative overflow-hidden">
@@ -319,7 +319,7 @@ export const BeetleDetailModal = ({
                  ))
                ) : (
                  <div className="py-12 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
-                    <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest italic">No Timeline Found</p>
+                    <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest italic">記録なし</p>
                  </div>
                )}
              </div>
