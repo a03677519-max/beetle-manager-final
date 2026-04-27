@@ -96,7 +96,7 @@ const initialState = {
     newWeight: '',
     newTemp: '',
     editingRecord: null,
-    newLog: { date: new Date().toISOString().split('T')[0], substrate: '', packingPressure: 3, moisture: 3, containerSize: '', stage: 'L1', weight: '', gender: 'Unknown', logNotes: '' }
+    newLog: { date: new Date().toISOString().split('T')[0], substrate: '', packingPressure: 3, moisture: 3, containerSize: '', stage: 'L1', weight: '', gender: 'Unknown', logNotes: '', temperature: '' }
   }
 };
 
@@ -195,11 +195,11 @@ const App = () => {
     const best = sortedRankings[0];
     if (best && best.value > 0) {
       return {
-        content: `最高実績: ${best.value}頭/日 - 温度: ${best.temp}℃ / 水分: ${best.moisture} / 詰圧: ${best.packing}`,
-        isGuideline: false
-      };
-    }
-    return { content: "データなし", isGuideline: false };
+          content: `実績: ${best.value}頭/日 (Temp: ${best.temp}℃ / Humid: ${best.moisture} / Press: ${best.packing})`,
+          isGuideline: false
+        };
+      }
+    return { content: "データ記録がありません", isGuideline: false };
   };
 
   // 並べ替えハンドラ
@@ -361,14 +361,14 @@ const App = () => {
 
   // 個体データをテキスト形式で生成しコピーする関数
   const copyBeetleText = (beetle) => {
-    let text = `和名 ${beetle.species || ''}\n`;
-    text += `学名 ${beetle.scientificName || ''}\n`;
-    text += `産地 ${beetle.locality || ''}\n`;
-    text += `累代 ${beetle.generation || ''} ${beetle.name || ''} ${beetle.hatchDate || ''}\n`;
+    let text = `[BeetleLog Record]\n和名: ${beetle.species || '-'}\n`;
+    text += `学名: ${beetle.scientificName || '-'}\n`;
+    text += `産地: ${beetle.locality || '-'}\n`;
+    text += `累代: ${beetle.generation || '-'}\nID/Name: ${beetle.name || '-'}\n`;
 
     // 履歴データ
     for (let i = 0; i < 5; i++) {
-      const rec = beetle.records && beetle.records[i];
+      const rec = beetle.records && [...beetle.records].reverse()[i];
       if (rec) {
         text += ` ${rec.date || ''} ${rec.substrate || ''} 水${rec.moisture || ''} 圧${rec.packingPressure || ''} ${rec.containerSize || ''} ${rec.stage || ''}\n`;
       } else if (i < 2) {
@@ -430,24 +430,12 @@ const App = () => {
   const longPressStartRef = useRef({ x: 0, y: 0, timer: null, target: null });
 
   const handleGlobalPointerMove = useCallback((e) => {
-    // ソートモードがアクティブな場合、デフォルトのスクロールやテキスト選択を防止
-    if (ui.isSortingMode) {
-      e.preventDefault();
-      return;
-    }
-
-    // 長押しタイマーがアクティブな場合（ドラッグの可能性あり）
-    if (longPressStartRef.current.timer) {
+    if (ui.isSortingMode || longPressStartRef.current.timer) {
       const dx = Math.abs(e.clientX - longPressStartRef.current.x);
       const dy = Math.abs(e.clientY - longPressStartRef.current.y);
-      // 少しでも動いたら長押しをキャンセルし、通常のスクロールを許可
-      if (dx > 10 || dy > 10) { // 10px以上の移動でスクロールと判断
-        clearTimeout(longPressStartRef.current.timer);
-        longPressStartRef.current.timer = null;
-        longPressStartRef.current.target = null;
-      } else {
-        // 移動が少ない場合はデフォルトの動作（スクロール、テキスト選択）を防止
-        e.preventDefault();
+      
+      if (ui.isSortingMode || dx > 5 || dy > 5) {
+        e.preventDefault(); // 並べ替え中または微細な移動でもスクロール/選択を防止
       }
     }
   }, [ui.isSortingMode]);
@@ -492,8 +480,8 @@ const App = () => {
     );
     
     if (isAnyModalOpen || ui.isSortingMode) {
-      document.body.style.overflow = 'hidden';
-      document.body.classList.add('sorting-active', 'select-none');
+      document.body.style.overflow = 'hidden'; // スクロール禁止
+      document.body.classList.add('sorting-active', 'select-none', 'touch-none');
     } else {
       document.body.style.overflow = '';
       document.body.classList.remove('sorting-active', 'select-none');
@@ -518,19 +506,24 @@ const App = () => {
   };
 
   // ドラッグ可能な要素のonPointerDownハンドラ
-  const handleDraggablePointerDown = useCallback((e) => {
-    // 並べ替え中、または長押し判定中はブラウザのデフォルト挙動を抑制
-    if (ui.isSortingMode) e.preventDefault();
-    
+  const handleDraggablePointerDown = useCallback(
+    (e) => {
+      // 文字選択とスクロールを抑制するためにデフォルト挙動を防止
+      e.preventDefault();
+      
+      if (e.pointerType === 'touch') e.target.releasePointerCapture(e.pointerId);
+
     longPressStartRef.current.x = e.clientX;
     longPressStartRef.current.y = e.clientY;
     longPressStartRef.current.target = e.target;
 
     longPressStartRef.current.timer = setTimeout(() => {
-      dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isSortingMode: true } });
-      if (window.navigator.vibrate) window.navigator.vibrate(80);
-    }, 600);
-  }, [ui.isSortingMode]);
+        dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isSortingMode: true } });
+        if (window.navigator.vibrate) window.navigator.vibrate(80);
+      }, 600);
+    },
+    [ui.isSortingMode]
+  );
 
   const handleSaveBeetle = () => {
     const { data, isEditing } = form;
@@ -562,7 +555,7 @@ const App = () => {
   const handleEmergenceSubmit = () => {
     const { data } = form;
     if (!data.emergenceDate) return alert('羽化日を入力してください。');
-    const updated = beetles.map(b => b.id === data.id ? { ...b, status: 'Adult', emergenceDate: data.emergenceDate } : b);
+    const updated = beetles.map(b => b.id === data.id ? { ...b, status: 'Adult', emergenceDate: data.emergenceDate, isDigOut: data.isDigOut } : b);
     dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: updated });
     dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'emergence' });
     const target = updated.find(b => b.id === data.id);
@@ -753,15 +746,12 @@ const App = () => {
           </div>
         )}
         {/* Header */}
-      <header className="bg-white/5 backdrop-blur-2xl text-white border-b border-white/10 px-4 py-3 pt-[calc(1rem+env(safe-area-inset-top))] sticky top-0 z-40 shadow-xl">
-          <div className="max-w-md mx-auto flex justify-between items-center">
-            <h1 
-              onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home' } })} 
-              className="text-xl font-black tracking-tighter flex items-center gap-2 cursor-pointer select-none active:scale-95 transition-all"
-            >
-              <img src={logoImg} alt="BeetleLog" className="w-8 h-8 rounded-lg object-contain shadow-md border border-white/10" />
-              BeetleLog
-            </h1>
+      <header className="bg-white/10 backdrop-blur-2xl text-white border-b border-white/10 px-4 py-4 pt-[calc(1.2rem+env(safe-area-inset-top))] sticky top-0 z-40 shadow-2xl">
+          <div className="max-w-md mx-auto flex justify-center items-center">
+            <div className="flex items-center gap-3 select-none">
+              <img src={logoImg} alt="BeetleLog" className="w-8 h-8 rounded-lg object-contain" />
+              <h1 className="text-xl font-black tracking-tighter uppercase">BeetleLog</h1>
+            </div>
           </div>
       </header>
 
@@ -820,19 +810,44 @@ const App = () => {
                           
                           <div className="flex flex-wrap gap-2 pt-1">
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
-                              <Search size={10} className="text-white/30" />
-                              <span className="text-xs font-black text-white">産地: {beetle.locality || '-'}</span>
+                              <span className="text-[10px] font-black text-white/40 uppercase">Locality</span>
+                              <span className="text-xs font-black text-white">{beetle.locality || '-'}</span>
                             </div>
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
-                              <Crown size={10} className="text-white/30" />
-                              <span className="text-xs font-black text-white">累代: {beetle.generation || '不明'}</span>
+                              <span className="text-[10px] font-black text-white/40 uppercase">Gen</span>
+                              <span className="text-xs font-black text-white">{beetle.generation || '不明'}</span>
                             </div>
-                            {beetle.records?.length > 0 && (
-                              <div className="bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1.5 ml-auto shadow-lg shadow-emerald-500/10">
-                                <Scale size={10} className="text-emerald-400" />
-                                <span className="text-xs font-black text-emerald-400">最終記録: {beetle.records[beetle.records.length-1].weight}g</span>
+                            {beetle.status === 'Adult' && beetle.emergenceDate && (
+                              <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
+                                <span className="text-[10px] font-black text-emerald-400/60 uppercase">Emerged</span>
+                                <span className="text-xs font-black text-white">{beetle.emergenceDate}</span>
                               </div>
                             )}
+                            {beetle.status === 'Larva' && beetle.hatchDate && (
+                              <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
+                                <span className="text-[10px] font-black text-amber-400/60 uppercase">Hatched</span>
+                                <span className="text-xs font-black text-white">{beetle.hatchDate}</span>
+                              </div>
+                            )}
+                            {beetle.status === 'SpawnSet' && beetle.setDate && (
+                              <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
+                                <span className="text-[10px] font-black text-rose-400/60 uppercase">Set</span>
+                                <span className="text-xs font-black text-white">{beetle.setDate}</span>
+                              </div>
+                            )}
+                            <div className="ml-auto flex gap-2">
+                              {beetle.records?.length > 0 && beetle.records[beetle.records.length-1].weight && (
+                                <div className="bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1.5 shadow-lg shadow-emerald-500/10">
+                                  <Scale size={10} className="text-emerald-400" />
+                                  <span className="text-xs font-black text-emerald-400">{beetle.records[beetle.records.length-1].weight}g</span>
+                                </div>
+                              )}
+                              {beetle.gender && beetle.gender !== 'Unknown' && (
+                                <div className={`px-3 py-1.5 rounded-xl font-black text-xs border ${beetle.gender === 'Male' ? 'bg-blue-500/20 border-blue-500/30 text-blue-400' : 'bg-pink-500/20 border-pink-500/30 text-pink-400'}`}>
+                                  {beetle.gender === 'Male' ? '♂' : '♀'}
+                                </div>
+                              )}
+                            </div>
                             </div>
                           </div>
                         </div>
@@ -1073,32 +1088,27 @@ const App = () => {
                           <div className="grid grid-cols-2 gap-2 mb-4">
                             {ui.statCardOrder.map((key, idx) => {
                               const isDragging = ui.draggedIdx === idx;
-                              
-                              const handlePointerDown = () => {
-                                if (ui.isSortingMode) return;
-                                const timer = setTimeout(() => {
-                                  dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isSortingMode: true } });
-                                  if (window.navigator.vibrate) window.navigator.vibrate(80);
-                                }, 600);
-                                dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { longPressTimer: timer } });
-                              };
-                              const handlePointerUp = () => {
-                                if (ui.longPressTimer) clearTimeout(ui.longPressTimer);
-                              };
 
                               const btnProps = {
                                 draggable: ui.isSortingMode,
                                 onDragStart: (e) => {
+                                  if (!ui.isSortingMode) { e.preventDefault(); return; }
                                   onDragStart(idx);
-                                  if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
                                 },
                                 onDragOver: onDragOver,
                                 onDrop: () => onDrop(idx),
-                                onPointerDown: handlePointerDown,
+                                onPointerDown: (e) => {
+                                  if (ui.isSortingMode) {
+                                    e.preventDefault(); // 並べ替え中はスクロールを阻止
+                                  } else {
+                                    // 通常時は長押し判定を開始
+                                    handleDraggablePointerDown(e);
+                                  }
+                                },
                                 onContextMenu: (e) => e.preventDefault(),
-                                className: `p-3 rounded-xl text-left transition-all relative select-none touch-action-pan-y ${
-                                  ui.isSortingMode ? 'animate-wiggle ring-2 ring-emerald-500/30 ring-offset-1 touch-action-none' : 'bg-emerald-500/5 active:scale-95 touch-action-pan-y'
-                                } ${isDragging ? 'opacity-30 border-2 border-dashed border-white/20 shadow-inner' : ''}`,
+                                className: `p-3 rounded-xl text-left transition-all relative select-none touch-none draggable-target ${
+                                  ui.isSortingMode ? 'animate-wiggle ring-2 ring-emerald-500/30 ring-offset-1 touch-none select-none' : 'bg-emerald-500/5 active:scale-95'
+                                } ${isDragging ? 'opacity-30' : ''}`,
                                 style: { WebkitUserDrag: 'none', WebkitTouchCallout: 'none', userSelect: 'none' }
                               };
 
@@ -1145,23 +1155,8 @@ const App = () => {
                               <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">ブリーディング記録</span>
                             </div>
                             <p className="text-[11px] text-white/80 leading-relaxed font-medium">
-                              {(() => {
-                                const guide = getGuide(group);
-                                return (
-                                  <span className="flex items-start gap-1.5">
-                                    <span>{guide.content}</span>
-                                  </span>
-                                );
-                              })()}
+                              <span>{getGuide(group).content}</span>
                             </p>
-                            <div className="mt-2 flex gap-1">
-                              <span className="text-[8px] bg-white/60 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100 font-bold">成功率重視</span>
-                              <span className="text-[8px] bg-white/60 text-emerald-600 px-2 py-0.5 rounded-full border border-emerald-100 font-bold">一般的手法</span>
-                            </div>
-                          </div>
-
-                          {/* Spawning Analysis & Golden Ratio (Combined) */}
-                          {group.spawnSetRankings.length > 0 && (() => {
                             const best = [...group.spawnSetRankings].sort((a, b) => b.value - a.value)[0];
                             const bestBeetle = best ? beetles.find(b => b && b.name === best.name?.split(' (')[0]) : null;
                             return (
@@ -1192,15 +1187,18 @@ const App = () => {
                                     {best.notes}
                                   </div>
                                 )}
-                                <button 
-                                  onClick={() => { dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'statGraph', payload: { title: `${group.name} - 産卵効率ランキング`, data: group.spawnSetRankings, unit: '頭/日', color: '#ec4899' } }); }}
-                                  className="w-full mt-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-[10px] font-black rounded-lg transition-colors border border-amber-500/20"
-                                >
-                                  全産卵セットのランキング・詳細比較を表示
-                                </button>
                               </div>
                             );
                           })()}
+
+                          {group.spawnSetRankings.length > 0 && (
+                            <button 
+                              onClick={() => { dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'statGraph', payload: { title: `${group.name} - 産卵効率ランキング`, data: group.spawnSetRankings, unit: '頭/日', color: '#ec4899' } }); }}
+                              className="w-full mb-4 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 text-[10px] font-black rounded-lg transition-colors border border-amber-500/20"
+                            >
+                                  全産卵セットのランキング・詳細比較を表示
+                            </button>
+                          )}
 
                           <button 
                             onClick={() => {
@@ -1480,6 +1478,7 @@ const App = () => {
         onDelete={deleteBeetle}
         onUpdateImages={handleUpdateBeetleImages}
         onOpenLightbox={(img) => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'lightbox', payload: img })}
+        onSelectBeetle={(b) => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: b })}
         newWeight={form.newWeight}
         setNewWeight={(val) => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { newWeight: val } })}
         newTemp={form.newTemp}

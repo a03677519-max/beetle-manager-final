@@ -82,18 +82,24 @@ const InfoRow = ({ label, value }) => (
   </div>
 );
 
-const LineageSection = ({ beetle, beetles }) => {
-  const father = beetles.find(b => b.id === beetle.parentMaleId);
-  const mother = beetles.find(b => b.id === beetle.parentFemaleId);
+const LineageSection = ({ beetle, beetles, onSelectBeetle }) => {
+  const father = beetles.find(b => b && (b.id === beetle.parentMaleId || b.name === beetle.parentMaleId));
+  const mother = beetles.find(b => b && (b.id === beetle.parentFemaleId || b.name === beetle.parentFemaleId));
   return (
     <div className="mt-4 p-3 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-inner">
       <p className="text-[9px] font-black text-emerald-400/60 uppercase tracking-widest mb-2">Lineage (血統情報)</p>
       <div className="grid grid-cols-2 gap-2">
-        <div className="bg-white/5 p-2 rounded-lg border border-white/10 shadow-inner">
+        <div 
+          className={`bg-white/5 p-2 rounded-lg border border-white/10 shadow-inner ${father ? 'cursor-pointer active:scale-95 transition-all hover:bg-white/10' : ''}`}
+          onClick={() => father && onSelectBeetle(father)}
+        >
           <p className="text-[8px] text-blue-400 font-bold">♂ Father</p>
           <p className="text-[10px] font-black truncate text-white/90">{father ? father.name : (beetle.parentMaleId || '不明')}</p>
         </div>
-        <div className="bg-white/5 p-2 rounded-lg border border-white/10 shadow-inner">
+        <div 
+          className={`bg-white/5 p-2 rounded-lg border border-white/10 shadow-inner ${mother ? 'cursor-pointer active:scale-95 transition-all hover:bg-white/10' : ''}`}
+          onClick={() => mother && onSelectBeetle(mother)}
+        >
           <p className="text-[8px] text-pink-400 font-bold">♀ Mother</p>
           <p className="text-[10px] font-black truncate text-white/90">{mother ? mother.name : (beetle.parentFemaleId || '不明')}</p>
         </div>
@@ -102,8 +108,60 @@ const LineageSection = ({ beetle, beetles }) => {
   );
 };
 
+const OffspringSection = ({ beetle, beetles, onSelectBeetle }) => {
+  const offspring = beetles.filter(b => b && (
+    b.parentMaleId === beetle.id || 
+    b.parentFemaleId === beetle.id || 
+    (beetle.name && (b.parentMaleId === beetle.name || b.parentFemaleId === beetle.name))
+  ));
+
+  if (offspring.length === 0) return null;
+
+  // 羽化済み（Adult）個体から最大サイズを抽出
+  const adultOffspringSizes = offspring
+    .filter(b => b.status === 'Adult' && b.adultSize)
+    .map(b => parseFloat(b.adultSize))
+    .filter(size => !isNaN(size));
+
+  const maxSize = adultOffspringSizes.length > 0 ? Math.max(...adultOffspringSizes) : null;
+
+  return (
+    <div className="mt-4 p-3 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-inner">
+      <div className="flex justify-between items-center mb-2">
+        <p className="text-[9px] font-black text-emerald-400/60 uppercase tracking-widest">Offspring (子個体リスト)</p>
+        {maxSize && (
+          <div className="flex items-center gap-1 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+            <Crown size={10} className="text-amber-400" />
+            <span className="text-[9px] font-black text-amber-400">MAX: {maxSize}mm</span>
+          </div>
+        )}
+      </div>
+      <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
+        {offspring.map(child => (
+          <div 
+            key={child.id} 
+            onClick={() => onSelectBeetle(child)}
+            className="flex justify-between items-center p-2 bg-white/5 rounded-lg border border-white/10 active:scale-95 transition-all hover:bg-white/10 cursor-pointer"
+          >
+            <div className="flex flex-col min-w-0 pr-2">
+              <span className="text-[10px] font-black text-white/90 truncate">{child.name}</span>
+              <span className="text-[8px] text-white/40 italic truncate">{child.species}</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {child.status === 'Adult' && child.adultSize && (
+                <span className="text-[9px] font-black text-emerald-400">{child.adultSize}mm</span>
+              )}
+              <span className="text-[8px] font-black px-2 py-0.5 rounded bg-white/10 text-white/60 border border-white/5">{child.status}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const BeetleDetailModal = ({ 
-  beetle, onClose, beetles, config, onCopy, onEdit, onEmergence, onDeath, onRevert, onDelete, onUpdateImages, onOpenLightbox,
+  beetle, onClose, beetles, config, onCopy, onEdit, onEmergence, onDeath, onRevert, onDelete, onUpdateImages, onOpenLightbox, onSelectBeetle,
   newWeight, setNewWeight, newTemp, setNewTemp, newLog, setNewLog, fetchSbTemp, isFetchingSb, onAddRecord, 
   editingRecord, setEditingRecord, onUpdateRecord, onDeleteRecord
 }) => {
@@ -243,7 +301,8 @@ export const BeetleDetailModal = ({
               <button onClick={(e) => onDelete(beetle.id, e)} className="text-rose-400 p-2 hover:bg-white/10 rounded-xl transition-all"><Trash2 size={20}/></button>
             </div>
           </div>
-          <LineageSection beetle={beetle} beetles={beetles} />
+          <LineageSection beetle={beetle} beetles={beetles} onSelectBeetle={onSelectBeetle} />
+          <OffspringSection beetle={beetle} beetles={beetles} onSelectBeetle={onSelectBeetle} />
 
           {/* Photo Gallery Section */}
           <div className="space-y-3">
@@ -307,13 +366,12 @@ export const BeetleDetailModal = ({
              {/* Add Record Form */}
              <div className="bg-white/5 p-6 rounded-[2.5rem] border border-white/10 shadow-inner space-y-5">
                <div className="flex justify-between items-center px-1">
-                 <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest">新規記録</p>
+                 <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest">飼育ログ入力</p>
                  <button onClick={() => onAddRecord(beetle.id)} className={`px-5 py-2 rounded-xl font-black text-[10px] bg-emerald-500 text-white shadow-lg active:scale-95 transition-all`}>記録を保存</button>
                </div>
 
                <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
-                    <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">日付</p>
                     <DateRollSelector label="日付" value={newLog.date} onChange={(v) => setNewLog({...newLog, date: v})} accentColorClass="text-emerald-400" />
                   </div>
                   <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
@@ -333,7 +391,8 @@ export const BeetleDetailModal = ({
                             ))}
                           </div>
                         </div>
-                        <input className="w-full bg-white/5 p-2 rounded-xl text-[10px] outline-none border border-white/5" placeholder="使用マット/ボトル" value={newLog.substrate} onChange={e => setNewLog({...newLog, substrate: e.target.value})} />
+                        <input className="w-full bg-white/5 p-3 rounded-xl text-[10px] outline-none border border-white/10 focus:border-emerald-500 transition-all" placeholder="使用マット・エサ名" value={newLog.substrate} onChange={e => setNewLog({...newLog, substrate: e.target.value})} />
+                        <input className="w-full bg-white/5 p-3 rounded-xl text-[10px] outline-none border border-white/10 focus:border-emerald-500 transition-all" placeholder="ボトルサイズ (例: 800cc)" value={newLog.containerSize} onChange={e => setNewLog({...newLog, containerSize: e.target.value})} />
                         <div className="flex gap-2">
                            <div className="flex-1 space-y-1">
                              <p className="text-[7px] text-white/30 uppercase">水分</p>
@@ -362,13 +421,15 @@ export const BeetleDetailModal = ({
                   </div>
                </div>
 
-               {/* ロール式（チップ）選択: ステージ */}
-               <div className="space-y-2">
-                 <p className="text-[8px] text-white/40 font-black uppercase ml-1">現在の状態</p>
-                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-                   {['L1', 'L2', 'L3', 'Pupa', 'Adult'].map(s => (
-                     <button key={s} onClick={() => setNewLog({...newLog, stage: s})} className={`shrink-0 px-4 py-2 rounded-xl text-[10px] font-black border transition-all ${newLog.stage === s ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-white/5 border-white/10 text-white/30'}`}>{s}</button>
-                   ))}
+               {/* 加齢状況（ステージ）のドラムロール化 */}
+               <div className="space-y-1">
+                 <label className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest ml-1">加齢状況 (ロール選択)</label>
+                 <div className="bg-white/5 rounded-2xl p-1 border border-white/10">
+                   <WheelPicker 
+                     options={['L1', 'L2', 'L3', 'Pupa', 'Adult']} 
+                     value={newLog.stage} 
+                     onChange={(v) => setNewLog({...newLog, stage: v})} 
+                   />
                  </div>
                </div>
              </div>
@@ -440,6 +501,24 @@ export const EmergenceModal = ({ isOpen, onClose, formData, setFormData, onSubmi
         </div>
         <div className="space-y-6">
           <DateRollSelector label="羽化日" value={formData.emergenceDate} onChange={(v) => setFormData({...formData, emergenceDate: v})} accentColorClass="text-emerald-400" />
+          <div className="space-y-2">
+            <label className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest ml-1">報告種別</label>
+            <div className="flex gap-2">
+              {[
+                { id: false, label: '羽化確認' },
+                { id: true, label: '掘り出し' }
+              ].map(opt => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => setFormData({...formData, isDigOut: opt.id})}
+                  className={`flex-1 py-4 rounded-2xl font-black text-xs border transition-all ${formData.isDigOut === opt.id ? 'bg-emerald-500 border-emerald-400 text-white shadow-lg' : 'bg-white/5 border-white/10 text-white/40'}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <button onClick={onSubmit} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white py-5 rounded-[2rem] font-black text-lg shadow-lg active:scale-95 transition-all">羽化を記録</button>
         </div>
       </div>
