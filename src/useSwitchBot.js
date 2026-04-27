@@ -107,8 +107,6 @@ export const useSwitchBot = (appDispatch, ACTION_TYPES) => {
     availableSbDevices,
     tempHistory,
     sbDeviceOrder, setSbDeviceOrder,
-    isFetchingSb,
-    isFetchingSbDevices,
     fetchSbTemperature,
     fetchSbDevices
   };

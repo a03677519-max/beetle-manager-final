@@ -67,6 +67,8 @@ const initialState = {
     isSortingMode: false,
     statCardOrder: ['size', 'larval', 'resting', 'lifespan', 'spawn'],
     showSbGraphs: true,
+    isFetchingSb: false,
+    isFetchingSbDevices: false,
     draggedIdx: null,
     draggedIdxSb: null,
     touchStart: null,
@@ -148,7 +150,11 @@ const App = () => {
     fetchSbTemperature, fetchSbDevices
   } = useSwitchBot(dispatch, ACTION_TYPES); // dispatchをuseSwitchBotに渡す
 
-  const { activeTab, filterStatus, scientificNameSearchTerm, expandedGroup, isSortingMode, showSbGraphs, draggedIdx, draggedIdxSb, longPressTimer, pullOffset, isRefreshing } = ui;
+  const { 
+    activeTab, filterStatus, scientificNameSearchTerm, expandedGroup, 
+    isSortingMode, showSbGraphs, draggedIdx, draggedIdxSb, longPressTimer, 
+    pullOffset, isRefreshing, isFetchingSb, isFetchingSbDevices 
+  } = ui;
   const { editingRecord } = form;
 
   // 非同期でのデータ初期化
@@ -792,7 +798,7 @@ const App = () => {
                       </button>
                     )}
                     <button onClick={() => handleFetchSbTemperature()} className="text-[10px] font-black text-emerald-400 bg-emerald-50/20 px-3 py-1 rounded-full flex items-center gap-1 active:scale-95 transition-all border border-emerald-500/20 shadow-sm">
-                      <RefreshCw size={10} className={ui.isFetchingSb ? "animate-spin" : ""} />
+                    <RefreshCw size={10} className={isFetchingSb ? "animate-spin" : ""} />
                       一括同期
                     </button>
                     <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { showSbGraphs: !ui.showSbGraphs } })} className="p-1.5 bg-slate-100 text-slate-500 rounded-lg active:scale-90 transition-all">
@@ -1154,7 +1160,7 @@ const App = () => {
                         value={selectedSbDeviceId}
                         onChange={(e) => setSelectedSbDeviceId(e.target.value)}
                         className="flex-1 text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
-                        disabled={ui.isFetchingSbDevices}
+                    disabled={isFetchingSbDevices}
                       >
                         <option value="">デバイスを選択してください</option>
                         {availableSbDevices.map(device => (
@@ -1163,7 +1169,7 @@ const App = () => {
                           </option>
                         ))}
                       </select>
-                      <button onClick={fetchSbDevices} className={`p-1.5 rounded-lg transition-colors ${ui.isFetchingSbDevices ? "text-emerald-400 animate-spin" : "text-white/50 hover:text-emerald-400"} border border-white/10 shadow-sm`} title="デバイスリストを更新">
+                  <button onClick={fetchSbDevices} className={`p-1.5 rounded-lg transition-colors ${isFetchingSbDevices ? "text-emerald-400 animate-spin" : "text-white/50 hover:text-emerald-400"} border border-white/10 shadow-sm`} title="デバイスリストを更新">
                         <RefreshCw size={18} />
                       </button>
                     </div>
@@ -1332,7 +1338,7 @@ const App = () => {
         newLog={form.newLog}
         setNewLog={(val) => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { newLog: val } })}
         fetchSbTemp={fetchSbTemperature}
-        isFetchingSb={ui.isFetchingSb}
+        isFetchingSb={isFetchingSb}
         onAddRecord={addRecord}
         editingRecord={editingRecord}
         setEditingRecord={(val) => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { editingRecord: val } })}
