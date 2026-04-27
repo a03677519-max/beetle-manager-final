@@ -1,4 +1,3 @@
-export const CATEGORIES = {
 export const calculateDaysBetweenDates = (startDate, endDate) => {
   if (!startDate || !endDate) return null;
   const start = new Date(startDate);

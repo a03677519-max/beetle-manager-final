@@ -149,7 +149,7 @@ const App = () => {
 
   const {
     sbToken, setSbToken, sbSecret, setSbSecret, selectedSbDeviceId, setSelectedSbDeviceId, availableSbDevices,
-    tempHistory, setTempHistory, sbDeviceOrder, setSbDeviceOrder,
+    tempHistory, sbDeviceOrder, setSbDeviceOrder,
     fetchSbTemperature, fetchSbDevices
   } = useSwitchBot(dispatch, ACTION_TYPES); // dispatchをuseSwitchBotに渡す
 
