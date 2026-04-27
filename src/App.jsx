@@ -1157,39 +1157,43 @@ const App = () => {
                             <p className="text-[11px] text-white/80 leading-relaxed font-medium">
                               <span>{getGuide(group).content}</span>
                             </p>
-                            const best = [...group.spawnSetRankings].sort((a, b) => b.value - a.value)[0];
-                            const bestBeetle = best ? beetles.find(b => b && b.name === best.name?.split(' (')[0]) : null;
-                            return (
-                              <div className="mb-4 p-4 bg-amber-50 rounded-2xl border border-amber-200">
-                                <div 
-                                  className="flex items-center justify-between mb-3 cursor-pointer active:opacity-60"
-                                  onClick={() => bestBeetle && dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: bestBeetle })}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <div className="bg-amber-500 text-white p-1 rounded-lg shadow-sm"><Crown size={14} fill="currentColor" /></div>
-                                    <span className="text-xs font-black text-amber-800 uppercase">飼育黄金比 (産卵成功データ)</span>
+                            {/* Spawning Analysis & Golden Ratio (Combined) */}
+                            {group.spawnSetRankings.length > 0 && (() => {
+                              const best = [...group.spawnSetRankings].sort((a, b) => b.value - a.value)[0];
+                              const bestBeetle = best ? beetles.find(b => b && b.name === best.name?.split(' (')[0]) : null;
+                              if (!best) return null; // Guard against empty best
+                              return (
+                                <div className="mb-4 p-4 bg-amber-50 rounded-2xl border border-amber-200">
+                                  <div
+                                    className="flex items-center justify-between mb-3 cursor-pointer active:opacity-60"
+                                    onClick={() => bestBeetle && dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: bestBeetle })}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <div className="bg-amber-500 text-white p-1 rounded-lg shadow-sm"><Crown size={14} fill="currentColor" /></div>
+                                      <span className="text-xs font-black text-amber-800 uppercase">飼育黄金比 (産卵成功データ)</span>
+                                    </div>
+                                    <ChevronRight size={16} className="text-amber-400" />
                                   </div>
-                                  <ChevronRight size={16} className="text-amber-400" />
+                                  <div className="grid grid-cols-2 gap-3 mb-3">
+                                    <div className="bg-white/50 p-2 rounded-xl text-center border border-amber-100">
+                                      <p className="text-[9px] font-bold text-amber-600">採卵効率</p>
+                                      <p className="text-sm font-black text-amber-900">{best.value}頭/日</p>
+                                    </div>
+                                    <div className="bg-white/50 p-2 rounded-xl text-center border border-amber-100">
+                                      <p className="text-[9px] font-bold text-amber-600">環境設定</p>
+                                      <p className="text-sm font-black text-amber-900">{best.temp}℃ / 水{best.moisture} / 圧{best.packing}</p>
+                                    </div>
+                                  </div>
+                                  {best.notes && (
+                                    <div className="bg-white/80 p-3 rounded-xl text-[10px] text-amber-800 font-medium leading-relaxed italic border border-amber-100 flex gap-2">
+                                      <MessageSquare size={12} className="shrink-0 mt-0.5 text-amber-400" />
+                                      {best.notes}
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="grid grid-cols-2 gap-3 mb-3">
-                                  <div className="bg-white/50 p-2 rounded-xl text-center border border-amber-100">
-                                    <p className="text-[9px] font-bold text-amber-600">採卵効率</p>
-                                    <p className="text-sm font-black text-amber-900">{best.value}頭/日</p>
-                                  </div>
-                                  <div className="bg-white/50 p-2 rounded-xl text-center border border-amber-100">
-                                    <p className="text-[9px] font-bold text-amber-600">環境設定</p>
-                                    <p className="text-sm font-black text-amber-900">{best.temp}℃ / 水{best.moisture} / 圧{best.packing}</p>
-                                  </div>
-                                </div>
-                                {best.notes && (
-                                  <div className="bg-white/80 p-3 rounded-xl text-[10px] text-amber-800 font-medium leading-relaxed italic border border-amber-100 flex gap-2">
-                                    <MessageSquare size={12} className="shrink-0 mt-0.5 text-amber-400" />
-                                    {best.notes}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
+                              );
+                            })()}
+                          </div>
 
                           {group.spawnSetRankings.length > 0 && (
                             <button 
