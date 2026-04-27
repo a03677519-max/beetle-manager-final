@@ -82,6 +82,10 @@
     -ms-overflow-style: none;
   }
 
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
   .picker-wheel::-webkit-scrollbar {
     display: none;
   }
