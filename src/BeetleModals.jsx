@@ -1,13 +1,13 @@
 import React from 'react';
-import { X, Copy, Edit3, Bug, Ghost, Trash2, Scale, Activity, Thermometer, MessageSquare, Crown, RefreshCw, ArrowUpDown } from 'lucide-react';
-import { CATEGORIES } from './beetleUtils.js';
+import { X, Copy, Edit3, Bug, Ghost, Trash2, Scale, Activity, Thermometer, MessageSquare, Crown, RefreshCw, ArrowUpDown, Camera, Image as ImageIcon, Plus } from 'lucide-react';
+import { CATEGORIES, calculateLarvalPeriodDays, calculateAdultLifespanDays } from './beetleUtils.js';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 
 // ヘルパーコンポーネント (CommonUI.jsx がない場合の暫定定義)
 const InfoRow = ({ label, value }) => (
-  <div className="flex justify-between py-1 border-b border-slate-50">
-    <span className="text-[10px] text-slate-400 font-bold uppercase">{label}</span>
-    <span className="text-xs font-black text-slate-700">{value || '-'}</span>
+  <div className="flex justify-between py-1 border-b border-white/5">
+    <span className="text-[10px] text-emerald-400/60 font-bold uppercase tracking-widest">{label}</span>
+    <span className="text-xs font-black text-white/90">{value || '-'}</span>
   </div>
 );
 
@@ -15,16 +15,16 @@ const LineageSection = ({ beetle, beetles }) => {
   const father = beetles.find(b => b.id === beetle.parentMaleId);
   const mother = beetles.find(b => b.id === beetle.parentFemaleId);
   return (
-    <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100">
-      <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Lineage (血統情報)</p>
+    <div className="mt-4 p-3 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-inner">
+      <p className="text-[9px] font-black text-emerald-400/60 uppercase tracking-widest mb-2">Lineage (血統情報)</p>
       <div className="grid grid-cols-2 gap-2">
-        <div className="bg-white p-2 rounded-lg border border-slate-100">
-          <p className="text-[8px] text-blue-500 font-bold">♂ Father</p>
-          <p className="text-[10px] font-black truncate">{father ? father.name : (beetle.parentMaleId || '不明')}</p>
+        <div className="bg-white/5 p-2 rounded-lg border border-white/10 shadow-inner">
+          <p className="text-[8px] text-blue-400 font-bold">♂ Father</p>
+          <p className="text-[10px] font-black truncate text-white/90">{father ? father.name : (beetle.parentMaleId || '不明')}</p>
         </div>
-        <div className="bg-white p-2 rounded-lg border border-slate-100">
-          <p className="text-[8px] text-pink-500 font-bold">♀ Mother</p>
-          <p className="text-[10px] font-black truncate">{mother ? mother.name : (beetle.parentFemaleId || '不明')}</p>
+        <div className="bg-white/5 p-2 rounded-lg border border-white/10 shadow-inner">
+          <p className="text-[8px] text-pink-400 font-bold">♀ Mother</p>
+          <p className="text-[10px] font-black truncate text-white/90">{mother ? mother.name : (beetle.parentFemaleId || '不明')}</p>
         </div>
       </div>
     </div>
@@ -32,36 +32,275 @@ const LineageSection = ({ beetle, beetles }) => {
 };
 
 export const BeetleDetailModal = ({ 
-  beetle, onClose, beetles, config, onCopy, onEdit, onEmergence, onDeath, onRevert, onDelete, 
+  beetle, onClose, beetles, config, onCopy, onEdit, onEmergence, onDeath, onRevert, onDelete, onUpdateImages, onOpenLightbox,
   newWeight, setNewWeight, newTemp, setNewTemp, newLog, setNewLog, fetchSbTemp, isFetchingSb, onAddRecord, 
   editingRecord, setEditingRecord, onUpdateRecord, onDeleteRecord
 }) => {
   if (!beetle) return null;
-  return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-20 flex flex-col" onClick={onClose}>
-      <div className="bg-white mt-12 flex-1 rounded-t-3xl overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="bg-emerald-800 text-white p-4 flex justify-between items-center">
-          <h2 className="text-xl font-bold">{(CATEGORIES[beetle.status + 's'] || '個体')}詳細</h2>
-          <button onClick={onClose}><X size={24} /></button>
+
+  // プログレスバー用の最大期間 (目安)
+  const MAX_LARVAL_PERIOD_DAYS = 730; // 2年
+  const MAX_ADULT_LIFESPAN_DAYS = 365; // 1年
+
+  // 幼虫期間の計算
+  const larvalPeriodDays = calculateLarvalPeriodDays(beetle);
+  const larvalPeriodLabel = beetle.emergenceDate ? '幼虫期間合計' : '幼虫期間経過';
+
+  // 成虫期間の計算
+  const adultLifespanDays = calculateAdultLifespanDays(beetle);
+  const adultLifespanLabel = beetle.deathDate ? '成虫期間合計' : '成虫期間経過';
+
+  const ProgressBar = ({ label, value, max, accentColorClass }) => {
+    const percentage = Math.min(100, (value / max) * 100);
+    const displayValue = value !== null ? `${value}日` : '-';
+
+    return (
+      <div className="space-y-1">
+        <div className="flex justify-between items-center text-xs font-bold">
+          <span className="text-white/60">{label}</span>
+          <span className={`${accentColorClass}`}>{displayValue}</span>
         </div>
-        <div className="p-4 flex-1 overflow-y-auto">
-          <div className="p-5 rounded-2xl mb-4 border bg-white border-slate-100 shadow-sm relative">
-            <h3 className="text-2xl font-black text-slate-800">{beetle.name}</h3>
+        <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+          {value !== null && (
+            <div
+              className={`h-full rounded-full ${accentColorClass.replace('text-', 'bg-')}`}
+              style={{ width: `${percentage}%` }}
+            ></div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // 画像追加の処理
+  const handleAddPhotos = (e) => {
+    const files = Array.from(e.target.files);
+    Promise.all(files.map(file => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+    })).then(base64s => {
+      onUpdateImages(beetle.id, [...(beetle.images || []), ...base64s]);
+    });
+  };
+
+  const handleDeletePhoto = (index) => {
+    if (!window.confirm('この写真を削除しますか？')) return;
+    const updated = beetle.images.filter((_, i) => i !== index);
+    onUpdateImages(beetle.id, updated);
+  };
+
+  // 状態に応じたアクセントカラー設定
+  const accentColors = {
+    Larva: {
+      text: 'text-amber-400',
+      textMuted: 'text-amber-400/60',
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/20',
+      badge: 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+    },
+    Adult: {
+      text: 'text-emerald-400',
+      textMuted: 'text-emerald-400/60',
+      bg: 'bg-emerald-500/10',
+      border: 'border-emerald-500/20',
+      badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+    },
+    SpawnSet: {
+      text: 'text-rose-400',
+      textMuted: 'text-rose-400/60',
+      bg: 'bg-rose-500/10',
+      border: 'border-rose-500/20',
+      badge: 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+    },
+    Pupa: {
+      text: 'text-indigo-400',
+      textMuted: 'text-indigo-400/60',
+      bg: 'bg-indigo-500/10',
+      border: 'border-indigo-500/20',
+      badge: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+    }
+  };
+
+  const currentAccent = accentColors[beetle.status] || accentColors.Adult;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex flex-col overscroll-none" onClick={onClose}>
+      <div className="bg-white/10 backdrop-blur-2xl mt-12 flex-1 rounded-t-[3rem] overflow-hidden flex flex-col border border-white/20 shadow-2xl overscroll-contain" onClick={e => e.stopPropagation()}>
+        <div className="bg-white/5 backdrop-blur-md text-white p-6 flex justify-between items-center border-b border-white/10">
+          <h2 className={`text-xl font-black tracking-tight ${currentAccent.text}`}>{(CATEGORIES[beetle.status + 's'] || '個体')}詳細</h2>
+          <button onClick={onClose} className="text-white/60 hover:text-white transition-colors p-1"><X size={28} /></button>
+        </div>
+        <div className="p-6 flex-1 overflow-y-auto text-white space-y-6">
+          <div className={`p-6 rounded-[2rem] border ${currentAccent.bg} ${currentAccent.border} shadow-inner relative overflow-hidden group`}>
+            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 group-hover:animate-[sweep_3s_infinite]" />
+            <h3 className="text-2xl font-black text-white relative z-10">{beetle.name}</h3>
+            <div className={`inline-block mt-2 px-3 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border ${currentAccent.badge}`}>
+              {config.labels[beetle.status] || '未設定'}
+            </div>
             <div className="space-y-1 mt-4">
               <InfoRow label="産地" value={beetle.locality} />
               <InfoRow label="累代" value={beetle.generation} />
-              <InfoRow label="状態" value={config.labels[beetle.status] || '未設定'} />
+            </div>
+            <div className="space-y-3 mt-6">
+              {beetle.hatchDate && (
+                <ProgressBar label={larvalPeriodLabel} value={larvalPeriodDays} max={MAX_LARVAL_PERIOD_DAYS} accentColorClass={currentAccent.text} />
+              )}
+              {beetle.emergenceDate && (
+                <ProgressBar label={adultLifespanLabel} value={adultLifespanDays} max={MAX_ADULT_LIFESPAN_DAYS} accentColorClass={currentAccent.text} />
+              )}
             </div>
             <div className="absolute top-4 right-4 flex gap-2">
-              <button onClick={() => onCopy(beetle)} className="text-emerald-600 p-1"><Copy size={20}/></button>
-              <button onClick={() => onEdit(beetle)} className="text-blue-500 p-1"><Edit3 size={20}/></button>
-              <button onClick={(e) => onDelete(beetle.id, e)} className="text-rose-600 p-1"><Trash2 size={20}/></button>
+              <button onClick={() => onCopy(beetle)} className={`${currentAccent.text} p-2 hover:bg-white/10 rounded-xl transition-all`}><Copy size={20}/></button>
+              <button onClick={() => onEdit(beetle)} className="text-blue-400 p-2 hover:bg-white/10 rounded-xl transition-all"><Edit3 size={20}/></button>
+              <button onClick={(e) => onDelete(beetle.id, e)} className="text-rose-400 p-2 hover:bg-white/10 rounded-xl transition-all"><Trash2 size={20}/></button>
             </div>
           </div>
           <LineageSection beetle={beetle} beetles={beetles} />
-          {/* 履歴などのコンテンツ */}
+
+          {/* Photo Gallery Section */}
+          <div className="space-y-3">
+            <div className="flex justify-between items-center px-1">
+              <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest flex items-center gap-2">
+                <Camera size={12} /> Photo Gallery
+              </p>
+              <label className="cursor-pointer bg-white/5 hover:bg-white/10 p-2 rounded-xl transition-colors border border-white/10 shadow-sm">
+                <Plus size={16} className={currentAccent.text} />
+                <input type="file" multiple accept="image/*" className="hidden" onChange={handleAddPhotos} />
+              </label>
+            </div>
+            
+            <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar min-h-[120px]">
+              {(beetle.images && beetle.images.length > 0) ? (
+                beetle.images.map((img, idx) => (
+                  <div key={idx} className="relative shrink-0 animate-in zoom-in duration-300">
+                    <img 
+                      src={img} 
+                      alt={`Beetle ${idx}`} 
+                      className="w-28 h-28 object-cover rounded-2xl border border-white/10 shadow-lg cursor-pointer"
+                      onClick={() => onOpenLightbox(img)}
+                    />
+                    <button 
+                      onClick={() => handleDeletePhoto(idx)}
+                      className="absolute -top-1 -right-1 bg-rose-500 text-white p-1 rounded-full shadow-lg border border-white/20 active:scale-90"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="w-full h-28 border-2 border-dashed border-white/5 rounded-3xl flex flex-col items-center justify-center text-white/20 italic gap-2">
+                  <ImageIcon size={24} opacity={0.3} />
+                  <span className="text-[10px]">No Photos</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* History & New Record Form */}
+          <div className="space-y-6 pt-4">
+             {/* Charts */}
+             {beetle.records && beetle.records.length > 0 && (
+               <div className="bg-white/5 p-5 rounded-[2rem] border border-white/10 shadow-inner">
+                 <p className="text-[10px] font-black text-amber-400/60 uppercase tracking-widest mb-4 flex items-center gap-2"><Scale size={12}/> Growth Chart</p>
+                 <div className="h-48 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={beetle.records}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+                        <XAxis dataKey="date" fontSize={8} stroke="rgba(255,255,255,0.3)" />
+                        <YAxis yId="left" fontSize={8} stroke="rgba(255,255,255,0.3)" unit="g" />
+                        <Tooltip contentStyle={{ backgroundColor: 'rgba(2, 44, 34, 0.9)', border: 'none', borderRadius: '12px', fontSize: '10px', backdropFilter: 'blur(8px)' }} />
+                        <Line yId="left" type="monotone" dataKey="weight" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#fbbf24', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                 </div>
+               </div>
+             )}
+
+             {/* Add Record Form */}
+             <div className="bg-white/5 p-6 rounded-[2.5rem] border border-white/10 shadow-inner space-y-5">
+               <div className="flex justify-between items-center px-1">
+                 <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest">New Record</p>
+                 <button onClick={() => onAddRecord(beetle.id)} className={`px-5 py-2 rounded-xl font-black text-[10px] bg-emerald-500 text-white shadow-lg active:scale-95 transition-all`}>記録を保存</button>
+               </div>
+
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
+                    <p className="text-[8px] text-white/40 font-black uppercase mb-1">Date</p>
+                    <input type="date" className="w-full bg-transparent text-sm font-bold outline-none text-white" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
+                  </div>
+                  <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-[8px] text-white/40 font-black uppercase mb-1">Weight (g)</p>
+                      <input type="number" step="0.1" className="w-full bg-transparent text-sm font-bold outline-none text-white" value={newWeight} onChange={e => setNewWeight(e.target.value)} placeholder="0.0" />
+                    </div>
+                  </div>
+               </div>
+
+               {/* ロール式（チップ）選択: ステージ */}
+               <div className="space-y-2">
+                 <p className="text-[8px] text-white/40 font-black uppercase ml-1">Current Stage</p>
+                 <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+                   {['L1', 'L2', 'L3', 'Pupa', 'Adult'].map(s => (
+                     <button key={s} onClick={() => setNewLog({...newLog, stage: s})} className={`shrink-0 px-4 py-2 rounded-xl text-[10px] font-black border transition-all ${newLog.stage === s ? 'bg-emerald-500 border-emerald-400 text-white' : 'bg-white/5 border-white/10 text-white/30'}`}>{s}</button>
+                   ))}
+                 </div>
+               </div>
+             </div>
+
+             {/* History List */}
+             <div className="space-y-3 pb-8">
+               <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest ml-1">Timeline Logs</p>
+               {beetle.records && beetle.records.length > 0 ? (
+                 [...beetle.records].reverse().map(rec => (
+                   <div key={rec.id} className="bg-white/5 border border-white/10 p-5 rounded-[2rem] flex justify-between items-center group relative overflow-hidden">
+                     <div className="relative z-10">
+                       <div className="flex items-center gap-3 mb-1">
+                         <span className="text-[10px] font-black text-emerald-400">{rec.date}</span>
+                         <span className="text-[8px] px-2 py-0.5 bg-white/10 rounded-md font-bold uppercase tracking-tighter border border-white/5">{rec.stage}</span>
+                       </div>
+                       <p className="text-sm font-black text-white/90">
+                         {rec.weight ? `${rec.weight}g` : '計測なし'} 
+                         <span className="text-[10px] text-white/30 font-medium ml-3 italic">{rec.substrate || 'マット未設定'}</span>
+                       </p>
+                     </div>
+                     <button onClick={() => onDeleteRecord(beetle.id, rec.id)} className="p-2 text-rose-400/30 hover:text-rose-400 transition-all active:scale-90"><Trash2 size={16}/></button>
+                   </div>
+                 ))
+               ) : (
+                 <div className="py-12 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
+                    <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest italic">No Timeline Found</p>
+                 </div>
+               )}
+             </div>
+          </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+export const LightboxModal = ({ image, onClose }) => {
+  if (!image) return null;
+  return (
+    <div 
+      className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300"
+      onClick={onClose}
+    >
+      <button 
+        onClick={onClose}
+        className="absolute top-6 right-6 text-white/60 hover:text-white transition-colors p-2 z-[110]"
+      >
+        <X size={32} />
+      </button>
+      <img 
+        src={image} 
+        alt="Enlarged" 
+        className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in duration-300"
+        onClick={e => e.stopPropagation()}
+      />
     </div>
   );
 };
@@ -70,15 +309,15 @@ export const BeetleDetailModal = ({
 export const EmergenceModal = ({ isOpen, onClose, formData, setFormData, onSubmit }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end" onClick={onClose}>
-      <div className="bg-white w-full rounded-t-3xl p-6" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-black text-emerald-800">羽化報告</h2>
-          <button onClick={onClose}><X size={24} /></button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[70] flex items-end overscroll-none" onClick={onClose}>
+      <div className="bg-[#022c22]/90 backdrop-blur-3xl w-full rounded-t-[3rem] p-8 border-t border-white/20 shadow-2xl text-white animate-in slide-in-from-bottom duration-500 max-h-[80dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-black text-emerald-400">羽化報告</h2>
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><X size={28} /></button>
         </div>
-        <div className="space-y-4">
-          <input type="date" className="w-full border p-3 rounded-xl" value={formData.emergenceDate} onChange={e => setFormData({...formData, emergenceDate: e.target.value})} />
-          <button onClick={onSubmit} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black">羽化を記録</button>
+        <div className="space-y-6">
+          <input type="date" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-lg font-bold text-white outline-none focus:ring-2 focus:ring-emerald-500" value={formData.emergenceDate} onChange={e => setFormData({...formData, emergenceDate: e.target.value})} />
+          <button onClick={onSubmit} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white py-5 rounded-[2rem] font-black text-lg shadow-lg active:scale-95 transition-all">羽化を記録</button>
         </div>
       </div>
     </div>
@@ -88,15 +327,15 @@ export const EmergenceModal = ({ isOpen, onClose, formData, setFormData, onSubmi
 export const DeathModal = ({ isOpen, onClose, formData, setFormData, onSubmit }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end" onClick={onClose}>
-      <div className="bg-white w-full rounded-t-3xl p-6" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-black text-rose-800">死亡・★報告</h2>
-          <button onClick={onClose}><X size={24} /></button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[70] flex items-end overscroll-none" onClick={onClose}>
+      <div className="bg-[#1a0a0a]/90 backdrop-blur-3xl w-full rounded-t-[3rem] p-8 border-t border-white/20 shadow-2xl text-white animate-in slide-in-from-bottom duration-500 max-h-[80dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-black text-rose-400">死亡・★報告</h2>
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><X size={28} /></button>
         </div>
-        <div className="space-y-4">
-          <input type="date" className="w-full border p-3 rounded-xl" value={formData.deathDate} onChange={e => setFormData({...formData, deathDate: e.target.value})} />
-          <button onClick={onSubmit} className="w-full bg-rose-600 text-white py-4 rounded-2xl font-black">記録してアーカイブ</button>
+        <div className="space-y-6">
+          <input type="date" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-lg font-bold text-white outline-none focus:ring-2 focus:ring-rose-500" value={formData.deathDate} onChange={e => setFormData({...formData, deathDate: e.target.value})} />
+          <button onClick={onSubmit} className="w-full bg-gradient-to-r from-rose-700 to-rose-600 text-white py-5 rounded-[2rem] font-black text-lg shadow-lg active:scale-95 transition-all">記録してアーカイブ</button>
         </div>
       </div>
     </div>
@@ -106,20 +345,20 @@ export const DeathModal = ({ isOpen, onClose, formData, setFormData, onSubmit })
 export const StatGraphModal = ({ info, onClose, viewMode, setViewMode, sortConfig, setSortConfig, beetles, onSelectBeetle }) => {
   if (!info) return null;
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-white w-full max-w-lg rounded-3xl overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <div className="p-6 border-b flex justify-between items-center bg-slate-50">
-          <h3 className="font-black text-slate-800">{info.title}</h3>
-          <button onClick={onClose}><X size={24} /></button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-center justify-center p-4 overscroll-none" onClick={onClose}>
+      <div className="bg-white/10 backdrop-blur-2xl w-full max-w-lg rounded-[2.5rem] overflow-hidden flex flex-col max-h-[90dvh] border border-white/20 shadow-2xl overscroll-contain" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5 backdrop-blur-md">
+          <h3 className="font-black text-white tracking-tight">{info.title}</h3>
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><X size={28} /></button>
         </div>
-        <div className="p-6 overflow-y-auto">
+        <div className="p-6 overflow-y-auto text-white">
           <div className="h-64 w-full mb-6">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={info.data}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" hide />
-                <YAxis unit={info.unit} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="name" hide stroke="rgba(255,255,255,0.4)" />
+                <YAxis unit={info.unit} stroke="rgba(255,255,255,0.4)" fontSize={10} />
+                <Tooltip contentStyle={{ backgroundColor: 'rgba(2, 44, 34, 0.9)', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '11px' }} />
                 <Bar dataKey="value" fill={info.color} radius={[4, 4, 0, 0]}>
                   {info.data.map((entry, index) => (
                     <Cell key={`cell-${index}`} onClick={() => onSelectBeetle(entry.name)} cursor="pointer" />
@@ -130,8 +369,8 @@ export const StatGraphModal = ({ info, onClose, viewMode, setViewMode, sortConfi
           </div>
           <div className="space-y-2">
             {info.data.map((item, i) => (
-              <div key={i} className="flex justify-between p-3 bg-slate-50 rounded-xl text-xs font-bold" onClick={() => onSelectBeetle(item.name)}>
-                <span>{item.name}</span>
+              <div key={i} className="flex justify-between p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/5 text-xs font-black shadow-inner active:scale-95 transition-all cursor-pointer" onClick={() => onSelectBeetle(item.name)}>
+                <span className="text-white/80">{item.name}</span>
                 <span className="text-emerald-600">{item.value}{info.unit}</span>
               </div>
             ))}
@@ -145,32 +384,32 @@ export const StatGraphModal = ({ info, onClose, viewMode, setViewMode, sortConfi
 export const BatchRecordModal = ({ isOpen, onClose, selectedIds, targets, onToggle, onSelectAll, onClearAll, newLog, setNewLog, newTemp, setNewTemp, onFetchTemp, onSubmit }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end" onClick={onClose}>
-      <div className="bg-white w-full rounded-t-3xl max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
-          <h2 className="text-xl font-black text-emerald-800">一括交換記録</h2>
-          <button onClick={onClose}><X size={24} /></button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-end overscroll-none" onClick={onClose}>
+      <div className="bg-white/10 backdrop-blur-2xl w-full rounded-t-[3rem] max-h-[90dvh] overflow-y-auto border-t border-white/20 shadow-2xl flex flex-col overscroll-contain" onClick={e => e.stopPropagation()}>
+        <div className="p-8 border-b border-white/10 flex justify-between items-center sticky top-0 bg-white/5 backdrop-blur-md z-10">
+          <h2 className="text-xl font-black text-white tracking-tight">一括交換記録</h2>
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><X size={28} /></button>
         </div>
-        <div className="p-6 space-y-6">
+        <div className="p-8 space-y-8 text-white">
           <div className="grid grid-cols-2 gap-4">
-             <div className="bg-slate-50 p-3 rounded-xl">
-               <p className="text-[10px] text-slate-400 font-black mb-1">交換日</p>
-               <input type="date" className="w-full bg-transparent font-bold outline-none" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
+             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl shadow-inner focus-within:ring-2 focus-within:ring-emerald-500 transition-all">
+               <p className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest mb-1">交換日</p>
+               <input type="date" className="w-full bg-transparent font-bold outline-none text-white" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
              </div>
-             <div className="bg-slate-50 p-3 rounded-xl flex items-center justify-between">
+             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between shadow-inner focus-within:ring-2 focus-within:ring-emerald-500 transition-all">
                <div className="flex-1">
-                 <p className="text-[10px] text-slate-400 font-black mb-1">温度 (℃)</p>
-                 <input type="number" step="0.1" className="w-full bg-transparent font-bold outline-none" value={newTemp} onChange={e => setNewTemp(e.target.value)} />
+                 <p className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest mb-1">温度 (℃)</p>
+                 <input type="number" step="0.1" className="w-full bg-transparent font-bold outline-none text-white" value={newTemp} onChange={e => setNewTemp(e.target.value)} />
                </div>
-               <button onClick={() => onFetchTemp()} className="p-2 bg-white rounded-lg shadow-sm text-blue-500"><RefreshCw size={16} /></button>
+               <button onClick={() => onFetchTemp()} className="p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-blue-400"><RefreshCw size={18} /></button>
              </div>
           </div>
           <div className="space-y-2">
-            <p className="text-[10px] text-slate-400 font-black">対象個体 ({selectedIds.size} / {targets.length})</p>
+            <p className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest ml-1">対象個体 ({selectedIds.size} / {targets.length})</p>
             <div className="grid grid-cols-1 gap-2">
               {targets.map(t => (
-                <div key={t.id} onClick={() => onToggle(t.id)} className={`p-3 rounded-xl border flex justify-between items-center transition-all ${selectedIds.has(t.id) ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-100'}`}>
-                  <span className="text-sm font-bold">{t.name}</span>
+                <div key={t.id} onClick={() => onToggle(t.id)} className={`p-4 rounded-2xl border transition-all flex justify-between items-center cursor-pointer shadow-inner ${selectedIds.has(t.id) ? 'bg-emerald-500/20 border-emerald-500/50' : 'bg-white/5 border-white/10 opacity-60'}`}>
+                  <span className="text-sm font-black">{t.name}</span>
                   <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedIds.has(t.id) ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-200'}`}>
                     {selectedIds.has(t.id) && <X size={12} className="rotate-45" />}
                   </div>
@@ -178,7 +417,7 @@ export const BatchRecordModal = ({ isOpen, onClose, selectedIds, targets, onTogg
               ))}
             </div>
           </div>
-          <button onClick={onSubmit} className="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black shadow-lg">選択した個体に記録を反映</button>
+          <button onClick={onSubmit} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white py-5 rounded-[2rem] font-black text-lg shadow-[0_20px_40px_-10px_rgba(16,185,129,0.3)] active:scale-95 transition-all">選択した個体に記録を反映</button>
         </div>
       </div>
     </div>

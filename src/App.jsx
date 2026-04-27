@@ -23,7 +23,8 @@ import {
   StatGraphModal, 
   BatchRecordModal, 
   EmergenceModal, 
-  DeathModal 
+  DeathModal,
+  LightboxModal
 } from './BeetleModals.jsx';
 // 同様に他のモーダルもインポート...
 
@@ -46,11 +47,11 @@ const initialFormState = {
   name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: '', isDigOut: false,
   parentMaleId: '', parentFemaleId: '', hatchDate: '', emergenceDate: '', feedingStartDate: '', deathDate: '',
   setDate: '', substrate: '', containerSize: '', packingPressure: '', moisture: 3, cohabitation: 'No', archived: false, notes: '', adultSize: '', parentSpawnSetId: '',
-  count: 1, image: null
+  count: 1, images: []
 };
 
 const initialState = {
-  isLoggedIn: false,
+  isLoggedIn: true, // ログイン機能を削除するため、常にtrueとする
   userId: '',
   beetles: [],
   config: { labels: { Adult: '成虫', Larva: '幼虫', SpawnSet: '産卵セット', Pupa: '蛹' } },
@@ -84,6 +85,7 @@ const initialState = {
     emergence: null,
     death: null,
     statGraph: null,
+    lightbox: null,
     batchTargets: [],
     selectedBatchIds: new Set()
   },
@@ -112,13 +114,14 @@ const appReducer = (state, action) => {
     case ACTION_TYPES.UPDATE_FORM:
       return { ...state, form: { ...state.form, ...action.payload } };
     case ACTION_TYPES.OPEN_MODAL:
-      return { ...state, modals: { ...state.modals, [action.modal]: action.payload || true } };
+      return { ...state, modals: { ...state.modals, [action.modal]: action.payload || true }, ui: { ...state.ui, isFabMenuOpen: false } };
     case ACTION_TYPES.CLOSE_MODAL:
-      return { ...state, modals: { ...state.modals, [action.modal]: action.modal === 'detail' || action.modal === 'statGraph' ? null : false } };
-    case ACTION_TYPES.LOGIN:
-      return { ...state, isLoggedIn: true, userId: action.payload };
-    case ACTION_TYPES.LOGOUT:
-      return { ...state, isLoggedIn: false, userId: '', beetles: [], modals: { ...initialState.modals } };
+      return { ...state, modals: { ...state.modals, [action.modal]: action.modal === 'detail' || action.modal === 'statGraph' || action.modal === 'lightbox' ? null : false } };
+    // ログイン機能を削除するため、LOGIN/LOGOUTアクションは不要
+    // case ACTION_TYPES.LOGIN:
+    //   return { ...state, isLoggedIn: true, userId: action.payload };
+    // case ACTION_TYPES.LOGOUT:
+    //   return { ...state, isLoggedIn: false, userId: '', beetles: [], modals: { ...initialState.modals } };
     case ACTION_TYPES.SET_BATCH_TARGETS:
       return { ...state, modals: { ...state.modals, batchTargets: action.payload, selectedBatchIds: new Set(action.payload.map(t => t.id)) } };
     case ACTION_TYPES.TOGGLE_BATCH_SELECTION:
@@ -138,7 +141,7 @@ const App = () => {
   const isDataLoaded = useRef(false);
 
   // 入力補完用の派生データ
-  const existingNames = useMemo(() => Array.from(new Set(beetles.map(b => b.name).filter(Boolean))), [beetles]);
+  const existingNames = useMemo(() => Array.from(new Set(beetles.map(b => b.name).filter(Boolean))), [beetles]); // existingNames
   const existingSpecies = useMemo(() => Array.from(new Set(beetles.map(b => b.species).filter(Boolean))), [beetles]);
   const existingScientificNames = useMemo(() => Array.from(new Set(beetles.map(b => b.scientificName).filter(Boolean))), [beetles]);
   const existingLocalities = useMemo(() => Array.from(new Set(beetles.map(b => b.locality).filter(Boolean))), [beetles]);
@@ -175,7 +178,7 @@ const App = () => {
         payload: { 
           beetles: savedBeetles, 
           config: savedConfig,
-          isLoggedIn: (await getItem('beetle_is_logged_in', 'false')) === 'true', // IndexedDBから取得
+          isLoggedIn: true, // ログイン機能を削除するため、常にtrue
           ui: { ...state.ui, isInitialLoading: false, pushPermission: 'Notification' in window ? Notification.permission : 'unsupported' },
           userId: currentId,
         } 
@@ -271,13 +274,14 @@ const App = () => {
   }, [beetles, isLoggedIn, userId]);
 
   useEffect(() => {
-    setItem('beetle_is_logged_in', isLoggedIn);
-  }, [isLoggedIn]);
+    // ログイン機能を削除するため、isLoggedInの保存は不要
+    // setItem('beetle_is_logged_in', isLoggedIn);
+  }, []);
 
   // User IDの保存
   useEffect(() => {
-    setItem('beetle_user_id', userId || '');
-  }, [userId]);
+    setItem('beetle_user_id', userId || 'default_user'); // ログインなしの場合のデフォルトユーザーID
+  }, [userId]); // userId
 
   // Configの保存
   useEffect(() => { // config
@@ -389,8 +393,13 @@ const App = () => {
 
   // スワイプ更新ロジック
   const handleTouchStart = (e) => {
-    // モーダル表示中やリストが一番上にない時はリロード判定をスキップして不具合（固まる・閉じる）を防止
-    if (modals.detail || modals.form || modals.emergence || modals.death || modals.statGraph || modals.batch || window.scrollY !== 0) {
+    // 何らかのモーダルが開いているかチェック
+    const isAnyModalOpen = Object.values(modals).some(val => 
+      val === true || (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Set))
+    );
+
+    // モーダル表示中やリストが一番上にない時はリロード判定をスキップ
+    if (isAnyModalOpen || window.scrollY !== 0) {
       dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { touchStart: null } });
       return;
     }
@@ -417,83 +426,21 @@ const App = () => {
     dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { touchStart: null, pullOffset: 0 } });
   };
 
+  // モーダル表示時にボディのスクロールをロックする
+  useEffect(() => {
+    const isAnyModalOpen = Object.values(modals).some(val => 
+      val === true || (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Set))
+    );
+    
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [modals]);
+
   const handleFetchSbTemperature = (targetId = null) => {
     fetchSbTemperature(targetId, (temp) => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { newTemp: temp.toString() } })); // form.newTemp
-  };
-
-  const openFormWithStatus = (status) => {
-    dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: { ...initialFormState, status }, isEditing: false } });
-    dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' });
-  };
-
-  const handleEmergenceSubmit = () => {
-    const { data } = form;
-    if (!data.emergenceDate) return alert('羽化日を入力してください');
-    const updatedBeetles = beetles.map(b => {
-      if (b.id === data.id) {
-        return {
-          ...b,
-          status: 'Adult',
-          emergenceDate: data.emergenceDate,
-          feedingStartDate: data.feedingStartDate,
-          gender: data.gender,
-          adultSize: data.adultSize,
-          isDigOut: data.isDigOut,
-          archived: false, // 羽化したらアーカイブ解除
-        };
-      }
-      return b;
-    });
-    dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: updatedBeetles });
-    dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'emergence' });
-    dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'detail' });
-    dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: initialFormState } });
-  };
-
-  const handleDeathSubmit = () => {
-    const { data } = form;
-    if (!data.deathDate) return alert('死亡日を入力してください');
-    const updatedBeetles = beetles.map(b => b.id === data.id ? { ...b, deathDate: data.deathDate, archived: true } : b);
-    dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: updatedBeetles });
-    dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'death' });
-    dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'detail' });
-    dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: initialFormState } });
-  };
-
-  const handleSaveBeetle = () => {
-    const { data, isEditing } = form;
-    if (!data.name || !data.species) return alert('管理名と種類は必須入力です');
-
-    let updatedBeetles;
-    if (isEditing) {
-      updatedBeetles = beetles.map(b => b.id === data.id ? { ...data } : b);
-      // 詳細表示中の個体であれば更新
-      if (modals.detail?.id === data.id) {
-        dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: { ...data } });
-      }
-    } else {
-      const newItems = [];
-      const baseId = Date.now();
-      for (let i = 0; i < (data.count || 1); i++) {
-        const suffix = (data.count > 1) ? `-${String(i + 1).padStart(2, '0')}` : '';
-        newItems.push({
-          ...data,
-          id: (baseId + i).toString(),
-          name: data.name + suffix,
-          records: [], tasks: []
-        });
-      }
-      updatedBeetles = [...beetles, ...newItems];
-    }
-
-    dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: updatedBeetles });
-    dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'form' });
-    dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: initialFormState, isEditing: false } });
-  };
-
-  const startEditBeetle = (beetle) => {
-    dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: { ...beetle }, isEditing: true } });
-    dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' });
   };
 
   // プッシュ通知の権限リクエスト
@@ -535,29 +482,6 @@ const App = () => {
     alert(`${modals.selectedBatchIds.size}頭の一括記録を完了しました。`);
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!userId || !userId.trim()) return alert('ユーザーIDを入力してください');
-    
-    // ユーザー別のデータをロード
-    try {
-      // IndexedDBからデータをロード
-      const parsedBeetles = await getItem(`beetle_pwa_data_${userId}`, []);
-      dispatch({ type: ACTION_TYPES.LOGIN, payload: userId });
-      dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: Array.isArray(parsedBeetles) ? parsedBeetles : [] });
-      isDataLoaded.current = true;
-    } catch (err) {
-      console.error("Login error:", err);
-      dispatch({ type: ACTION_TYPES.LOGIN, payload: userId });
-    }
-  };
-
-  const handleLogout = () => {
-    if (window.confirm('ログアウトしますか？（データはブラウザに保存されたままになります）')) {
-      dispatch({ type: ACTION_TYPES.LOGOUT });
-    }
-  };
-
   const revertStatus = (beetle) => {
     if (!window.confirm('処理を前の段階に戻しますか？入力された日付やサイズ情報はクリアされます。')) return;
     const updatedBeetles = beetles.map(b => {
@@ -578,6 +502,14 @@ const App = () => {
     });
     dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: updatedBeetles }); // beetlesを更新
     dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: updatedBeetles.find(b => b.id === beetle.id) }); // 詳細モーダルも更新
+  };
+
+  const handleUpdateBeetleImages = (id, images) => {
+    const updated = beetles.map(b => b.id === id ? { ...b, images } : b);
+    dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: updated });
+    if (modals.detail?.id === id) {
+      dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: { ...modals.detail, images } });
+    }
   };
 
   const toggleTask = (beetleId, taskId) => {
@@ -656,38 +588,6 @@ const App = () => {
     }});
   };
 
-  // ログイン画面のコンポーネント
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-emerald-900 flex items-center justify-center p-6">
-        <div className="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-500">
-          <div className="flex flex-col items-center mb-8">
-            <img src={logoImg} alt="BeetleLog" className="w-24 h-24 object-contain mb-4" />
-            <h1 className="text-3xl font-black text-emerald-800">BeetleLog</h1>
-            <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">Management System</p>
-          </div>
-          
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-slate-400 uppercase ml-1">ユーザーID (識別名)</label>
-              <div className="flex items-center gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <User size={20} className="text-emerald-700" />
-                <input
-                  value={userId}
-                  onChange={(e) => dispatch({ type: ACTION_TYPES.SET_DATA, payload: { userId: e.target.value } })}
-                  placeholder="IDを入力..."
-                  className="text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
-                  required
-                />
-              </div>
-            </div>
-            <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all">ログイン</button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   return ( // ui.isOnlineはuseSwitchBotからではなく、Appのuiステートから取得
     <>
       <div className="min-h-screen bg-slate-50 pb-32 font-sans" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
@@ -727,9 +627,9 @@ const App = () => {
             </h1>
             <div className="flex items-center gap-1.5">
               <div className="flex gap-1.5 border-r border-slate-100 pr-2 mr-1">
-                <button onClick={() => openFormWithStatus('Adult')} className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">成</button>
-                <button onClick={() => openFormWithStatus('Larva')} className="w-8 h-8 bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">幼</button>
-                <button onClick={() => openFormWithStatus('SpawnSet')} className="w-8 h-8 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center font-black text-xs shadow-sm active:scale-90 transition-all">産</button>
+                <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: { ...initialFormState, status: 'Adult' }, isEditing: false } }) && dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' })} className="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center font-black text-[10px] border border-emerald-500/30 active:scale-90 transition-all">成</button>
+                <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: { ...initialFormState, status: 'Larva' }, isEditing: false } }) && dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' })} className="w-8 h-8 bg-amber-500/20 text-amber-400 rounded-lg flex items-center justify-center font-black text-[10px] border border-amber-500/30 active:scale-90 transition-all">幼</button>
+                <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: { ...initialFormState, status: 'SpawnSet' }, isEditing: false } }) && dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' })} className="w-8 h-8 bg-rose-500/20 text-rose-400 rounded-lg flex items-center justify-center font-black text-[10px] border border-rose-500/30 active:scale-90 transition-all">産</button>
               </div>
               <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'settings' } })} className={`p-1.5 rounded-xl transition-colors ${ui.activeTab === 'settings' ? 'bg-white/10 text-emerald-400' : 'text-white/30'}`}> {/* ui.activeTabを参照 */}
                 <Settings size={22} />
@@ -1222,26 +1122,35 @@ const App = () => {
 
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase ml-1">SwitchBotデバイス設定</label>
-                  <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 mt-2">
-                    <p className="text-[10px] text-slate-400 font-bold mb-1">温湿度計の選択</p>
-                    <div className="flex gap-2 items-center">
-                      <select // selectedSbDeviceId, availableSbDevicesはuseSwitchBotから取得
-                        value={selectedSbDeviceId}
-                        onChange={(e) => setSelectedSbDeviceId(e.target.value)}
-                        className="flex-1 text-base font-bold bg-transparent border-none focus:ring-0 w-full text-slate-800"
-                    disabled={isFetchingSbDevices}
-                      >
-                        <option value="">デバイスを選択してください</option>
-                        {availableSbDevices.map(device => (
-                          <option key={device.deviceId} value={device.deviceId}>
-                            {device.deviceName} ({device.deviceType})
-                          </option>
-                        ))}
-                      </select>
-                  <button onClick={fetchSbDevices} className={`p-1.5 rounded-lg transition-colors ${isFetchingSbDevices ? "text-emerald-400 animate-spin" : "text-white/50 hover:text-emerald-400"} border border-white/10 shadow-sm`} title="デバイスリストを更新">
+                  <div className="bg-white/5 backdrop-blur-md p-4 rounded-3xl border border-white/10 mt-2 shadow-inner">
+                    <div className="flex justify-between items-center mb-3 px-1">
+                      <p className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest">温湿度計の選択</p>
+                      <button onClick={fetchSbDevices} className={`p-1.5 rounded-lg transition-colors ${isFetchingSbDevices ? "text-emerald-400 animate-spin" : "text-white/40 hover:text-emerald-400"}`} title="デバイスリストを更新">
                         <RefreshCw size={18} />
                       </button>
                     </div>
+                    
+                    <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar pr-1">
+                      {availableSbDevices.length === 0 ? (
+                        <p className="text-[10px] text-white/20 text-center py-4 italic">デバイスが見つかりません</p>
+                      ) : (
+                        availableSbDevices.map(device => (
+                          <button
+                            key={device.deviceId}
+                            onClick={() => setSelectedSbDeviceId(device.deviceId)}
+                            className={`w-full p-4 rounded-2xl border text-left transition-all flex justify-between items-center ${
+                              selectedSbDeviceId === device.deviceId
+                                ? 'bg-emerald-500/20 border-emerald-500/50 text-white shadow-inner'
+                                : 'bg-white/5 border-white/10 text-white/30'
+                            }`}
+                          >
+                            <span className="text-sm font-bold">{device.deviceName}</span>
+                            <span className="text-[9px] opacity-40 uppercase tracking-tighter">{device.deviceType}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                    
                     <p className="text-[9px] text-slate-400 px-1">
                       ※ APIキーはブラウザにのみ保存されます。
                     </p>
@@ -1293,7 +1202,7 @@ const App = () => {
                 </div>
 
                 <div className="pt-2 border-t border-slate-50">
-                  <button onClick={handleLogout} className="w-full text-left p-2 text-sm text-rose-600 flex items-center justify-between hover:bg-rose-50 rounded-lg transition-colors">
+                  <button onClick={() => { if (window.confirm('ログアウトしますか？（データはブラウザに保存されたままになります）')) { dispatch({ type: ACTION_TYPES.LOGOUT }); } }} className="w-full text-left p-2 text-sm text-rose-600 flex items-center justify-between hover:bg-rose-50 rounded-lg transition-colors">
                     <div className="flex items-center gap-3">
                       <X size={18} />
                       <span className="font-bold">ログアウト</span>
@@ -1400,6 +1309,8 @@ const App = () => {
         onDeath={(b) => { dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: b } }); dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'death' }); }}
         onRevert={revertStatus}
         onDelete={deleteBeetle}
+        onUpdateImages={handleUpdateBeetleImages}
+        onOpenLightbox={(img) => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'lightbox', payload: img })}
         newWeight={form.newWeight}
         setNewWeight={(val) => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { newWeight: val } })}
         newTemp={form.newTemp}
@@ -1446,6 +1357,11 @@ const App = () => {
         setNewTemp={(val) => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { newTemp: val } })}
         onFetchTemp={fetchSbTemperature}
         onSubmit={handleBatchRecordSubmit}
+      />
+
+      <LightboxModal
+        image={modals.lightbox}
+        onClose={() => dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'lightbox' })}
       />
 
       <EmergenceModal

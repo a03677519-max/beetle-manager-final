@@ -1,4 +1,14 @@
 export const CATEGORIES = {
+export const calculateDaysBetweenDates = (startDate, endDate) => {
+  if (!startDate || !endDate) return null;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start) || isNaN(end)) return null;
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+export const CATEGORIES = {
   Adults: '成虫',
   Larvae: '幼虫',
   SpawnSets: '産卵セット',
@@ -19,6 +29,21 @@ export const getStatSummary = (arr) => {
     min: Math.min(...values).toFixed(1),
     max: Math.max(...values).toFixed(1)
   };
+};
+
+export const calculateLarvalPeriodDays = (beetle) => {
+  if (!beetle.hatchDate) return null;
+  const startDate = beetle.hatchDate;
+  // 羽化日が設定されていればそれまで、そうでなければ今日まで
+  const endDate = beetle.emergenceDate || new Date().toISOString().split('T')[0];
+  return calculateDaysBetweenDates(startDate, endDate);
+};
+
+export const calculateAdultLifespanDays = (beetle) => {
+  if (!beetle.emergenceDate) return null;
+  const startDate = beetle.emergenceDate;
+  const endDate = beetle.deathDate || new Date().toISOString().split('T')[0]; // 死亡日が設定されていなければ今日まで
+  return calculateDaysBetweenDates(startDate, endDate);
 };
 
 export const getAutoTasks = (beetle) => {

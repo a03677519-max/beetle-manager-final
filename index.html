@@ -22,6 +22,16 @@
         e.preventDefault(); // iOSのジェスチャーによるズームを禁止
       });
 
+      // 入力フィールドにフォーカスした際、キーボードで隠れないようにスクロール
+      document.addEventListener('focusin', (e) => {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+          // OS側のキーボード表示アニメーションを待機してから、中央にスクロール
+          setTimeout(() => {
+            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 300);
+        }
+      });
+
       // 入力フォームからフォーカスが外れた際に、画面のズレや余計な余白をリセット
       document.addEventListener('focusout', () => {
         window.scrollTo(0, 0);
