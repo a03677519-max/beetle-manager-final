@@ -199,7 +199,7 @@ const App = () => {
         isGuideline: false
       };
     }
-    return { content: "データなし", isGuideline: false };
+    return { content: "記録なし", isGuideline: false };
   };
 
   // 並べ替えハンドラ
@@ -789,27 +789,27 @@ const App = () => {
                     <div 
                       key={beetle.id} 
                       onClick={() => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: beetle })}
-                      className="bg-slate-900/40 backdrop-blur-2xl border border-white/20 rounded-[2.5rem] p-6 shadow-2xl active:scale-[0.98] transition-all relative overflow-hidden group cursor-pointer" // 視認性向上
+                      className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[2.5rem] p-6 shadow-2xl active:scale-[0.98] transition-all relative overflow-hidden group cursor-pointer" // 背景を少し明るくし、視認性向上
                     >
                       {/* グラデーションオーバーレイ */}
                       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-50" />
                       <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 group-hover:animate-[sweep_3s_infinite]" />
                       
                       <div className="flex gap-4 items-start relative z-10">
-                        <div className={`w-20 h-20 rounded-[1.8rem] flex items-center justify-center shrink-0 border shadow-lg transition-transform group-hover:scale-105 duration-500 ${ // アイコンサイズ調整
+                        <div className={`w-20 h-20 rounded-[1.8rem] flex items-center justify-center shrink-0 border shadow-lg transition-transform group-hover:scale-105 duration-500 ${
                           beetle.status === 'Larva' ? 'bg-amber-500/20 border-amber-500/30 shadow-amber-500/10' : 
                           beetle.status === 'Adult' ? 'bg-emerald-500/20 border-emerald-500/30 shadow-emerald-500/10' :
                           'bg-rose-500/20 border-rose-500/30 shadow-rose-500/10'
                         }`}>
-                          {beetle.status === 'Larva' ? <Activity className="text-amber-400" size={32} /> : // アイコンサイズ調整
-                           beetle.status === 'SpawnSet' ? <Egg className="text-rose-400" size={32} /> : // アイコンサイズ調整
-                           <Bug className="text-emerald-400" size={32} />} // アイコンサイズ調整
+                          {beetle.status === 'Larva' ? <Activity className="text-amber-400" size={32} /> : 
+                           beetle.status === 'SpawnSet' ? <Egg className="text-rose-400" size={32} /> :
+                           <Bug className="text-emerald-400" size={32} />}
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-1"> // テキストコントラスト調整
-                            <h3 className="text-2xl font-black truncate pr-2 text-white tracking-tighter leading-tight">{beetle.name}</h3> // テキストコントラスト調整
-                            <span className={`text-[7px] font-black px-2 py-1 rounded-lg uppercase tracking-widest border backdrop-blur-md ${
+                          <div className="flex justify-between items-start mb-1">
+                            <h3 className="text-2xl font-black truncate pr-2 text-white tracking-tighter leading-tight">{beetle.name}</h3>
+                            <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase tracking-wide border backdrop-blur-md ${ // フォントサイズとトラッキング調整
                               beetle.status === 'Larva' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
                               beetle.status === 'Adult' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
                               'bg-rose-500/10 text-rose-400 border-rose-500/30'
@@ -817,20 +817,20 @@ const App = () => {
                               {config.labels[beetle.status]}
                             </span>
                           </div>
-                          <p className="text-xs font-bold text-white/70 truncate mb-5 italic">{beetle.species}</p> // テキストコントラスト調整
+                          <p className="text-sm font-bold text-white/90 truncate mb-5 italic">{beetle.species}</p> {/* フォントサイズとコントラスト調整 */}
                           
                           <div className="flex flex-wrap gap-2">
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 flex items-center gap-1.5">
                               <Search size={10} className="text-white/30" />
-                              <span className="text-[10px] font-black text-white/80">{beetle.locality || '-'}</span>
+                              <span className="text-xs font-black text-white">産地: {beetle.locality || '-'}</span> {/* 日本語表記とフォントサイズ調整 */}
                             </div>
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 flex items-center gap-1.5">
                               <Crown size={10} className="text-white/30" />
-                              <span className="text-[10px] font-black text-white/80">{beetle.generation || '-'}</span>
+                              <span className="text-xs font-black text-white">累代: {beetle.generation || '-'}</span> {/* 日本語表記とフォントサイズ調整 */}
                             </div>
                             <div className="bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20 flex items-center gap-1.5 ml-auto">
                               <Scale size={10} className="text-emerald-400" />
-                              <span className="text-[10px] font-black text-emerald-400">{beetle.records?.length > 0 ? `${beetle.records[beetle.records.length-1].weight}g` : '-'}</span>
+                              <span className="text-xs font-black text-emerald-400">最終記録: {beetle.records?.length > 0 ? `${beetle.records[beetle.records.length-1].weight}g` : '-'}</span> {/* 日本語表記とフォントサイズ調整 */}
                             </div>
                           </div>
                         </div>
@@ -990,9 +990,10 @@ const App = () => {
                         onDrop={() => onDropSb(idx)}
                         onPointerDown={handleDraggablePointerDown}
                         onContextMenu={(e) => e.preventDefault()}
-                        className={`space-y-2 p-3 rounded-2xl transition-all relative select-none touch-action-pan-y ${
-                          ui.isSortingMode ? 'animate-wiggle ring-2 ring-blue-500/30 ring-offset-1 bg-blue-50/30 touch-action-none' : 'bg-slate-50/50'
+                        className={`space-y-2 p-3 rounded-2xl transition-all relative select-none ${
+                          ui.isSortingMode ? 'animate-wiggle ring-2 ring-blue-500/30 ring-offset-1 bg-blue-50/30 touch-action-none' : 'bg-slate-50/50 touch-action-pan-y'
                         } ${isDragging ? 'opacity-30 scale-95 border-2 border-dashed border-slate-200' : ''}`}
+                        style={{ WebkitUserDrag: 'none', WebkitTouchCallout: 'none' }}
                       >
                         <div className="flex justify-between items-center px-1">
                           <p className="text-sm font-black text-slate-700 uppercase">{device.deviceName}</p>
@@ -1094,9 +1095,10 @@ const App = () => {
                                 onDrop: () => onDrop(idx),
                                 onPointerDown: handlePointerDown,
                                 onContextMenu: (e) => e.preventDefault(),
-                                className: `p-3 rounded-xl text-left transition-all relative select-none touch-action-pan-y ${
-                                  ui.isSortingMode ? 'animate-wiggle ring-2 ring-emerald-500/30 ring-offset-1 touch-action-none' : 'active:scale-95'
-                                } ${isDragging ? 'opacity-30 border-2 border-dashed border-slate-300 shadow-inner' : ''}`
+                                className: `p-3 rounded-xl text-left transition-all relative select-none ${
+                                  ui.isSortingMode ? 'animate-wiggle ring-2 ring-emerald-500/30 ring-offset-1 touch-action-none' : 'active:scale-95 touch-action-pan-y'
+                                } ${isDragging ? 'opacity-30 border-2 border-dashed border-slate-300 shadow-inner' : ''}`,
+                                style: { WebkitUserDrag: 'none', WebkitTouchCallout: 'none' }
                               };
 
                               switch (key) {
@@ -1146,7 +1148,6 @@ const App = () => {
                                 const guide = getGuide(group);
                                 return (
                                   <span className="flex items-start gap-1.5">
-                                    {guide.isGuideline && <span className="shrink-0 bg-emerald-200 text-emerald-700 text-[8px] font-black px-1 rounded-sm mt-0.5 border border-emerald-300/50">目安</span>}
                                     <span>{guide.content}</span>
                                   </span>
                                 );
