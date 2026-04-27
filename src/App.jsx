@@ -14,6 +14,7 @@ import {
   getAutoTasks, 
   getStatSummary, 
   CATEGORIES 
+} from './beetleUtils.js';
 from './beetleUtils.js';
 import BeetleFormModal from './BeetleFormModal.jsx';
 import { useSwitchBot } from './useSwitchBot.js';
