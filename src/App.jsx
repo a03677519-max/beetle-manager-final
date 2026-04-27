@@ -199,7 +199,7 @@ const App = () => {
         isGuideline: false
       };
     }
-    return { content: "記録なし", isGuideline: false };
+    return { content: "データなし", isGuideline: false };
   };
 
   // 並べ替えハンドラ
@@ -836,10 +836,8 @@ const App = () => {
                             </div>
                           </div>
                         </div>
-                      </div>
+                      ))}
                     </div>
-                        ))}
-                      </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-24 px-4 text-center animate-in fade-in zoom-in duration-700">
                         <div className="relative mb-10">
