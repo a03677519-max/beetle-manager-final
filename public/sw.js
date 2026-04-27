@@ -29,22 +29,22 @@ self.addEventListener('activate', (event) => {
 
 // ネットワークリクエストのインターセプト
 self.addEventListener('fetch', (event) => {
-  // APIリクエストなどはキャッシュせずネットワークを優先（必要に応じて調整）
-  if (event.request.url.includes('/api/')) {
+  // http/https 以外のリクエスト（chrome-extension等）や APIリクエストを除外
+  if (!event.request.url.startsWith('http') || event.request.url.includes('/api/')) {
     return;
   }
 
   event.respondWith(
     caches.match(event.request).then((response) => {
-      // キャッシュがあればそれを返し、なければネットワークから取得
       return response || fetch(event.request).then((networkResponse) => {
-        // 取得したリソースをキャッシュに追加しながら返す
-        return caches.open(CACHE_NAME).then((cache) => {
-          if (event.request.method === 'GET') {
-            cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        });
+        // 正常なGETレスポンスのみキャッシュに保存
+        if (event.request.method === 'GET' && networkResponse && networkResponse.status === 200) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return networkResponse;
       });
     }).catch(() => {
       // オフラインかつキャッシュもない場合のフォールバック（例：index.htmlを返す）
