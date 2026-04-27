@@ -293,11 +293,21 @@ export const BeetleDetailModal = ({
                 <>
                   <InfoRow label="羽化日" value={`${beetle.emergenceDate || '-'} ${beetle.isDigOut ? '(掘出)' : '(羽化確認)'}`} />
                   <InfoRow label="後食開始" value={beetle.feedingStartDate} />
-                  {larvalPeriodDays && <InfoRow label="幼虫期間" value={`${larvalPeriodDays} 日`} />}
-                  {beetle.emergenceDate && beetle.hatchDate && (
-                    <InfoRow label="羽化まで" value={`${calculateDaysBetweenDates(beetle.hatchDate, beetle.emergenceDate)} 日`} />
-                  )}
-
+                  <div className="mt-2 p-3 bg-white/5 rounded-xl border border-white/5">
+                    <p className="text-[9px] text-emerald-400/60 font-black uppercase mb-1">幼虫時データ要約</p>
+                    <p className="text-[10px] text-white/80 leading-relaxed">
+                      孵化から羽化まで {beetle.hatchDate && beetle.emergenceDate ? calculateDaysBetweenDates(beetle.hatchDate, beetle.emergenceDate) : '?'} 日で推移。
+                      最大体重: {beetle.records?.length > 0 ? Math.max(...beetle.records.map(r => r.weight || 0)) : '-'}g
+                    </p>
+                  </div>
+                </>
+              )}
+              {beetle.status === 'Larva' && beetle.emergenceDate && (
+                <div className="mt-2 p-3 bg-white/5 rounded-xl border border-amber-500/20">
+                  <p className="text-[9px] text-amber-400/60 font-black uppercase mb-1">羽化まであと何日（目安）</p>
+                  <p className="text-[10px] text-white/80">
+                    羽化まであと <span className="text-amber-400 font-black">{calculateDaysBetweenDates(new Date().toISOString().split('T')[0], beetle.emergenceDate)}</span> 日（予定）
+                  </p>
                 </>
               )}
               {beetle.status === 'SpawnSet' && (
@@ -365,15 +375,19 @@ export const BeetleDetailModal = ({
              {/* Charts */}
              {beetle.records && beetle.records.length > 0 && (
                <div className="bg-white/5 p-5 rounded-[2rem] border border-white/10 shadow-inner">
-                 <p className="text-[10px] font-black text-amber-400/60 uppercase tracking-widest mb-4 flex items-center gap-2"><Scale size={12}/> 成長グラフ</p>
+                 <p className="text-[10px] font-black text-amber-400/60 uppercase tracking-widest mb-4 flex justify-between items-center">
+                   <span className="flex items-center gap-2"><Scale size={12}/> 成長・温度推移</span>
+                   <span className="text-[8px] opacity-40">Weight(g) / Temp(℃) / Date</span>
+                 </p>
                  <div className="h-48 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={beetle.records}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
                         <XAxis dataKey="date" fontSize={8} stroke="rgba(255,255,255,0.3)" />
-                        <YAxis yId="left" fontSize={8} stroke="rgba(255,255,255,0.3)" unit="g" />
+                        <YAxis fontSize={8} stroke="rgba(255,255,255,0.3)" />
                         <Tooltip contentStyle={{ backgroundColor: 'rgba(2, 44, 34, 0.9)', border: 'none', borderRadius: '12px', fontSize: '10px', backdropFilter: 'blur(8px)' }} />
-                        <Line yId="left" type="monotone" dataKey="weight" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#fbbf24', strokeWidth: 0 }} activeDot={{ r: 6 }} />
+                        <Line type="monotone" dataKey="weight" name="体重" stroke="#fbbf24" strokeWidth={3} dot={{ r: 4, fill: '#fbbf24' }} />
+                        <Line type="monotone" dataKey="temperature" name="温度" stroke="#3b82f6" strokeWidth={2} strokeDasharray="5 5" dot={false} />
                       </LineChart>
                     </ResponsiveContainer>
                  </div>
@@ -639,6 +653,45 @@ export const BatchRecordModal = ({ isOpen, onClose, selectedIds, targets, onTogg
             </div>
           </div>
           <button onClick={onSubmit} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white py-5 rounded-[2rem] font-black text-lg shadow-[0_20px_40px_-10px_rgba(16,185,129,0.3)] active:scale-95 transition-all">選択した個体に記録を反映</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * バックアップ履歴から復元するモーダル
+ */
+export const BackupHistoryModal = ({ isOpen, onClose, history, onRestore }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[70] flex items-end overscroll-none" onClick={onClose}>
+      <div className="bg-slate-900/90 backdrop-blur-3xl w-full rounded-t-[3rem] p-8 border-t border-white/20 shadow-2xl text-white animate-in slide-in-from-bottom duration-500 max-h-[80dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-xl font-black text-emerald-400 tracking-tight">バックアップ履歴</h2>
+            <p className="text-[10px] text-white/40 font-bold uppercase mt-1">過去5件の自動保存から復元できます</p>
+          </div>
+          <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><X size={28} /></button>
+        </div>
+        <div className="space-y-3">
+          {history && history.length > 0 ? (
+            history.map((item, idx) => (
+              <button 
+                key={idx}
+                onClick={() => onRestore(item)}
+                className="w-full flex justify-between items-center p-5 bg-white/5 border border-white/10 rounded-2xl active:scale-95 transition-all hover:bg-white/10 group"
+              >
+                <div className="text-left">
+                  <p className="text-sm font-black text-white/90">{item.backupDate}</p>
+                  <p className="text-[10px] text-white/40 font-bold">{item.beetles?.length || 0} 頭の個体データ</p>
+                </div>
+                <RefreshCw size={18} className="text-emerald-500 opacity-40 group-hover:opacity-100 transition-opacity" />
+              </button>
+            ))
+          ) : (
+            <div className="py-12 text-center text-white/20 italic text-sm">履歴が見つかりません</div>
+          )}
         </div>
       </div>
     </div>

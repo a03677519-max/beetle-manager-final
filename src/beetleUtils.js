@@ -72,7 +72,8 @@ export const getAutoTasks = (beetle) => {
 
 export const calculateBeetleStats = (beetles, searchTerm = '') => {
   try {
-    const stats = Array.isArray(beetles) ? beetles.filter(b => b && b.id).reduce((acc, b) => {
+    if (!Array.isArray(beetles)) return [];
+    const stats = beetles.filter(b => b && b.id && !b.archived).reduce((acc, b) => {
       const name = b.scientificName || '学名未設定';
       if (!acc[name]) {
         acc[name] = {
@@ -89,20 +90,26 @@ export const calculateBeetleStats = (beetles, searchTerm = '') => {
       if (b.hatchDate && b.emergenceDate) {
         const start = new Date(b.hatchDate);
         const end = new Date(b.emergenceDate);
-        if (!isNaN(start) && !isNaN(end)) targetGroup.larvalPeriods.push({ name: b.name, value: Math.ceil(Math.abs(end - start) / 86400000) });
+        const diff = Math.ceil(Math.abs(end - start) / 86400000);
+        if (!isNaN(diff)) targetGroup.larvalPeriods.push({ name: b.name || 'Unknown', value: diff });
       }
       if (b.emergenceDate && b.feedingStartDate && !b.isDigOut) {
         const start = new Date(b.emergenceDate);
         const end = new Date(b.feedingStartDate);
-        if (!isNaN(start) && !isNaN(end)) targetGroup.restingPeriods.push({ name: b.name, value: Math.ceil(Math.abs(end - start) / 86400000) });
+        const diff = Math.ceil(Math.abs(end - start) / 86400000);
+        if (!isNaN(diff)) targetGroup.restingPeriods.push({ name: b.name || 'Unknown', value: diff });
       }
-      if (b.adultSize) targetGroup.sizes.push({ name: b.name, value: parseFloat(b.adultSize) });
+      if (b.adultSize && !isNaN(parseFloat(b.adultSize))) {
+        targetGroup.sizes.push({ name: b.name || 'Unknown', value: parseFloat(b.adultSize) });
+      }
       
       if (b.status === 'SpawnSet') targetGroup.spawnSetIds.push(b.id);
       return acc;
-    }, {}) : {};
+    }, {});
 
-    return Object.values(stats).filter(g => g.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    return Object.values(stats).filter(g => 
+      g && g.name && g.name.toLowerCase().includes((searchTerm || '').toLowerCase())
+    );
   } catch (err) {
     console.error("Stats calculation error:", err);
     return [];
@@ -168,4 +175,39 @@ export const parseBeetleText = (text) => {
   }
 
   return data;
+};
+
+/**
+ * 個体データをCSV形式に変換する
+ */
+export const convertToCSV = (beetles) => {
+  if (!beetles || beetles.length === 0) return "";
+  
+  const headers = ["ID", "管理名", "状態", "和名", "学名", "産地", "累代", "孵化日", "羽化日", "サイズ(mm)", "死亡日", "備考"];
+  const rows = beetles.map(b => [
+    b.id,
+    `"${(b.name || "").replace(/"/g, '""')}"`,
+    b.status || "",
+    `"${(b.species || "").replace(/"/g, '""')}"`,
+    `"${(b.scientificName || "").replace(/"/g, '""')}"`,
+    `"${(b.locality || "").replace(/"/g, '""')}"`,
+    b.generation || "",
+    b.hatchDate || "",
+    b.emergenceDate || "",
+    b.adultSize || "",
+    b.deathDate || "",
+    `"${(b.notes || "").replace(/"/g, '""')}"`
+  ]);
+
+  return [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+};
+
+/**
+ * インポートデータが有効な形式かチェックする
+ */
+export const isValidBeetleData = (data) => {
+  if (!data || typeof data !== 'object') return false;
+  if (!Array.isArray(data.beetles)) return false;
+  // 必須フィールドの簡易チェック
+  return data.beetles.every(b => b && typeof b === 'object' && b.id);
 };

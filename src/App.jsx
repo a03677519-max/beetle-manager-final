@@ -15,6 +15,7 @@ import {
   getStatSummary, 
   CATEGORIES,
   parseBeetleText
+  isValidBeetleData
 } from './beetleUtils.js';
 import BeetleFormModal from './BeetleFormModal.jsx';
 import { useSwitchBot } from './useSwitchBot.js';
@@ -25,8 +26,8 @@ import {
   BatchRecordModal, 
   EmergenceModal, 
   DeathModal,
-  LightboxModal
-} from './BeetleModals.jsx';
+  LightboxModal,
+  BackupHistoryeModals.jsx';
 // 同様に他のモーダルもインポート...
 
 const ACTION_TYPES = {
@@ -48,7 +49,10 @@ const initialFormState = {
   name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: '', isDigOut: false,
   parentMaleId: '', parentFemaleId: '', hatchDate: '', emergenceDate: '', feedingStartDate: '', deathDate: '',
   setDate: '', substrate: '', containerSize: '', packingPressure: '', moisture: 3, cohabitation: 'No', archived: false, notes: '', adultSize: '', parentSpawnSetId: '',
-  count: 1, images: [], records: [], temperature: ''
+  count: 1, images: [], records: [], temperature: '',
+  // Fields for initial larva record (if status is Larva)
+  initialRecordWeight: '', initialRecordTemperature: '', initialRecordStage: 'L1', initialRecordGender: 'Unknown',
+  initialRecordSubstrate: '', initialRecordContainerSize: '', initialRecordPackingPressure: 3, initialRecordMoisture: 3
 };
 
 const initialState = {
@@ -87,6 +91,7 @@ const initialState = {
     death: null,
     statGraph: null,
     lightbox: null,
+    backupHistory: false,
     batchTargets: [],
     selectedBatchIds: new Set()
   },
@@ -141,7 +146,11 @@ const App = () => {
   const { beetles, config, isLoggedIn, userId, ui, modals, form } = state;
   const isDataLoaded = useRef(false);
 
-  // 入力補完用の派生データ
+  // 安全な個体リスト（万が一データが壊れていても配列を保証）
+  const safeBeetles = useMemo(() => {
+    return Array.isArray(beetles) ? beetles.filter(b => b && typeof b === 'object' && b.id) : [];
+  }, [beetles]);
+
   const existingNames = useMemo(() => Array.from(new Set(beetles.map(b => b.name).filter(Boolean))), [beetles]); // existingNames
   const existingSpecies = useMemo(() => Array.from(new Set(beetles.map(b => b.species).filter(Boolean))), [beetles]);
   const existingScientificNames = useMemo(() => Array.from(new Set(beetles.map(b => b.scientificName).filter(Boolean))), [beetles]);
@@ -273,22 +282,11 @@ const App = () => {
     setItem('beetle_app_config', config);
   }, [config]);
 
-  // 自動バックアップ (1日1回のスナップショット)
+  // 自動バックアップ (履歴管理: 最大5件)
   useEffect(() => {
-    const lastBackupDate = localStorage.getItem('beetle_last_backup_date');
-    const today = new Date().toISOString().split('T')[0];
-    
-    if (beetles.length > 0 && lastBackupDate !== today) {
-      const backupData = {
-        beetles,
-        config,
-        userId,
-        backupDate: today
-      };
-      setItem('beetle_auto_backup_data', backupData); // IndexedDBに保存
-      setItem('beetle_last_backup_date', today); // IndexedDBに保存
-      console.log("Auto-backup snapshot created for today."); // beetles, config, userId
-    }
+    const managtBackupDate = localStorage.getItem('beetle_last_backup_date');
+      const today = new Date().toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
+      itkotem('b tot}nageBackups();
   }, [beetles, config, userId]);
 
   // Web Share API を使用してデータを共有・保存する関数
@@ -311,6 +309,16 @@ const App = () => {
     } else {
       exportData();
     }
+  };
+
+  const exportCSV = () => {
+    const csv = convertToCSV(beetles);
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8' }); // BOM for Excel
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `beetlelog-data-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
   };
 
   const handleImportFromClipboard = async () => {
@@ -346,13 +354,15 @@ const App = () => {
     reader.onload = (event) => {
       try {
         const data = JSON.parse(event.target.result);
-        if (data.beetles && Array.isArray(data.beetles)) {
+        if (isValidBeetleData(data)) {
           if (window.confirm('データを復元しますか？現在のデータはすべて上書きされます。')) {
             dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: data.beetles }); // setBeetles
             if (data.config) dispatch({ type: ACTION_TYPES.SET_DATA, payload: { config: data.config } }); // setConfig
             if (data.userId) dispatch({ type: ACTION_TYPES.SET_DATA, payload: { userId: data.userId } }); // setUserId
             alert('バックアップから復元しました。'); // beetles, config, userId
           }
+        } else {
+          alert('不正な形式のバックアップファイルです。');
         }
       } catch (err) { alert('不正なファイル形式です。'); }
     };
@@ -361,8 +371,7 @@ const App = () => {
 
   // 個体データをテキスト形式で生成しコピーする関数
   const copyBeetleText = (beetle) => {
-    let text = `[BeetleLog Record]\n和名: ${beetle.species || '-'}\n`;
-    text += `学名: ${beetle.scientificName || '-'}\n`;
+    let text\n名: ${beetle.scientificName || '-'}\n`;
     text += `産地: ${beetle.locality || '-'}\n`;
     text += `累代: ${beetle.generation || '-'}\nID/Name: ${beetle.name || '-'}\n`;
 
@@ -518,6 +527,12 @@ const App = () => {
     longPressStartRef.current.target = e.target;
 
     longPressStartRef.current.timer = setTimeout(() => {
+        const idx = e.currentTarget.getAttribute('data-idx');
+        if (idx !== null) {
+          dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { draggedIdx: parseInt(idx), isSortingMode: true } });
+        } else {
+          dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isSortingMode: true } });
+        }
         dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isSortingMode: true } });
         if (window.navigator.vibrate) window.navigator.vibrate(80);
       }, 600);
@@ -539,12 +554,31 @@ const App = () => {
       const newBeetles = [];
       for (let i = 0; i < (data.count || 1); i++) {
         const suffix = (data.count > 1) ? `-${String(i + 1).padStart(2, '0')}` : '';
-        newBeetles.push({
+        const newBeetle = {
           ...data,
           id: Date.now() + i,
           name: data.name + suffix,
-          records: data.records || [],
+          records: [], // Initialize records as empty
           tasks: []
+        };
+
+        // If it's a new larva and initial record data is provided, create the first record
+        if (newBeetle.status === 'Larva' && (newBeetle.initialRecordWeight || newBeetle.initialRecordTemperature || newBeetle.initialRecordSubstrate)) {
+          newBeetle.records.push({
+            id: Date.now() + i + 1000, // Unique ID for record
+            date: newBeetle.hatchDate || new Date().toISOString().split('T')[0], // Use hatchDate as initial record date
+            weight: newBeetle.initialRecordWeight !== '' ? parseFloat(newBeetle.initialRecordWeight) : null,
+            temperature: newBeetle.initialRecordTemperature !== '' ? parseFloat(newBeetle.initialRecordTemperature) : null,
+            stage: newBeetle.initialRecordStage,
+            gender: newBeetle.initialRecordGender,
+            substrate: newBeetle.initialRecordSubstrate,
+            containerSize: newBeetle.initialRecordContainerSize,
+            packingPressure: newBeetle.initialRecordPackingPressure,
+            moisture: newBeetle.initialRecordMoisture,
+          });
+        }
+        newBeetles.push({
+          ...newBeetle,
         });
       }
       dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: [...beetles, ...newBeetles] });
@@ -855,29 +889,29 @@ const App = () => {
                     ))}
                     </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center py-24 px-4 text-center animate-in fade-in zoom-in duration-700">
+                      <button 
+                        onClick={() => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' })}
+                        className="w-full relative flex flex-col items-center justify-center py-32 px-4 text-center animate-in fade-in zoom-in duration-700 cursor-pointer active:scale-95 transition-all outline-none group"
+                      >
                         <div className="relative mb-10">
-                          <div className="absolute inset-0 bg-emerald-500/10 blur-[80px] rounded-full scale-150" />
-                          <div className="relative bg-white p-12 rounded-[3.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-50">
-                            <Bug size={80} className="text-slate-100 animate-float" />
-                            <div className="absolute -top-1 -right-1 bg-emerald-500 w-8 h-8 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                              <Plus size={16} className="text-white font-black" />
+                          {/* 背景のアニメーションリング */}
+                          <div className="absolute inset-0 bg-emerald-500/20 blur-[60px] rounded-full scale-150 animate-pulse" />
+                          <div className="absolute inset-0 border-2 border-emerald-500/10 rounded-full scale-125 animate-[ping_3s_infinite]" />
+                          
+                          <div className="relative bg-white p-14 rounded-[4rem] shadow-[0_25px_60px_rgba(0,0,0,0.08)] border border-slate-50 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-500">
+                            <Bug size={84} className="text-slate-200 animate-float relative z-10" />
+                            <div className="absolute -top-1 -right-1 bg-gradient-to-br from-emerald-500 to-emerald-700 w-12 h-12 rounded-full border-4 border-white shadow-lg flex items-center justify-center z-20">
+                              <Plus size={20} className="text-white font-black" />
                             </div>
                           </div>
                         </div>
-                        <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">
-                          {filterStatus === 'All' ? '個体データが見つかりません' : `${config.labels[filterStatus]}が登録されていません`}
+                        <h3 className="text-2xl font-black text-slate-800 mb-4 tracking-tight group-hover:text-emerald-600 transition-colors">
+                          {filterStatus === 'All' ? 'ブリードを開始する' : `${config.labels[filterStatus]}の初登録`}
                         </h3>
-                        <p className="text-sm text-slate-400 font-medium mb-10 leading-relaxed max-w-[280px]">
-                          あなたのブリード記録をここから始めましょう。右下のボタンから最初の個体を登録できます。
+                        <p className="text-sm text-slate-400 font-bold leading-relaxed max-w-[240px] mx-auto opacity-80">
+                          まだデータがありません。<br/>ここをタップして最初の記録を。
                         </p>
-                        <button 
-                          onClick={() => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' })}
-                          className="bg-emerald-600 text-white px-10 py-5 rounded-[2.5rem] font-black text-sm shadow-[0_15px_30px_-5px_rgba(16,185,129,0.3)] active:scale-95 transition-all flex items-center gap-2 group"
-                        >
-                          <Plus size={20} className="group-hover:rotate-90 transition-transform" /> 最初の一歩を登録する
-                        </button>
-                      </div>
+                      </button>
                     )}
                   </>
                 );
@@ -1105,6 +1139,12 @@ const App = () => {
                                     handleDraggablePointerDown(e);
                                   }
                                 },
+                                onPointerEnter: () => {
+                                  if (ui.isSortingMode && ui.draggedIdx !== null && ui.draggedIdx !== idx) {
+                                    onDrop(idx);
+                                  }
+                                },
+                                'data-idx': idx,
                                 onContextMenu: (e) => e.preventDefault(),
                                 className: `p-3 rounded-xl text-left transition-all relative select-none touch-none draggable-target ${
                                   ui.isSortingMode ? 'animate-wiggle ring-2 ring-emerald-500/30 ring-offset-1 touch-none select-none' : 'bg-emerald-500/5 active:scale-95'
@@ -1329,10 +1369,18 @@ const App = () => {
                 </div>
 
                 <div className="pt-2 border-t border-slate-50 space-y-1">
-                  <button onClick={shareData} className="w-full text-left p-2 text-sm text-slate-600 flex items-center justify-between hover:bg-slate-50 rounded-lg transition-colors">
+                  <button onClick={shareData} className="w-full text-left p-2 text-sm text-slate-600 flex items-center justify-between hover:bg-slate-50 rounded-lg transition-all">
                     <div className="flex items-center gap-3">
-                      <MessageSquare size={18} className="text-emerald-600" />
-                      <span>バックアップを共有・保存 (JSON)</span>
+                      <Upload size={18} className="text-emerald-600" />
+                      <span>データ共有・保存 (JSON)</span>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-300" />
+                  </button>
+
+                  <button onClick={exportCSV} className="w-full text-left p-2 text-sm text-slate-600 flex items-center justify-between hover:bg-slate-50 rounded-lg transition-all">
+                    <div className="flex items-center gap-3">
+                      <List size={18} className="text-blue-500" />
+                      <span>Excel用に出力 (CSV)</span>
                     </div>
                     <ChevronRight size={14} className="text-slate-300" />
                   </button>
@@ -1340,10 +1388,7 @@ const App = () => {
                   <label className="w-full text-left p-2 text-sm text-slate-600 flex items-center justify-between hover:bg-slate-50 rounded-lg transition-colors cursor-pointer">
                     <div className="flex items-center gap-3">
                       <Upload size={18} className="text-blue-600" />
-                      <span>バックアップを読み込む</span>
-                    </div>
-                    <input type="file" accept=".json" onChange={importData} className="hidden" />
-                  </label>
+                    </div>}
 
                   <button 
                     onClick={async () => {
@@ -1566,6 +1611,8 @@ const App = () => {
         existingScientificNames={existingScientificNames}
         existingLocalities={existingLocalities}
         existingGenerations={existingGenerations}
+        fetchSbTemperature={fetchSbTemperature} // Pass the function
+        isFetchingSb={isFetchingSb} // Pass the state
       />
 
     </>
