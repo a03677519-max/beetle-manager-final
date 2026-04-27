@@ -443,6 +443,62 @@ const App = () => {
     fetchSbTemperature(targetId, (temp) => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { newTemp: temp.toString() } })); // form.newTemp
   };
 
+  const startEditBeetle = (beetle) => {
+    dispatch({ 
+      type: ACTION_TYPES.UPDATE_FORM, 
+      payload: { data: { ...beetle }, isEditing: true } 
+    });
+    dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' });
+  };
+
+  const handleSaveBeetle = () => {
+    const { data, isEditing } = form;
+    if (!data.name || !data.species) return alert('管理名と種類は必須です。');
+
+    if (isEditing) {
+      const updated = beetles.map(b => b.id === data.id ? data : b);
+      dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: updated });
+      if (modals.detail?.id === data.id) {
+        dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: data });
+      }
+    } else {
+      const newBeetles = [];
+      for (let i = 0; i < (data.count || 1); i++) {
+        const suffix = (data.count > 1) ? `-${String(i + 1).padStart(2, '0')}` : '';
+        newBeetles.push({
+          ...data,
+          id: Date.now() + i,
+          name: data.name + suffix,
+          records: [],
+          tasks: []
+        });
+      }
+      dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: [...beetles, ...newBeetles] });
+    }
+    dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'form' });
+  };
+
+  const handleEmergenceSubmit = () => {
+    const { data } = form;
+    if (!data.emergenceDate) return alert('羽化日を入力してください。');
+    const updated = beetles.map(b => b.id === data.id ? { ...b, status: 'Adult', emergenceDate: data.emergenceDate } : b);
+    dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: updated });
+    dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'emergence' });
+    const target = updated.find(b => b.id === data.id);
+    if (modals.detail?.id === data.id) {
+      dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: target });
+    }
+  };
+
+  const handleDeathSubmit = () => {
+    const { data } = form;
+    if (!data.deathDate) return alert('日付を入力してください。');
+    const updated = beetles.map(b => b.id === data.id ? { ...b, deathDate: data.deathDate, archived: true } : b);
+    dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: updated });
+    dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'death' });
+    dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'detail' });
+  };
+
   // プッシュ通知の権限リクエスト
   const requestPushPermission = async () => {
     if (!('Notification' in window)) {
