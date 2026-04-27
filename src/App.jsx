@@ -991,8 +991,8 @@ const App = () => {
                         onDragOver={onDragOver}
                         onDrop={() => onDropSb(idx)}
                         onPointerDown={handleDraggablePointerDown}
-                        onContextMenu={(e) => e.preventDefault()} // コンテキストメニュー禁止
-                        className={`space-y-2 p-3 rounded-2xl transition-all relative select-none ${ // テキスト選択禁止
+                        onContextMenu={(e) => e.preventDefault()}
+                        className={`space-y-2 p-3 rounded-2xl transition-all relative select-none ${
                           ui.isSortingMode ? 'animate-wiggle ring-2 ring-blue-500/30 ring-offset-1 bg-blue-50/30 touch-action-none' : 'bg-slate-900/50 border border-white/10 touch-action-pan-y'
                         } ${isDragging ? 'opacity-30 scale-95 border-2 border-dashed border-white/20 shadow-2xl' : ''}`}
                         style={{ WebkitUserDrag: 'none', WebkitTouchCallout: 'none', userSelect: 'none' }}
@@ -1096,8 +1096,8 @@ const App = () => {
                                 onDragOver: onDragOver,
                                 onDrop: () => onDrop(idx),
                                 onPointerDown: handlePointerDown,
-                                onContextMenu: (e) => e.preventDefault(), // コンテキストメニュー禁止
-                                className: `p-3 rounded-xl text-left transition-all relative select-none ${ // テキスト選択禁止
+                                onContextMenu: (e) => e.preventDefault(),
+                                className: `p-3 rounded-xl text-left transition-all relative select-none ${
                                   ui.isSortingMode ? 'animate-wiggle ring-2 ring-emerald-500/30 ring-offset-1 touch-action-none' : 'bg-emerald-500/5 active:scale-95 touch-action-pan-y'
                                 } ${isDragging ? 'opacity-30 border-2 border-dashed border-white/20 shadow-inner' : ''}`,
                                 style: { WebkitUserDrag: 'none', WebkitTouchCallout: 'none', userSelect: 'none' }
