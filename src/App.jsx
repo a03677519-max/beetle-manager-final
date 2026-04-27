@@ -426,6 +426,49 @@ const App = () => {
     dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { touchStart: null, pullOffset: 0 } });
   };
 
+  // 長押しドラッグ＆ドロップのためのグローバルイベントハンドラ
+  const longPressStartRef = useRef({ x: 0, y: 0, timer: null, target: null });
+
+  const handleGlobalPointerMove = useCallback((e) => {
+    // ソートモードがアクティブな場合、デフォルトのスクロールやテキスト選択を防止
+    if (ui.isSortingMode) {
+      e.preventDefault();
+      return;
+    }
+
+    // 長押しタイマーがアクティブな場合（ドラッグの可能性あり）
+    if (longPressStartRef.current.timer) {
+      const dx = Math.abs(e.clientX - longPressStartRef.current.x);
+      const dy = Math.abs(e.clientY - longPressStartRef.current.y);
+      // 少しでも動いたら長押しをキャンセルし、通常のスクロールを許可
+      if (dx > 10 || dy > 10) { // 10px以上の移動でスクロールと判断
+        clearTimeout(longPressStartRef.current.timer);
+        longPressStartRef.current.timer = null;
+        longPressStartRef.current.target = null;
+      } else {
+        // 移動が少ない場合はデフォルトの動作（スクロール、テキスト選択）を防止
+        e.preventDefault();
+      }
+    }
+  }, [ui.isSortingMode]);
+
+  const handleGlobalPointerUp = useCallback(() => {
+    clearTimeout(longPressStartRef.current.timer);
+    longPressStartRef.current.timer = null;
+    longPressStartRef.current.target = null;
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('pointermove', handleGlobalPointerMove, { passive: false });
+    document.addEventListener('pointerup', handleGlobalPointerUp);
+    document.addEventListener('pointercancel', handleGlobalPointerUp);
+    return () => {
+      document.removeEventListener('pointermove', handleGlobalPointerMove);
+      document.removeEventListener('pointerup', handleGlobalPointerUp);
+      document.removeEventListener('pointercancel', handleGlobalPointerUp);
+    };
+  }, [handleGlobalPointerMove, handleGlobalPointerUp]);
+
   // ペーストによる自動入力（逆輸入）機能
   useEffect(() => {
     const handlePaste = (e) => {
@@ -466,6 +509,21 @@ const App = () => {
     });
     dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' });
   };
+
+  // ドラッグ可能な要素のonPointerDownハンドラ
+  const handleDraggablePointerDown = useCallback((e) => {
+    if (ui.isSortingMode) {
+      e.preventDefault(); // ソートモード中はデフォルトの動作を防止
+      return;
+    }
+    longPressStartRef.current.x = e.clientX;
+    longPressStartRef.current.y = e.clientY;
+    longPressStartRef.current.target = e.target;
+    longPressStartRef.current.timer = setTimeout(() => {
+      dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isSortingMode: true } });
+      if (window.navigator.vibrate) window.navigator.vibrate(80);
+    }, 600);
+  }, [ui.isSortingMode]);
 
   const handleSaveBeetle = () => {
     const { data, isEditing } = form;
@@ -697,16 +755,7 @@ const App = () => {
               <img src={logoImg} alt="BeetleLog" className="w-8 h-8 rounded-lg object-contain shadow-md border border-white/10" />
               BeetleLog
             </h1>
-            <div className="flex items-center gap-1.5">
-              <div className="flex gap-1.5 border-r border-slate-100 pr-2 mr-1">
-                <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: { ...initialFormState, status: 'Adult' }, isEditing: false } }) && dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' })} className="w-8 h-8 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center font-black text-[10px] border border-emerald-500/30 active:scale-90 transition-all">成</button>
-                <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: { ...initialFormState, status: 'Larva' }, isEditing: false } }) && dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' })} className="w-8 h-8 bg-amber-500/20 text-amber-400 rounded-lg flex items-center justify-center font-black text-[10px] border border-amber-500/30 active:scale-90 transition-all">幼</button>
-                <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { data: { ...initialFormState, status: 'SpawnSet' }, isEditing: false } }) && dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' })} className="w-8 h-8 bg-rose-500/20 text-rose-400 rounded-lg flex items-center justify-center font-black text-[10px] border border-rose-500/30 active:scale-90 transition-all">産</button>
-              </div>
-              <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'settings' } })} className={`p-1.5 rounded-xl transition-colors ${ui.activeTab === 'settings' ? 'bg-white/10 text-emerald-400' : 'text-white/30'}`}> {/* ui.activeTabを参照 */}
-                <Settings size={22} />
-              </button>
-            </div>
+            {/* 右上のアイコン類を削除し、視覚的ノイズを軽減 */}
           </div>
       </header>
 
@@ -733,26 +782,26 @@ const App = () => {
                     <div 
                       key={beetle.id} 
                       onClick={() => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: beetle })}
-                      className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2.5rem] p-6 shadow-2xl active:scale-[0.98] transition-all relative overflow-hidden group cursor-pointer"
+                      className="bg-slate-900/40 backdrop-blur-2xl border border-white/20 rounded-[2.5rem] p-6 shadow-2xl active:scale-[0.98] transition-all relative overflow-hidden group cursor-pointer" // 視認性向上
                     >
                       {/* グラデーションオーバーレイ */}
                       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-50" />
                       <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 group-hover:animate-[sweep_3s_infinite]" />
                       
                       <div className="flex gap-4 items-start relative z-10">
-                        <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center shrink-0 border shadow-lg transition-transform group-hover:scale-105 duration-500 ${
+                        <div className={`w-20 h-20 rounded-[1.8rem] flex items-center justify-center shrink-0 border shadow-lg transition-transform group-hover:scale-105 duration-500 ${ // アイコンサイズ調整
                           beetle.status === 'Larva' ? 'bg-amber-500/20 border-amber-500/30 shadow-amber-500/10' : 
                           beetle.status === 'Adult' ? 'bg-emerald-500/20 border-emerald-500/30 shadow-emerald-500/10' :
                           'bg-rose-500/20 border-rose-500/30 shadow-rose-500/10'
                         }`}>
-                          {beetle.status === 'Larva' ? <Activity className="text-amber-400" size={28} /> : 
-                           beetle.status === 'SpawnSet' ? <Egg className="text-rose-400" size={28} /> :
-                           <Bug className="text-emerald-400" size={28} />}
+                          {beetle.status === 'Larva' ? <Activity className="text-amber-400" size={32} /> : // アイコンサイズ調整
+                           beetle.status === 'SpawnSet' ? <Egg className="text-rose-400" size={32} /> : // アイコンサイズ調整
+                           <Bug className="text-emerald-400" size={32} />} // アイコンサイズ調整
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-center mb-1">
-                            <h3 className="text-xl font-black truncate pr-2 text-white tracking-tight">{beetle.name}</h3>
+                          <div className="flex justify-between items-start mb-1"> // テキストコントラスト調整
+                            <h3 className="text-2xl font-black truncate pr-2 text-white tracking-tighter leading-tight">{beetle.name}</h3> // テキストコントラスト調整
                             <span className={`text-[7px] font-black px-2 py-1 rounded-lg uppercase tracking-widest border backdrop-blur-md ${
                               beetle.status === 'Larva' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
                               beetle.status === 'Adult' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
@@ -761,7 +810,7 @@ const App = () => {
                               {config.labels[beetle.status]}
                             </span>
                           </div>
-                          <p className="text-xs font-bold text-white/50 truncate mb-4 italic">{beetle.species}</p>
+                          <p className="text-xs font-bold text-white/70 truncate mb-5 italic">{beetle.species}</p> // テキストコントラスト調整
                           
                           <div className="flex flex-wrap gap-2">
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 flex items-center gap-1.5">
@@ -922,18 +971,6 @@ const App = () => {
                   <div className="grid grid-cols-1 gap-6">
                     {sortedSbDevices.map((device, idx) => {
                       const isDragging = ui.draggedIdxSb === idx;
-                      const handlePointerDown = () => {
-                        if (ui.isSortingMode) return;
-                        const timer = setTimeout(() => {
-                          dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isSortingMode: true } });
-                          if (window.navigator.vibrate) window.navigator.vibrate(80);
-                        }, 600);
-                        dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { longPressTimer: timer } });
-                      };
-                      const handlePointerUp = () => {
-                        if (ui.longPressTimer) clearTimeout(ui.longPressTimer);
-                      };
-
                       return (
                       <div 
                         key={device.deviceId} 
@@ -944,11 +981,10 @@ const App = () => {
                         }}
                         onDragOver={onDragOver}
                         onDrop={() => onDropSb(idx)}
-                        onPointerDown={handlePointerDown}
-                        onPointerUp={handlePointerUp}
-                        onPointerLeave={handlePointerUp}
-                        className={`space-y-2 p-3 rounded-2xl transition-all relative ${
-                          ui.isSortingMode ? 'animate-wiggle ring-2 ring-blue-500/30 ring-offset-1 bg-blue-50/30' : 'bg-slate-50/50'
+                        onPointerDown={handleDraggablePointerDown}
+                        onContextMenu={(e) => e.preventDefault()}
+                        className={`space-y-2 p-3 rounded-2xl transition-all relative select-none touch-action-pan-y ${
+                          ui.isSortingMode ? 'animate-wiggle ring-2 ring-blue-500/30 ring-offset-1 bg-blue-50/30 touch-action-none' : 'bg-slate-50/50'
                         } ${isDragging ? 'opacity-30 scale-95 border-2 border-dashed border-slate-200' : ''}`}
                       >
                         <div className="flex justify-between items-center px-1">
@@ -1050,10 +1086,9 @@ const App = () => {
                                 onDragOver: onDragOver,
                                 onDrop: () => onDrop(idx),
                                 onPointerDown: handlePointerDown,
-                                onPointerUp: handlePointerUp,
-                                onPointerLeave: handlePointerUp,
-                                className: `p-3 rounded-xl text-left transition-all relative ${
-                                  ui.isSortingMode ? 'animate-wiggle ring-2 ring-emerald-500/30 ring-offset-1' : 'active:scale-95'
+                                onContextMenu: (e) => e.preventDefault(),
+                                className: `p-3 rounded-xl text-left transition-all relative select-none touch-action-pan-y ${
+                                  ui.isSortingMode ? 'animate-wiggle ring-2 ring-emerald-500/30 ring-offset-1 touch-action-none' : 'active:scale-95'
                                 } ${isDragging ? 'opacity-30 border-2 border-dashed border-slate-300 shadow-inner' : ''}`
                               };
 

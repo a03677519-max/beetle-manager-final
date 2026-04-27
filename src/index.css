@@ -78,4 +78,18 @@
   .picker-item {
     scroll-snap-align: center;
   }
+
+  /* Custom utility classes for drag-and-drop */
+  .touch-action-none {
+    touch-action: none;
+  }
+  .touch-action-pan-y {
+    touch-action: pan-y;
+  }
+  .select-none {
+    user-select: none;
+    -webkit-user-select: none; /* For Webkit browsers */
+    -moz-user-select: none;    /* For Firefox */
+    -ms-user-select: none;     /* For Internet Explorer/Edge */
+  }
 }

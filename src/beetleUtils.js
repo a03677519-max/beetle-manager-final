@@ -142,7 +142,7 @@ export const parseBeetleText = (text) => {
       if (parts.length >= 6) {
         data.records.push({
           id: Date.now() + idx,
-          date: parts[0],
+          date: parts[0], // Assuming date is YYYY-MM-DD
           substrate: parts[1],
           moisture: parseInt(parts[2].replace('水', '')) || 3,
           packingPressure: parts[3].replace('圧', ''),
