@@ -15,7 +15,6 @@ import {
   getStatSummary, 
   CATEGORIES 
 } from './beetleUtils.js';
-from './beetleUtils.js';
 import BeetleFormModal from './BeetleFormModal.jsx';
 import { useSwitchBot } from './useSwitchBot.js';
 import { getItem, setItem, migrateFromLocalStorage } from './db.js';
