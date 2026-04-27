@@ -698,19 +698,22 @@ const App = () => {
           {/* Tab: Home (Main List) */}
           {activeTab === 'home' && (
             <div className="animate-in fade-in duration-500 space-y-4">
-              <div className="flex justify-between items-center px-1">
-                <h2 className="text-xl font-bold text-slate-800">
-                  {filterStatus === 'All' ? 'すべての個体' : config.labels[filterStatus]}
-                </h2>
-                <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-widest">
-                  {beetles.filter(b => (filterStatus === 'All' ? !b.archived : b.status === filterStatus && !b.archived)).length} UNITS
-                </span>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-4">
-                {beetles
-                  .filter(b => (filterStatus === 'All' ? !b.archived : b.status === filterStatus && !b.archived))
-                  .map(beetle => (
+              {(() => {
+                const filteredBeetles = beetles.filter(b => (filterStatus === 'All' ? !b.archived : b.status === filterStatus && !b.archived));
+                return (
+                  <>
+                    <div className="flex justify-between items-center px-1">
+                      <h2 className="text-xl font-bold text-slate-800">
+                        {filterStatus === 'All' ? 'すべての個体' : config.labels[filterStatus]}
+                      </h2>
+                      <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-widest">
+                        {filteredBeetles.length} UNITS
+                      </span>
+                    </div>
+                    
+                    {filteredBeetles.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-4">
+                        {filteredBeetles.map(beetle => (
                     <div 
                       key={beetle.id} 
                       onClick={() => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: beetle })}
@@ -759,17 +762,52 @@ const App = () => {
                         </div>
                       </div>
                     </div>
-                  ))}
-              </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-24 px-4 text-center animate-in fade-in zoom-in duration-700">
+                        <div className="relative mb-10">
+                          <div className="absolute inset-0 bg-emerald-500/10 blur-[80px] rounded-full scale-150" />
+                          <div className="relative bg-white p-12 rounded-[3.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-50">
+                            <Bug size={80} className="text-slate-100 animate-float" />
+                            <div className="absolute -top-1 -right-1 bg-emerald-500 w-8 h-8 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
+                              <Plus size={16} className="text-white font-black" />
+                            </div>
+                          </div>
+                        </div>
+                        <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">
+                          {filterStatus === 'All' ? '個体データが見つかりません' : `${config.labels[filterStatus]}が登録されていません`}
+                        </h3>
+                        <p className="text-sm text-slate-400 font-medium mb-10 leading-relaxed max-w-[280px]">
+                          あなたのブリード記録をここから始めましょう。右下のボタンから最初の個体を登録できます。
+                        </p>
+                        <button 
+                          onClick={() => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' })}
+                          className="bg-emerald-600 text-white px-10 py-5 rounded-[2.5rem] font-black text-sm shadow-[0_15px_30px_-5px_rgba(16,185,129,0.3)] active:scale-95 transition-all flex items-center gap-2 group"
+                        >
+                          <Plus size={20} className="group-hover:rotate-90 transition-transform" /> 最初の一歩を登録する
+                        </button>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
 
           {/* Tab: Tasks (Full View) */}
           {activeTab === 'tasks' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-4">
-              <h3 className="font-bold text-slate-700 px-1">全タスク一覧</h3>
-              <div className="space-y-3">
-                {beetles.filter(b => !b.archived && (b.tasks?.some(t => !t.completed) || getAutoTasks(b).length > 0)).map(b => (
+              <div className="flex justify-between items-center px-1">
+                <h3 className="font-bold text-slate-700">全タスク一覧</h3>
+                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full uppercase tracking-widest">Perfect Clear</span>
+              </div>
+              
+              {(() => {
+                const taskBeetles = beetles.filter(b => !b.archived && (b.tasks?.some(t => !t.completed) || getAutoTasks(b).length > 0));
+                return taskBeetles.length > 0 ? (
+                  <div className="space-y-3">
+                    {taskBeetles.map(b => (
                   <div key={b.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
                     <div className="flex justify-between items-center mb-3">
                       <span className="font-bold text-slate-800">{b.name}</span>
@@ -798,8 +836,20 @@ const App = () => {
                       ))}
                     </div>
                   </div>
-                ))}
-              </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-[2.5rem] border border-slate-100 p-16 text-center animate-in fade-in zoom-in duration-500 shadow-sm">
+                    <div className="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-inner">
+                      <ClipboardCheck size={40} />
+                    </div>
+                    <h4 className="text-lg font-black text-slate-800 mb-2">すべて完了！</h4>
+                    <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                      現在、予定されている作業はありません。<br/>素晴らしい管理状況です！
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
