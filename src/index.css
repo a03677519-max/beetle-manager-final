@@ -88,7 +88,8 @@
   }
   .select-none {
     user-select: none;
-    -webkit-user-select: none; /* For Webkit browsers */
+    -webkit-user-select: none;
+    -webkit-touch-callout: none; /* iOSでリンクや画像の長押しメニューを防止 */
     -moz-user-select: none;    /* For Firefox */
     -ms-user-select: none;     /* For Internet Explorer/Edge */
   }

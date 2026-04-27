@@ -491,12 +491,19 @@ const App = () => {
       val === true || (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Set))
     );
     
-    if (isAnyModalOpen) {
+    if (isAnyModalOpen || ui.isSortingMode) {
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('touch-action-none', 'select-none');
     } else {
       document.body.style.overflow = '';
+      document.body.classList.remove('touch-action-none', 'select-none');
     }
-  }, [modals]);
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.classList.remove('touch-action-none', 'select-none');
+    };
+  }, [modals, ui.isSortingMode]);
 
   const handleFetchSbTemperature = (targetId = null) => {
     fetchSbTemperature(targetId, (temp) => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { newTemp: temp.toString() } })); // form.newTemp
@@ -512,13 +519,13 @@ const App = () => {
 
   // ドラッグ可能な要素のonPointerDownハンドラ
   const handleDraggablePointerDown = useCallback((e) => {
-    if (ui.isSortingMode) {
-      e.preventDefault(); // ソートモード中はデフォルトの動作を防止
-      return;
-    }
+    // 並べ替え中、または長押し判定中はブラウザのデフォルト挙動を抑制
+    if (ui.isSortingMode) e.preventDefault();
+    
     longPressStartRef.current.x = e.clientX;
     longPressStartRef.current.y = e.clientY;
     longPressStartRef.current.target = e.target;
+
     longPressStartRef.current.timer = setTimeout(() => {
       dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isSortingMode: true } });
       if (window.navigator.vibrate) window.navigator.vibrate(80);
