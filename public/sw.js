@@ -2,10 +2,7 @@ const CACHE_NAME = 'beetlelog-cache-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/src/main.jsx',
-  '/src/App.jsx',
-  '/src/index.css',
-  '/assets/logo.png'
+  '/manifest.json'
 ];
 
 // インストール時にアセットをキャッシュ
