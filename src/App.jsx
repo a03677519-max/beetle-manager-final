@@ -27,7 +27,8 @@ import {
   EmergenceModal, 
   DeathModal,
   LightboxModal,
-  BackupHistoryeModals.jsx';
+  BackupHistoryModal
+} from './BeetleModals.jsx';
 // 同様に他のモーダルもインポート...
 
 const ACTION_TYPES = {
@@ -284,9 +285,20 @@ const App = () => {
 
   // 自動バックアップ (履歴管理: 最大5件)
   useEffect(() => {
-    const managtBackupDate = localStorage.getItem('beetle_last_backup_date');
+    const manageBackups = async () => {
+      const lastBackupDate = localStorage.getItem('beetle_last_backup_date');
       const today = new Date().toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, '-');
-      itkotem('b tot}nageBackups();
+      
+      if (beetles.length > 0 && lastBackupDate !== today) {
+        const newBackup = { beetles, config, userId, backupDate: today + " " + new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) };
+        const history = await getItem('beetle_backup_history', []);
+        const updatedHistory = [newBackup, ...history].slice(0, 5);
+        await setItem('beetle_backup_history', updatedHistory);
+        localStorage.setItem('beetle_last_backup_date', today);
+        localStorage.setItem('beetle_last_backup_full_time', newBackup.backupDate);
+      }
+    };
+    if (isDataLoaded.current) manageBackups();
   }, [beetles, config, userId]);
 
   // Web Share API を使用してデータを共有・保存する関数
@@ -371,7 +383,7 @@ const App = () => {
 
   // 個体データをテキスト形式で生成しコピーする関数
   const copyBeetleText = (beetle) => {
-    let text\n名: ${beetle.scientificName || '-'}\n`;
+    let text = `和名: ${beetle.species || '-'}\n学名: ${beetle.scientificName || '-'}\n`;
     text += `産地: ${beetle.locality || '-'}\n`;
     text += `累代: ${beetle.generation || '-'}\nID/Name: ${beetle.name || '-'}\n`;
 
