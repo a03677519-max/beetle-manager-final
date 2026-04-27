@@ -14,8 +14,8 @@ import {
   getAutoTasks, 
   getStatSummary, 
   CATEGORIES,
-  parseBeetleText
-  isValidBeetleData
+  parseBeetleText,
+  isValidBeetleData // カンマを追加
 } from './beetleUtils.js';
 import BeetleFormModal from './BeetleFormModal.jsx';
 import { useSwitchBot } from './useSwitchBot.js';
@@ -1385,27 +1385,22 @@ const App = () => {
                     <ChevronRight size={14} className="text-slate-300" />
                   </button>
                   
-                  <label className="w-full text-left p-2 text-sm text-slate-600 flex items-center justify-between hover:bg-slate-50 rounded-lg transition-colors cursor-pointer">
+                  <label htmlFor="import-file" className="w-full text-left p-2 text-sm text-slate-600 flex items-center justify-between hover:bg-slate-50 rounded-lg transition-colors cursor-pointer">
                     <div className="flex items-center gap-3">
                       <Upload size={18} className="text-blue-600" />
-                    </div>}
+                      <span>ファイルから復元 (JSON)</span>
+                    </div>
+                    <input type="file" id="import-file" accept=".json" className="hidden" onChange={importData} />
+                    <ChevronRight size={14} className="text-slate-300" />
+                  </label>
 
-                  <button 
-                    onClick={async () => {
-                      const saved = await getItem('beetle_auto_backup_data');
-                      if (!saved) return alert('自動バックアップがまだ作成されていません。');
-                      const data = JSON.parse(saved);
-                      if (window.confirm(`${data.backupDate} の自動バックアップから復元しますか？`)) {
-                        dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: data.beetles });
-                        if (data.config) dispatch({ type: ACTION_TYPES.SET_DATA, payload: { config: data.config } });
-                        alert('復元が完了しました。');
-                      }
-                    }}
-                    className="w-full text-left p-2 text-sm text-slate-600 flex items-center justify-between hover:bg-slate-50 rounded-lg transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <RefreshCw size={18} className="text-amber-500" />
-                      <span>昨日の状態に復元 (自動スナップショット)</span>
+                  <button onClick={() => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'backupHistory' })} className="w-full text-left p-2 text-sm text-slate-600 flex flex-col hover:bg-slate-50 rounded-lg transition-all group">
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-3">
+                        <History size={18} className="text-amber-500" />
+                        <span className="font-bold">バックアップ履歴から復元</span>
+                      </div>
+                      <ChevronRight size={14} className="text-slate-300 group-hover:translate-x-1 transition-transform" />
                     </div>
                   </button>
 
