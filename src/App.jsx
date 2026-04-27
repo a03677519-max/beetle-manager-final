@@ -739,6 +739,75 @@ const App = () => {
       </header>
 
         <main className="max-w-md mx-auto p-4">
+          {/* Tab: Home (Main List) */}
+          {activeTab === 'home' && (
+            <div className="animate-in fade-in duration-500 space-y-4">
+              <div className="flex justify-between items-center px-1">
+                <h2 className="text-xl font-bold text-slate-800">
+                  {filterStatus === 'All' ? 'すべての個体' : config.labels[filterStatus]}
+                </h2>
+                <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-widest">
+                  {beetles.filter(b => (filterStatus === 'All' ? !b.archived : b.status === filterStatus && !b.archived)).length} UNITS
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-1 gap-4">
+                {beetles
+                  .filter(b => (filterStatus === 'All' ? !b.archived : b.status === filterStatus && !b.archived))
+                  .map(beetle => (
+                    <div 
+                      key={beetle.id} 
+                      onClick={() => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: beetle })}
+                      className="bg-white/5 backdrop-blur-3xl border border-white/10 rounded-[2.5rem] p-6 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.6)] shadow-inner active:scale-[0.97] transition-all relative overflow-hidden group cursor-pointer"
+                    >
+                      {/* Shine effect on hover */}
+                      <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 group-hover:animate-[sweep_3s_infinite]" />
+                      
+                      <div className="flex gap-4 items-start relative z-10">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 border shadow-inner transition-transform group-hover:scale-110 duration-500 ${
+                          beetle.status === 'Larva' ? 'bg-amber-500/10 border-amber-500/20' : 
+                          beetle.status === 'Adult' ? 'bg-emerald-500/10 border-emerald-500/20' :
+                          'bg-rose-500/10 border-rose-500/20'
+                        }`}>
+                          {beetle.status === 'Larva' ? <Activity className="text-amber-400" size={22} /> : 
+                           beetle.status === 'SpawnSet' ? <Egg className="text-rose-400" size={22} /> :
+                           <Bug className="text-emerald-400" size={22} />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-start mb-1">
+                            <h3 className="text-lg font-black truncate pr-2 text-white">{beetle.name}</h3>
+                            <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-[0.15em] border ${
+                              beetle.status === 'Larva' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
+                              beetle.status === 'Adult' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
+                              'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                            }`}>
+                              {config.labels[beetle.status]}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-emerald-400/80 truncate mb-3">{beetle.species}</p>
+                          
+                          <div className="grid grid-cols-3 gap-2">
+                            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-2.5 border border-white/5 shadow-inner">
+                              <p className="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest mb-0.5">Locality</p>
+                              <p className="text-[9px] font-bold truncate text-white/90">{beetle.locality || '-'}</p>
+                            </div>
+                            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-2.5 border border-white/5 shadow-inner">
+                              <p className="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest mb-0.5">Gen</p>
+                              <p className="text-[9px] font-bold text-white/90">{beetle.generation || '-'}</p>
+                            </div>
+                            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-2.5 border border-white/5 shadow-inner">
+                              <p className="text-[7px] font-black text-emerald-400/60 uppercase tracking-widest mb-0.5">Last Rec</p>
+                              <p className="text-[9px] font-black text-emerald-400">{beetle.records?.length > 0 ? `${beetle.records[beetle.records.length-1].weight}g` : '-'}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
           {/* Tab: Tasks (Full View) */}
           {activeTab === 'tasks' && (
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-4">
