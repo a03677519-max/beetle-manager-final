@@ -15,9 +15,10 @@ import {
   getStatSummary, 
   CATEGORIES 
 } from './utils/beetleUtils';
-import BeetleFormModal from './modals/BeetleFormModal';
-import { useSwitchBot } from './hooks/useSwitchBot';
-import { getItem, setItem, migrateFromLocalStorage } from './utils/db';
+import BeetleFormModal from './BeetleFormModal';
+import { useSwitchBot } from './useSwitchBot';
+import { getItem, setItem, migrateFromLocalStorage } from './db';
+import { BeetleDetailModal } from './BeetleModals';
 // 同様に他のモーダルもインポート...
 
 const ACTION_TYPES = {
