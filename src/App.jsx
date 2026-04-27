@@ -836,7 +836,8 @@ const App = () => {
                             </div>
                           </div>
                         </div>
-                      ))}
+                      </div>
+                    ))}
                     </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-24 px-4 text-center animate-in fade-in zoom-in duration-700">
