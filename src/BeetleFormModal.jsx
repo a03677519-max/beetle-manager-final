@@ -7,26 +7,37 @@ import { X, ChevronRight, Upload, RefreshCw } from 'lucide-react';
 const WheelPicker = ({ options, value, onChange, className = "" }) => {
   const wheelRef = useRef(null);
   const itemHeight = 40; // px
+  const isScrollingRef = useRef(false);
+  const timeoutRef = useRef(null);
 
   const handleScroll = useCallback((e) => {
-    if (!wheelRef.current) return;
-    const scrollTop = wheelRef.current.scrollTop;
+    isScrollingRef.current = true;
+    const scrollTop = e.target.scrollTop;
     const index = Math.min(options.length - 1, Math.max(0, Math.round(scrollTop / itemHeight)));
+    
     if (options[index] !== undefined && options[index].toString() !== value?.toString()) {
       if (window.navigator.vibrate) window.navigator.vibrate(10);
       onChange(options[index]);
     }
-  }, [options, value, onChange]);
+
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
+    }, 150);
+  }, [options, value, onChange, itemHeight]);
 
   useEffect(() => {
-    if (wheelRef.current && value !== undefined) {
+    if (wheelRef.current && value !== undefined && !isScrollingRef.current) {
       const strValue = value?.toString() || '';
       const index = options.findIndex(opt => opt?.toString() === strValue);
       if (index !== -1) {
-        wheelRef.current.scrollTop = index * itemHeight;
+        const targetTop = index * itemHeight;
+        if (Math.abs(wheelRef.current.scrollTop - targetTop) > 1) {
+          wheelRef.current.scrollTop = targetTop;
+        }
       }
     }
-  }, [value, options, itemHeight]);
+  }, [value, options]);
 
   return (
     <div className={`relative h-[120px] overflow-hidden picker-viewport ${className}`}>
@@ -34,6 +45,7 @@ const WheelPicker = ({ options, value, onChange, className = "" }) => {
       <div 
         ref={wheelRef}
         onScroll={handleScroll}
+        onTouchStart={(e) => e.stopPropagation()}
         className="h-full overflow-y-auto picker-wheel py-[40px] px-2 overscroll-contain snap-y snap-mandatory scrollbar-none"
       >
         {options.map((opt, i) => (

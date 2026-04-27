@@ -82,11 +82,8 @@
     -ms-overflow-style: none;
   }
 
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-
-  .picker-wheel::-webkit-scrollbar {
+  /* picker-wheelとscrollbar-noneの両方でWebkit系スクロールバーを非表示 */
+  .picker-wheel::-webkit-scrollbar, .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
 

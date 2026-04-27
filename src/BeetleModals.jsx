@@ -9,25 +9,39 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 export const WheelPicker = ({ options, value, onChange, className = "" }) => {
   const wheelRef = useRef(null);
   const itemHeight = 40;
+  const isScrollingRef = useRef(false);
+  const timeoutRef = useRef(null);
 
   const handleScroll = useCallback((e) => {
+    isScrollingRef.current = true;
     const scrollTop = Math.max(0, e.target.scrollTop);
     const index = Math.round(scrollTop / itemHeight);
+    
     if (options[index] !== undefined && options[index].toString() !== value?.toString()) {
       if (window.navigator.vibrate) window.navigator.vibrate(10);
       onChange(options[index]);
     }
-  }, [options, value, onChange]);
+
+    // スクロール停止判定
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
+    }, 150);
+  }, [options, value, onChange, itemHeight]);
 
   useEffect(() => {
-    if (wheelRef.current && value !== undefined) {
+    // 手動スクロール中でない場合のみ、外部からの値変更を位置に反映
+    if (wheelRef.current && value !== undefined && !isScrollingRef.current) {
       const strValue = value?.toString() || '';
       const index = options.findIndex(opt => opt?.toString() === strValue);
       if (index !== -1) {
-        wheelRef.current.scrollTop = index * itemHeight;
+        const targetTop = index * itemHeight;
+        if (Math.abs(wheelRef.current.scrollTop - targetTop) > 1) {
+          wheelRef.current.scrollTop = targetTop;
+        }
       }
     }
-  }, [value, options, itemHeight]);
+  }, [value, options]);
 
   return (
     <div className={`relative h-[120px] overflow-hidden picker-viewport ${className}`}>
@@ -35,6 +49,7 @@ export const WheelPicker = ({ options, value, onChange, className = "" }) => {
       <div 
         ref={wheelRef}
         onScroll={handleScroll}
+        onTouchStart={(e) => e.stopPropagation()}
         className="h-full overflow-y-auto picker-wheel py-[40px] px-2 overscroll-contain snap-y snap-mandatory scrollbar-none"
       >
         {options.map((opt, i) => (
