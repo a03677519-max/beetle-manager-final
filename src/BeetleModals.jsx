@@ -308,7 +308,7 @@ export const BeetleDetailModal = ({
                   <p className="text-[10px] text-white/80">
                     羽化まであと <span className="text-amber-400 font-black">{calculateDaysBetweenDates(new Date().toISOString().split('T')[0], beetle.emergenceDate)}</span> 日（予定）
                   </p>
-                </>
+                </div>
               )}
               {beetle.status === 'SpawnSet' && (
                 <InfoRow label="セット日" value={beetle.setDate} />
