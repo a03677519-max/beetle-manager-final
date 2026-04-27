@@ -806,9 +806,9 @@ const App = () => {
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start mb-1">
-                            <h3 className="text-2xl font-black truncate pr-2 text-white tracking-tighter leading-none">{beetle.name}</h3>
-                            <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest border backdrop-blur-md ${
+                          <div className="flex justify-between items-center mb-1">
+                            <h3 className="text-2xl font-black truncate text-white tracking-tighter">{beetle.name}</h3>
+                            <span className={`text-[9px] font-black px-2 py-1 rounded-lg uppercase border backdrop-blur-md ${
                               beetle.status === 'Larva' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
                               beetle.status === 'Adult' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
                               'bg-rose-500/10 text-rose-400 border-rose-500/30'
@@ -816,7 +816,7 @@ const App = () => {
                               {config.labels[beetle.status]}
                             </span>
                           </div>
-                          <p className="text-base font-bold text-white/90 truncate mb-5 italic leading-none">{beetle.species}</p>
+                          <p className="text-base font-bold text-white/90 truncate mb-5 italic leading-none">{beetle.species || '種類未設定'}</p>
                           
                           <div className="flex flex-wrap gap-2 pt-1">
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
@@ -825,7 +825,7 @@ const App = () => {
                             </div>
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
                               <Crown size={10} className="text-white/30" />
-                              <span className="text-xs font-black text-white">累代: {beetle.generation || '不明'}</span>
+                              <span className="text-xs font-black text-white">累代: {beetle.generation || '-'}</span>
                             </div>
                             {beetle.records?.length > 0 && (
                               <div className="bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1.5 ml-auto shadow-lg shadow-emerald-500/10">
@@ -837,7 +837,7 @@ const App = () => {
                           </div>
                         </div>
                     </div>
-                    ))}
+                    </div>
                     </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-24 px-4 text-center animate-in fade-in zoom-in duration-700">

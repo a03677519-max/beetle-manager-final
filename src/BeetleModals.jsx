@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useEffect } from 'react';
 import { X, Copy, Edit3, Bug, Ghost, Trash2, Scale, Activity, Thermometer, MessageSquare, Crown, RefreshCw, ArrowUpDown, Camera, Image as ImageIcon, Plus } from 'lucide-react';
-import { CATEGORIES, calculateLarvalPeriodDays, calculateAdultLifespanDays } from './beetleUtils.js';
+import { CATEGORIES, calculateLarvalPeriodDays, calculateAdultLifespanDays, calculateDaysBetweenDates } from './beetleUtils.js';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 
 /**
@@ -11,9 +11,9 @@ export const WheelPicker = ({ options, value, onChange, className = "" }) => {
   const itemHeight = 40;
 
   const handleScroll = useCallback((e) => {
-    const scrollTop = e.target.scrollTop;
+    const scrollTop = Math.max(0, e.target.scrollTop);
     const index = Math.round(scrollTop / itemHeight);
-    if (options[index] !== undefined && options[index] !== value) {
+    if (options[index] !== undefined && options[index].toString() !== value?.toString()) { // value?.toString()で比較を統一
       if (window.navigator.vibrate) window.navigator.vibrate(10);
       onChange(options[index]);
     }
@@ -22,8 +22,8 @@ export const WheelPicker = ({ options, value, onChange, className = "" }) => {
   useEffect(() => {
     if (wheelRef.current) {
       const index = options.indexOf(value?.toString());
-      const targetIndex = index !== -1 ? index : 0;
-      wheelRef.current.scrollTop = targetIndex * itemHeight;
+      const targetIndex = index !== -1 ? index : options.indexOf(options[0]); // 値が見つからない場合は最初の項目にスクロール
+      wheelRef.current.scrollTo({ top: targetIndex * itemHeight, behavior: 'auto' });
     }
   }, [options, value]);
 
@@ -33,10 +33,10 @@ export const WheelPicker = ({ options, value, onChange, className = "" }) => {
       <div 
         ref={wheelRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto picker-wheel py-[40px] px-2 overscroll-contain"
+        className="h-full overflow-y-auto picker-wheel py-[40px] px-2 overscroll-contain snap-y snap-mandatory"
       >
         {options.map((opt, i) => (
-          <div key={i} className={`h-10 flex items-center justify-center text-sm font-black transition-all picker-item ${opt === value?.toString() ? 'text-white scale-110' : 'text-white/20'}`}>
+          <div key={i} className={`h-10 flex items-center justify-center text-sm font-black transition-all picker-item snap-center ${opt === value?.toString() ? 'text-white scale-110' : 'text-white/20'}`}>
             {opt}
           </div>
         ))}
@@ -219,6 +219,10 @@ export const BeetleDetailModal = ({
                   <InfoRow label="羽化日" value={`${beetle.emergenceDate || '-'} ${beetle.isDigOut ? '(掘出)' : '(羽化確認)'}`} />
                   <InfoRow label="後食開始" value={beetle.feedingStartDate} />
                   {larvalPeriodDays && <InfoRow label="幼虫期間" value={`${larvalPeriodDays} 日`} />}
+                  {beetle.emergenceDate && beetle.hatchDate && (
+                    <InfoRow label="羽化まで" value={`${calculateDaysBetweenDates(beetle.hatchDate, beetle.emergenceDate)} 日`} />
+                  )}
+
                 </>
               )}
               {beetle.status === 'SpawnSet' && (
@@ -310,7 +314,7 @@ export const BeetleDetailModal = ({
                <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white/5 border border-white/10 p-4 rounded-2xl">
                     <p className="text-[8px] text-emerald-400 font-black uppercase mb-1">日付</p>
-                    <input type="date" className="w-full bg-transparent text-sm font-bold outline-none text-white" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
+                    <DateRollSelector label="日付" value={newLog.date} onChange={(v) => setNewLog({...newLog, date: v})} accentColorClass="text-emerald-400" />
                   </div>
                   <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between">
                     <div className="flex-1">
