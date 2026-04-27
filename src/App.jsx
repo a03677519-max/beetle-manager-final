@@ -522,7 +522,7 @@ const App = () => {
     alert(`${modals.selectedBatchIds.size}頭の一括記録を完了しました。`);
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!userId || !userId.trim()) return alert('ユーザーIDを入力してください');
     
