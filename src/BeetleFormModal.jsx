@@ -97,7 +97,6 @@ const BeetleFormModal = ({
   const speciesRef = useRef(null);
   const sciRef = useRef(null);
   const locRef = useRef(null);
-  const genRef = useRef(null);
   const saveRef = useRef(null);
 
   // ステータスに応じたアクセントカラーを定義

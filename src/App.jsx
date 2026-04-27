@@ -821,22 +821,22 @@ const App = () => {
                           <div className="flex flex-wrap gap-2 pt-1">
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
                               <Search size={10} className="text-white/30" />
-                              <span className="text-xs font-black text-white/90">産地: {beetle.locality || '-'}</span>
+                              <span className="text-xs font-black text-white">産地: {beetle.locality || '-'}</span>
                             </div>
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
                               <Crown size={10} className="text-white/30" />
-                              <span className="text-xs font-black text-white/90">累代: {beetle.generation || '不明'}</span>
+                              <span className="text-xs font-black text-white">累代: {beetle.generation || '不明'}</span>
                             </div>
                             {beetle.records?.length > 0 && (
                               <div className="bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1.5 ml-auto shadow-lg shadow-emerald-500/10">
                                 <Scale size={10} className="text-emerald-400" />
-                                <span className="text-xs font-black text-emerald-400">最終記録: {beetle.records[beetle.records.length-1].weight} g</span>
+                                <span className="text-xs font-black text-emerald-400">最終記録: {beetle.records[beetle.records.length-1].weight}g</span>
                               </div>
                             )}
                             </div>
                           </div>
                         </div>
-                      </div>
+                    </div>
                     ))}
                     </div>
                     ) : (

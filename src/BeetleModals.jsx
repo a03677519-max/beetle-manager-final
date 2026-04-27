@@ -1,7 +1,78 @@
-import React from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { X, Copy, Edit3, Bug, Ghost, Trash2, Scale, Activity, Thermometer, MessageSquare, Crown, RefreshCw, ArrowUpDown, Camera, Image as ImageIcon, Plus } from 'lucide-react';
 import { CATEGORIES, calculateLarvalPeriodDays, calculateAdultLifespanDays } from './beetleUtils.js';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
+
+/**
+ * ロール式セレクターコンポーネント
+ */
+export const WheelPicker = ({ options, value, onChange, className = "" }) => {
+  const wheelRef = useRef(null);
+  const itemHeight = 40;
+
+  const handleScroll = useCallback((e) => {
+    const scrollTop = e.target.scrollTop;
+    const index = Math.round(scrollTop / itemHeight);
+    if (options[index] !== undefined && options[index] !== value) {
+      if (window.navigator.vibrate) window.navigator.vibrate(10);
+      onChange(options[index]);
+    }
+  }, [options, value, onChange]);
+
+  useEffect(() => {
+    if (wheelRef.current) {
+      const index = options.indexOf(value?.toString());
+      const targetIndex = index !== -1 ? index : 0;
+      wheelRef.current.scrollTop = targetIndex * itemHeight;
+    }
+  }, [options, value]);
+
+  return (
+    <div className={`relative h-[120px] overflow-hidden picker-viewport ${className}`}>
+      <div className="absolute top-1/2 left-0 right-0 h-10 -translate-y-1/2 bg-white/10 border-y border-white/20 pointer-events-none z-10" />
+      <div 
+        ref={wheelRef}
+        onScroll={handleScroll}
+        className="h-full overflow-y-auto picker-wheel py-[40px] px-2 overscroll-contain"
+      >
+        {options.map((opt, i) => (
+          <div key={i} className={`h-10 flex items-center justify-center text-sm font-black transition-all picker-item ${opt === value?.toString() ? 'text-white scale-110' : 'text-white/20'}`}>
+            {opt}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/**
+ * 年月日をまとめてロール選択するコンポーネント
+ */
+export const DateRollSelector = ({ label, value, onChange, accentColorClass = "text-emerald-400" }) => {
+  const d = value ? new Date(value) : new Date();
+  const y = d.getFullYear().toString();
+  const m = (d.getMonth() + 1).toString().padStart(2, '0');
+  const day = d.getDate().toString().padStart(2, '0');
+
+  const handleUpdate = (part, val) => {
+    const newY = part === 'y' ? val : y;
+    const newM = part === 'm' ? val : m;
+    const newD = part === 'd' ? val : day;
+    onChange(`${newY}-${newM}-${newD}`);
+  };
+
+  return (
+    <div className="space-y-2 col-span-2">
+      <label className={`text-[10px] ${accentColorClass} font-black uppercase tracking-widest ml-1`}>{label} (ロール選択)</label>
+      <div className="grid grid-cols-3 gap-1 bg-white/5 rounded-2xl p-1 border border-white/10">
+        <WheelPicker options={Array.from({length: 11}, (_, i) => (new Date().getFullYear() - 5 + i).toString())} value={y} onChange={(v) => handleUpdate('y', v)} />
+        <WheelPicker options={Array.from({length: 12}, (_, i) => (i + 1).toString().padStart(2, '0'))} value={m} onChange={(v) => handleUpdate('m', v)} />
+        <WheelPicker options={Array.from({length: 31}, (_, i) => (i + 1).toString().padStart(2, '0'))} value={day} onChange={(v) => handleUpdate('d', v)} />
+      </div>
+      <p className="text-[9px] text-white/30 text-center font-bold mt-1">選択中: {value || '未設定'}</p>
+    </div>
+  );
+};
 
 // ヘルパーコンポーネント (CommonUI.jsx がない場合の暫定定義)
 const InfoRow = ({ label, value }) => (
@@ -364,7 +435,7 @@ export const EmergenceModal = ({ isOpen, onClose, formData, setFormData, onSubmi
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><X size={28} /></button>
         </div>
         <div className="space-y-6">
-          <input type="date" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-lg font-bold text-white outline-none focus:ring-2 focus:ring-emerald-500" value={formData.emergenceDate} onChange={e => setFormData({...formData, emergenceDate: e.target.value})} />
+          <DateRollSelector label="羽化日" value={formData.emergenceDate} onChange={(v) => setFormData({...formData, emergenceDate: v})} accentColorClass="text-emerald-400" />
           <button onClick={onSubmit} className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white py-5 rounded-[2rem] font-black text-lg shadow-lg active:scale-95 transition-all">羽化を記録</button>
         </div>
       </div>
@@ -382,7 +453,7 @@ export const DeathModal = ({ isOpen, onClose, formData, setFormData, onSubmit })
           <button onClick={onClose} className="text-white/40 hover:text-white transition-colors"><X size={28} /></button>
         </div>
         <div className="space-y-6">
-          <input type="date" className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-lg font-bold text-white outline-none focus:ring-2 focus:ring-rose-500" value={formData.deathDate} onChange={e => setFormData({...formData, deathDate: e.target.value})} />
+          <DateRollSelector label="死亡日" value={formData.deathDate} onChange={(v) => setFormData({...formData, deathDate: v})} accentColorClass="text-rose-400" />
           <button onClick={onSubmit} className="w-full bg-gradient-to-r from-rose-700 to-rose-600 text-white py-5 rounded-[2rem] font-black text-lg shadow-lg active:scale-95 transition-all">記録してアーカイブ</button>
         </div>
       </div>
@@ -440,10 +511,12 @@ export const BatchRecordModal = ({ isOpen, onClose, selectedIds, targets, onTogg
         </div>
         <div className="p-8 space-y-8 text-white">
           <div className="grid grid-cols-2 gap-4">
-             <div className="bg-white/5 border border-white/10 p-4 rounded-2xl shadow-inner focus-within:ring-2 focus-within:ring-emerald-500 transition-all">
-               <p className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest mb-1">交換日</p>
-               <input type="date" className="w-full bg-transparent font-bold outline-none text-white" value={newLog.date} onChange={e => setNewLog({...newLog, date: e.target.value})} />
-             </div>
+             <DateRollSelector 
+               label="交換日" 
+               value={newLog.date} 
+               onChange={(v) => setNewLog({...newLog, date: v})} 
+               accentColorClass="text-emerald-400" 
+             />
              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center justify-between shadow-inner focus-within:ring-2 focus-within:ring-emerald-500 transition-all">
                <div className="flex-1">
                  <p className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest mb-1">温度 (℃)</p>
