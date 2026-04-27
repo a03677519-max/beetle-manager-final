@@ -14,11 +14,17 @@ import {
   getAutoTasks, 
   getStatSummary, 
   CATEGORIES 
-} from './utils/beetleUtils';
+} from './beetleUtils';
 import BeetleFormModal from './BeetleFormModal';
 import { useSwitchBot } from './useSwitchBot';
 import { getItem, setItem, migrateFromLocalStorage } from './db';
-import { BeetleDetailModal } from './BeetleModals';
+import { 
+  BeetleDetailModal, 
+  StatGraphModal, 
+  BatchRecordModal, 
+  EmergenceModal, 
+  DeathModal 
+} from './BeetleModals';
 // 同様に他のモーダルもインポート...
 
 const ACTION_TYPES = {
