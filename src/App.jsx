@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useReducer } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useReducer, useCallback } from 'react';
 import logoImg from './assets/logo.png'; // 画像をインポート
 import { 
   Plus, Trash2, History, X, ChevronRight, Scale, ClipboardCheck, 

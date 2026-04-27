@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { X, ChevronRight, Upload } from 'lucide-react';
+import { X, ChevronRight, Upload, RefreshCw } from 'lucide-react';
 
 /**
  * ロール式セレクターコンポーネント
@@ -8,7 +8,7 @@ const WheelPicker = ({ options, value, onChange, className = "" }) => {
   const wheelRef = useRef(null);
   const itemHeight = 40; // px
 
-  const handleScroll = useCallback(() => {
+  const handleScroll = useCallback((e) => {
     if (!wheelRef.current) return;
     const scrollTop = wheelRef.current.scrollTop;
     const index = Math.min(options.length - 1, Math.max(0, Math.round(scrollTop / itemHeight)));
@@ -19,13 +19,14 @@ const WheelPicker = ({ options, value, onChange, className = "" }) => {
   }, [options, value, onChange]);
 
   useEffect(() => {
-    if (wheelRef.current) {
-      const index = options.indexOf(value?.toString());
+    if (wheelRef.current && value !== undefined) {
+      const strValue = value?.toString() || '';
+      const index = options.findIndex(opt => opt?.toString() === strValue);
       if (index !== -1) {
         wheelRef.current.scrollTop = index * itemHeight;
       }
     }
-  }, [options, value]);
+  }, [value, options, itemHeight]);
 
   return (
     <div className={`relative h-[120px] overflow-hidden picker-viewport ${className}`}>
@@ -153,32 +154,37 @@ const BeetleFormModal = ({
 
   const currentAccent = accentColors[formData.status] || accentColors.Adult; // デフォルトはAdult
 
-  // 累代の3カラムパース
-  const [gen1, setGen1] = useState('CB');
-  const [gen2, setGen2] = useState('-');
-  const [gen3, setGen3] = useState('-');
-  const [initialized, setInitialized] = useState(false);
-
-  // 初期値の同期（編集時）
-  useEffect(() => {
-    if (isEditing && formData.generation && !initialized) {
-      const genStr = formData.generation;
-      if (genStr === 'WD') {
-        setGen1('WD'); setGen2('-'); setGen3('-');
-      } else {
-        const match = genStr.match(/^([A-Z]+)(\d*)$/);
-        if (match) {
-          const prefix = match[1];
-          const num = match[2];
-          if (prefix === 'CB') { setGen1('CB'); setGen2('-'); }
-          else if (prefix === 'WF') { setGen1('WD'); setGen2('WF'); }
-          else if (prefix === 'CBF') { setGen1('CB'); setGen2('CBF'); }
-          setGen3(num || '1');
-        }
-      }
-      setInitialized(true);
+  // 累代の3カラムパース - 初期値を動的に決定
+  const initializeGenerationState = () => {
+    if (!formData.generation) return { g1: 'CB', g2: '-', g3: '-' };
+    
+    const genStr = formData.generation;
+    if (genStr === 'WD') return { g1: 'WD', g2: '-', g3: '-' };
+    
+    const match = genStr.match(/^(WD|CB|WF|CBF)(\d*)$/);
+    if (match) {
+      const prefix = match[1];
+      const num = match[2] || '-';
+      if (prefix === 'WD') return { g1: 'WD', g2: '-', g3: num === '-' ? '-' : num };
+      if (prefix === 'WF') return { g1: 'WD', g2: 'WF', g3: num === '-' ? '-' : num };
+      if (prefix === 'CB') return { g1: 'CB', g2: '-', g3: num === '-' ? '-' : num };
+      if (prefix === 'CBF') return { g1: 'CB', g2: 'CBF', g3: num === '-' ? '-' : num };
     }
-  }, [isOpen, isEditing, formData.generation]);
+    return { g1: 'CB', g2: '-', g3: '-' };
+  };
+  
+  const initialGen = initializeGenerationState();
+  const [gen1, setGen1] = useState(initialGen.g1);
+  const [gen2, setGen2] = useState(initialGen.g2);
+  const [gen3, setGen3] = useState(initialGen.g3);
+
+  // モーダルが開き直された時に状態をリセット
+  useEffect(() => {
+    const gen = initializeGenerationState();
+    setGen1(gen.g1);
+    setGen2(gen.g2);
+    setGen3(gen.g3);
+  }, [isOpen]);
 
   const updateGen = (g1, g2, g3) => {
     let res = g1;
@@ -313,7 +319,37 @@ const BeetleFormModal = ({
             )}
 
             {formData.status === 'Larva' && (
-              <DateRollSelector label="孵化日" value={formData.hatchDate} onChange={(v) => setFormData({...formData, hatchDate: v})} accentColorClass={currentAccent.text} />
+              <>
+                <DateRollSelector label="孵化日" value={formData.hatchDate} onChange={(v) => setFormData({...formData, hatchDate: v})} accentColorClass={currentAccent.text} />
+                <DateRollSelector label="羽化日" value={formData.emergenceDate} onChange={(v) => setFormData({...formData, emergenceDate: v})} accentColorClass={currentAccent.text} />
+                <div className="space-y-1 col-span-2">
+                  <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>羽化の状態</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, isDigOut: false})}
+                      className={`flex-1 py-3 rounded-xl text-[10px] font-black border transition-all ${
+                        !formData.isDigOut 
+                          ? `${currentAccent.chipActiveBg} text-white` 
+                          : 'bg-white/5 border-white/10 text-white/30'
+                      }`}
+                    >
+                      羽化確認
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, isDigOut: true})}
+                      className={`flex-1 py-3 rounded-xl text-[10px] font-black border transition-all ${
+                        formData.isDigOut 
+                          ? `${currentAccent.chipActiveBg} text-white` 
+                          : 'bg-white/5 border-white/10 text-white/30'
+                      }`}
+                    >
+                      掘り出し
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
 
             {formData.status === 'SpawnSet' && (

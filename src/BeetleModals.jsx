@@ -13,19 +13,21 @@ export const WheelPicker = ({ options, value, onChange, className = "" }) => {
   const handleScroll = useCallback((e) => {
     const scrollTop = Math.max(0, e.target.scrollTop);
     const index = Math.round(scrollTop / itemHeight);
-    if (options[index] !== undefined && options[index].toString() !== value?.toString()) { // value?.toString()で比較を統一
+    if (options[index] !== undefined && options[index].toString() !== value?.toString()) {
       if (window.navigator.vibrate) window.navigator.vibrate(10);
       onChange(options[index]);
     }
   }, [options, value, onChange]);
 
   useEffect(() => {
-    if (wheelRef.current) {
-      const index = options.indexOf(value?.toString());
-      const targetIndex = index !== -1 ? index : options.indexOf(options[0]); // 値が見つからない場合は最初の項目にスクロール
-      wheelRef.current.scrollTo({ top: targetIndex * itemHeight, behavior: 'auto' });
+    if (wheelRef.current && value !== undefined) {
+      const strValue = value?.toString() || '';
+      const index = options.findIndex(opt => opt?.toString() === strValue);
+      if (index !== -1) {
+        wheelRef.current.scrollTop = index * itemHeight;
+      }
     }
-  }, [options, value]);
+  }, [value, options, itemHeight]);
 
   return (
     <div className={`relative h-[120px] overflow-hidden picker-viewport ${className}`}>
