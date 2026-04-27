@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getItem, setItem } from './db';
+import { getItem, setItem } from './db.js';
 
 export const useSwitchBot = (appDispatch, ACTION_TYPES) => {
   const [sbToken, setSbToken] = useState(() => {

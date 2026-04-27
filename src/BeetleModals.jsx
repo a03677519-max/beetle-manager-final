@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Copy, Edit3, Bug, Ghost, Trash2, Scale, Activity, Thermometer, MessageSquare, Crown, RefreshCw, ArrowUpDown } from 'lucide-react';
-import { CATEGORIES } from './beetleUtils';
+import { CATEGORIES } from './beetleUtils.js';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 
 // ヘルパーコンポーネント (CommonUI.jsx がない場合の暫定定義)
