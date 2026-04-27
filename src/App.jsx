@@ -199,7 +199,7 @@ const App = () => {
         isGuideline: false
       };
     }
-    return { content: "データなし", isGuideline: false };
+    return { content: "記録なし", isGuideline: false };
   };
 
   // 並べ替えハンドラ
@@ -788,14 +788,14 @@ const App = () => {
                     <div 
                       key={beetle.id} 
                       onClick={() => dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'detail', payload: beetle })}
-                      className="bg-slate-900/90 backdrop-blur-xl border border-white/20 rounded-[2.5rem] p-6 shadow-2xl active:scale-[0.98] transition-all relative overflow-hidden group cursor-pointer"
+                      className="bg-slate-900/90 backdrop-blur-2xl border border-white/30 rounded-[2.5rem] p-6 shadow-2xl active:scale-[0.98] transition-all relative overflow-hidden group cursor-pointer ring-1 ring-white/10"
                     >
                       {/* グラデーションオーバーレイ */}
                       <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-50" />
                       <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 group-hover:animate-[sweep_3s_infinite]" />
                       
                       <div className="flex gap-4 items-start relative z-10">
-                        <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center shrink-0 border-2 shadow-xl transition-transform group-hover:scale-105 duration-500 ${
+                        <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center shrink-0 border-2 shadow-2xl transition-transform group-hover:scale-105 duration-500 ${
                           beetle.status === 'Larva' ? 'bg-amber-500/20 border-amber-500/30 shadow-amber-500/10' : 
                           beetle.status === 'Adult' ? 'bg-emerald-500/20 border-emerald-500/30 shadow-emerald-500/10' :
                           'bg-rose-500/20 border-rose-500/30 shadow-rose-500/10'
@@ -806,8 +806,8 @@ const App = () => {
                         </div>
                         
                         <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-center mb-1">
-                            <h3 className="text-2xl font-black truncate pr-2 text-white tracking-tight leading-none">{beetle.name}</h3>
+                          <div className="flex justify-between items-start mb-1">
+                            <h3 className="text-2xl font-black truncate pr-2 text-white tracking-tighter leading-none">{beetle.name}</h3>
                             <span className={`text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest border backdrop-blur-md ${
                               beetle.status === 'Larva' ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 
                               beetle.status === 'Adult' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' :
@@ -816,7 +816,7 @@ const App = () => {
                               {config.labels[beetle.status]}
                             </span>
                           </div>
-                          <p className="text-sm font-bold text-white/90 truncate mb-5 italic">{beetle.species}</p>
+                          <p className="text-base font-bold text-white/90 truncate mb-5 italic leading-none">{beetle.species}</p>
                           
                           <div className="flex flex-wrap gap-2 pt-1">
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
@@ -825,12 +825,12 @@ const App = () => {
                             </div>
                             <div className="bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 flex items-center gap-1.5">
                               <Crown size={10} className="text-white/30" />
-                              <span className="text-xs font-black text-white/90">累代: {beetle.generation || '-'}</span>
+                              <span className="text-xs font-black text-white/90">累代: {beetle.generation || '不明'}</span>
                             </div>
                             {beetle.records?.length > 0 && (
                               <div className="bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/30 flex items-center gap-1.5 ml-auto shadow-lg shadow-emerald-500/10">
                                 <Scale size={10} className="text-emerald-400" />
-                                <span className="text-xs font-black text-emerald-400">{beetle.records[beetle.records.length-1].weight}g</span>
+                                <span className="text-xs font-black text-emerald-400">最終記録: {beetle.records[beetle.records.length-1].weight} g</span>
                               </div>
                             )}
                             </div>
@@ -992,10 +992,9 @@ const App = () => {
                         onDrop={() => onDropSb(idx)}
                         onPointerDown={handleDraggablePointerDown}
                         onContextMenu={(e) => e.preventDefault()}
-                        className={`space-y-2 p-3 rounded-2xl transition-all relative select-none ${
+                        className={`space-y-2 p-3 rounded-2xl transition-all relative select-none touch-action-pan-y ${
                           ui.isSortingMode ? 'animate-wiggle ring-2 ring-blue-500/30 ring-offset-1 bg-blue-50/30 touch-action-none' : 'bg-slate-900/50 border border-white/10 touch-action-pan-y'
                         } ${isDragging ? 'opacity-30 scale-95 border-2 border-dashed border-white/20 shadow-2xl' : ''}`}
-                        style={{ WebkitUserDrag: 'none', WebkitTouchCallout: 'none', userSelect: 'none' }}
                       >
                         <div className="flex justify-between items-center px-1">
                           <p className="text-sm font-black text-slate-700 uppercase">{device.deviceName}</p>
@@ -1054,6 +1053,7 @@ const App = () => {
                       </button>
                       
                       {isExpanded && (
+                        <>
                         <div className="px-5 pb-5 animate-in slide-in-from-top-2 duration-200">
                           <p className="text-[10px] font-bold text-slate-400 mb-3 border-b border-slate-50 pb-1">{Array.from(group.speciesNames).join(' / ') || '種名未設定'}</p>
 
@@ -1097,7 +1097,7 @@ const App = () => {
                                 onDrop: () => onDrop(idx),
                                 onPointerDown: handlePointerDown,
                                 onContextMenu: (e) => e.preventDefault(),
-                                className: `p-3 rounded-xl text-left transition-all relative select-none ${
+                                className: `p-3 rounded-xl text-left transition-all relative select-none touch-action-pan-y ${
                                   ui.isSortingMode ? 'animate-wiggle ring-2 ring-emerald-500/30 ring-offset-1 touch-action-none' : 'bg-emerald-500/5 active:scale-95 touch-action-pan-y'
                                 } ${isDragging ? 'opacity-30 border-2 border-dashed border-white/20 shadow-inner' : ''}`,
                                 style: { WebkitUserDrag: 'none', WebkitTouchCallout: 'none', userSelect: 'none' }
@@ -1131,7 +1131,7 @@ const App = () => {
                                 case 'spawn': return (
                                   <button key="spawn" {...btnProps} onClick={() => { if (ui.isSortingMode) return; dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'statGraph', payload: { title: `${group.name} - 産卵効率ランキング`, data: group.spawnSetRankings, unit: '頭/日', color: '#ec4899' } }); }} className={`${btnProps.className} bg-pink-50`}>
                                     <p className="text-[9px] font-bold text-pink-600 uppercase flex justify-between">産卵効率 <ArrowUpDown size={8}/></p>
-                                    <p className="text-base font-black text-pink-700">{getStatSummary(group.spawnSetRankings).max}頭/日</p>
+                                    <p className="text-base font-black text-pink-700">{getStatSummary(group.spawnSetRankings).max} 頭/日</p>
                                   </button>
                                 );
                                 default: return null;
@@ -1150,7 +1150,7 @@ const App = () => {
                                 const guide = getGuide(group);
                                 return (
                                   <span className="flex items-start gap-1.5">
-                                    <span>{guide.content === "記録なし" ? "飼育データがまだありません。セット記録が増えるとここに傾向が表示されます。" : guide.content}</span>
+                                    <span>{guide.content}</span>
                                   </span>
                                 );
                               })()}
@@ -1222,6 +1222,7 @@ const App = () => {
                             </div>
                           </div>
                         </div>
+                        </>
                       )}
                     </div>
                   );
