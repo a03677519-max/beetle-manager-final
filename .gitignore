@@ -4,12 +4,11 @@ node_modules/
 # Build output
 dist/
 dist-ssr/
-*.local
 
-# Logs
+# Environment variables (API tokens, etc.)
+.env
+.env.local
+
+# Logs and system files
 *.log
-
-# IDE and OS files
-.vscode/
 .DS_Store
-thumbs.db
