@@ -70,19 +70,32 @@ export const DateRollSelector = ({ label, value, onChange, accentColorClass = "t
   const curM = (now.getMonth() + 1).toString().padStart(2, '0');
   const curD = now.getDate().toString().padStart(2, '0');
 
-  const d = value ? new Date(value) : null;
-  const y = d ? d.getFullYear().toString() : curY;
-  const m = d ? (d.getMonth() + 1).toString().padStart(2, '0') : curM;
-  const day = d ? d.getDate().toString().padStart(2, '0') : curD;
+  // タイムゾーンによるズレを防ぐため、Dateオブジェクトではなく文字列を直接パース
+  const dateParts = value && value.includes('-') ? value.split('-') : [];
+  const y = dateParts[0] || '-'; // valueが空の場合は'-'を初期値とする
+  const m = dateParts[1] || '-'; // valueが空の場合は'-'を初期値とする
+  const day = dateParts[2] || '-'; // valueが空の場合は'-'を初期値とする
 
   const handleUpdate = (part, val) => {
-    const newY = part === 'y' ? val : y;
-    const newM = part === 'm' ? val : m;
-    const newD = part === 'd' ? val : day;
-    
-    if (newY === '-' || newM === '-' || newD === '-') {
+    let newY = part === 'y' ? val : y;
+    let newM = part === 'm' ? val : m;
+    let newD = part === 'd' ? val : day;
+
+    // いずれかのホイールが操作された場合、未選択の項目を現在の年月日で補完する
+    if (val !== '-') {
+      if (newY === '-') newY = curY;
+      if (newM === '-') newM = curM;
+      if (newD === '-') newD = curD;
+    }
+
+    // 全てが '-' の場合のみ空文字にする。
+    // それ以外は、未選択の項目があっても現在の日付で補完して反映させる。
+    if (newY === '-' && newM === '-' && newD === '-') {
       onChange('');
     } else {
+      newY = newY === '-' ? curY : newY;
+      newM = newM === '-' ? curM : newM;
+      newD = newD === '-' ? curD : newD;
       onChange(`${newY}-${newM}-${newD}`);
     }
   };

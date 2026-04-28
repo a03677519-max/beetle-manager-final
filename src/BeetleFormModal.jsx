@@ -12,7 +12,7 @@ const WheelPicker = ({ options, value, onChange, className = "" }) => {
 
   const handleScroll = useCallback((e) => {
     isScrollingRef.current = true;
-    const scrollTop = e.target.scrollTop;
+    const scrollTop = Math.max(0, e.target.scrollTop);
     const index = Math.min(options.length - 1, Math.max(0, Math.round(scrollTop / itemHeight)));
     
     if (options[index] !== undefined && options[index].toString() !== value?.toString()) {
@@ -66,19 +66,32 @@ const DateRollSelector = ({ label, value, onChange, accentColorClass = "text-eme
   const curM = (now.getMonth() + 1).toString().padStart(2, '0');
   const curD = now.getDate().toString().padStart(2, '0');
 
-  const d = value ? new Date(value) : null;
-  const y = d ? d.getFullYear().toString() : curY;
-  const m = d ? (d.getMonth() + 1).toString().padStart(2, '0') : curM;
-  const day = d ? d.getDate().toString().padStart(2, '0') : curD;
+  // タイムゾーンによるズレを防ぐため、Dateオブジェクトではなく文字列を直接パース
+  const dateParts = value && value.includes('-') ? value.split('-') : [];
+  const y = dateParts[0] || '-'; // valueが空の場合は'-'を初期値とする
+  const m = dateParts[1] || '-'; // valueが空の場合は'-'を初期値とする
+  const day = dateParts[2] || '-'; // valueが空の場合は'-'を初期値とする
 
   const handleUpdate = (part, val) => {
-    const newY = part === 'y' ? val : y;
-    const newM = part === 'm' ? val : m;
-    const newD = part === 'd' ? val : day;
-    
-    if (newY === '-' || newM === '-' || newD === '-') {
+    let newY = part === 'y' ? val : y;
+    let newM = part === 'm' ? val : m;
+    let newD = part === 'd' ? val : day;
+
+    // いずれかのホイールが操作された場合、未選択の項目を現在の年月日で補完する
+    if (val !== '-') {
+      if (newY === '-') newY = curY;
+      if (newM === '-') newM = curM;
+      if (newD === '-') newD = curD;
+    }
+
+    // 全てが '-' の場合のみ空文字にする。
+    // それ以外は、未選択の項目があっても現在の日付で補完して反映させる。
+    if (newY === '-' && newM === '-' && newD === '-') {
       onChange('');
     } else {
+      newY = newY === '-' ? curY : newY;
+      newM = newM === '-' ? curM : newM;
+      newD = newD === '-' ? curD : newD;
       onChange(`${newY}-${newM}-${newD}`);
     }
   };
@@ -166,58 +179,71 @@ const BeetleFormModal = ({
   const currentAccent = accentColors[formData.status] || accentColors.Adult; // デフォルトはAdult
 
   // 累代の3カラムパース - 初期値を動的に決定
+  // 累代の3カラムパース - 初期値を動的に決定
   const initializeGenerationState = () => {
-    if (!formData.generation) return { g1: '-', g2: '-', g3: '-' };
+    const genStr = formData.generation || '';
+    let g1 = '-', g2 = '-', g3 = '-';
     
-    const genStr = formData.generation;
-    if (genStr === 'WD') return { g1: 'WD', g2: '-', g3: '-' };
-    
-    const match = genStr.match(/^(WD|CB|WF|CBF)(\d*)$/);
-    if (match) {
-      const prefix = match[1];
-      const num = match[2] || '-';
-      if (prefix === 'WD') return { g1: 'WD', g2: '-', g3: num === '-' ? '-' : num };
-      if (prefix === 'WF') return { g1: 'WD', g2: 'WF', g3: num === '-' ? '-' : num };
-      if (prefix === 'CB') return { g1: 'CB', g2: '-', g3: num === '-' ? '-' : num };
-      if (prefix === 'CBF') return { g1: 'CB', g2: 'CBF', g3: num === '-' ? '-' : num };
+    if (genStr === '' || genStr === '-') {
+      return { g1, g2, g3 };
     }
-    // Handle cases like WF, CBF without number
-    if (genStr === 'WF') return { g1: 'WD', g2: 'WF', g3: '-' };
-    if (genStr === 'CBF') return { g1: 'CB', g2: 'CBF', g3: '-' };
-    return { g1: '-', g2: '-', g3: '-' }; // Fallback to unselected
+
+    // CBFやWFのような複合パターンを先にチェック
+    const matchCBF = genStr.match(/^(CBF)(\d*)$/);
+    const matchWF = genStr.match(/^(WF)(\d*)$/);
+    const matchCB = genStr.match(/^(CB)(\d*)$/);
+    const matchWD = genStr.match(/^(WD)(\d*)$/);
+
+    if (matchCBF) {
+      g1 = 'CB'; g2 = 'CBF'; g3 = matchCBF[2] || '-';
+    } else if (matchWF) {
+      g1 = 'WD'; g2 = 'WF'; g3 = matchWF[2] || '-';
+    } else if (matchCB) {
+      g1 = 'CB'; g2 = '-'; g3 = matchCB[2] || '-';
+    } else if (matchWD) {
+      g1 = 'WD'; g2 = '-'; g3 = matchWD[2] || '-';
+    } else if (/^\d+$/.test(genStr)) { // 数字のみの場合 (例: "1")
+      g1 = 'CB'; // デフォルトでCBとする
+      g3 = genStr;
+    }
+    return { g1, g2, g3 };
   };
   
   const initialGen = initializeGenerationState();
   const [gen1, setGen1] = useState(initialGen.g1 || '-');
   const [gen2, setGen2] = useState(initialGen.g2 || '-');
   const [gen3, setGen3] = useState(initialGen.g3 || '-');
-
+  
   // モーダルが開き直された時に状態をリセット
   useEffect(() => {
-    const gen = initializeGenerationState();
-    setGen1(gen.g1 || '-');
-    setGen2(gen.g2 || '-');
-    setGen3(gen.g3 || '-');
-  }, [isOpen]);
+    if (isOpen) {
+      const gen = initializeGenerationState();
+      setGen1(gen.g1 || '-');
+      setGen2(gen.g2 || '-');
+      setGen3(gen.g3 || '-');
+    }
+  }, [isOpen, formData.generation]); // 外部からのリセットにも反応するように追加
 
   const updateGen = (g1, g2, g3) => {
     let generationString = '';
-    if (g1 === '-') {
-      generationString = '-'; // If main type is unselected, whole generation is unselected
-    } else if (g1 !== '-') {
-      if (g2 !== '-') {
-        generationString = g2; // If subtype is selected, use subtype
-      } else {
-        generationString = g1; // Otherwise use main type
+    if (g1 === '-') { // g1が未選択なら全体も未選択
+      generationString = '-';
+    } else {
+      if (g2 !== '-') { // g2 (WF/CBF)が選択されていればそれを優先
+        generationString = g2;
+      } else { // g2が未選択ならg1 (WD/CB)を使用
+        generationString = g1;
       }
-      if (g3 !== '-') generationString += g3; // Append generation number if selected
+      if (g3 !== '-') { // g3 (世代数)が選択されていれば追加
+        generationString += g3;
+      }
     }
     
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData({ 
+      ...formData, 
       generation: generationString,
       _genState: { g1, g2, g3 } // 状態保持用
-    }));
+    });
   };
 
   // 5段階評価のボタングループ
@@ -299,9 +325,9 @@ const BeetleFormModal = ({
                 <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>個体数</label>
                 <div className="bg-white/5 rounded-2xl p-1 border border-white/10">
                   <WheelPicker 
-                    options={['-', ...Array.from({length: 50}, (_, i) => (i + 1).toString())]} 
-                    value={(formData.count === 0 || formData.count === undefined) ? '-' : formData.count.toString()} 
-                    onChange={(v) => setFormData({...formData, count: v === '-' ? 0 : parseInt(v) || 1})} 
+                    options={[...Array.from({length: 50}, (_, i) => (i + 1).toString())]} 
+                    value={(formData.count || 1).toString()} 
+                    onChange={(v) => setFormData({...formData, count: parseInt(v) || 1})} 
                   />
                 </div>
               </div>

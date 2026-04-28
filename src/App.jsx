@@ -147,7 +147,6 @@ const App = () => {
 
   const { beetles, config, isLoggedIn, userId, ui, modals, form } = state;
   const [backupHistoryList, setBackupHistoryList] = useState([]);
-  const isDataLoaded = useRef(false);
 
   // 安全な個体リスト（万が一データが壊れていても配列を保証）
   const safeBeetles = useMemo(() => {
@@ -176,7 +175,7 @@ const App = () => {
   // 非同期でのデータ初期化
   useEffect(() => {
     const loadInitialData = async () => {
-      const currentId = localStorage.getItem('beetle_user_id') || '';
+      const currentId = localStorage.getItem('beetle_user_id') || 'default_user';
       // 初回のみ移行を実行
       if (!localStorage.getItem('beetle_db_migrated')) {
         await migrateFromLocalStorage([`beetle_pwa_data_${currentId}`, 'beetle_app_config', 'beetle_temp_history']);
@@ -259,16 +258,12 @@ const App = () => {
     };
   }, []);
 
-  // Save data
+  // データの自動保存 (読み込み完了後のみ実行)
   useEffect(() => {
-    if (beetles.length > 0) isDataLoaded.current = true;
-  }, []);
-
-  useEffect(() => {
-    if (isDataLoaded.current && isLoggedIn && userId) {
+    if (!ui.isInitialLoading && isLoggedIn && userId) {
       setItem(`beetle_pwa_data_${userId}`, beetles); // beetles
     }
-  }, [beetles, isLoggedIn, userId]);
+  }, [beetles, isLoggedIn, userId, ui.isInitialLoading]);
 
   useEffect(() => {
     // ログイン機能を削除するため、isLoggedInの保存は不要
@@ -277,7 +272,7 @@ const App = () => {
 
   // User IDの保存
   useEffect(() => {
-    setItem('beetle_user_id', userId || 'default_user'); // ログインなしの場合のデフォルトユーザーID
+    localStorage.setItem('beetle_user_id', userId || 'default_user');
   }, [userId]); // userId
 
   // Configの保存
@@ -606,6 +601,11 @@ const App = () => {
       }
       dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: [...beetles, ...newBeetles] });
     }
+    // 保存後にフォームをリセット
+    dispatch({ 
+      type: ACTION_TYPES.UPDATE_FORM, 
+      payload: { data: initialFormState, isEditing: false } 
+    });
     dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'form' });
   };
 
@@ -1463,6 +1463,11 @@ const App = () => {
           <div className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 flex flex-col gap-3 items-end z-30">
             <button 
               onClick={() => {
+                // 新規登録用にフォームをリセット
+                dispatch({ 
+                  type: ACTION_TYPES.UPDATE_FORM, 
+                  payload: { data: initialFormState, isEditing: false } 
+                });
                 dispatch({ type: ACTION_TYPES.OPEN_MODAL, modal: 'form' });
                 dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isFabMenuOpen: false } });
               }}
