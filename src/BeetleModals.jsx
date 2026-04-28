@@ -77,27 +77,23 @@ export const DateRollSelector = ({ label, value, onChange, accentColorClass = "t
   const day = dateParts[2] || '-'; // valueが空の場合は'-'を初期値とする
 
   const handleUpdate = (part, val) => {
-    let newY = part === 'y' ? val : y;
-    let newM = part === 'm' ? val : m;
-    let newD = part === 'd' ? val : day;
+    let updatedY = part === 'y' ? val : y;
+    let updatedM = part === 'm' ? val : m;
+    let updatedD = part === 'd' ? val : day;
 
-    // いずれかのホイールが操作された場合、未選択の項目を現在の年月日で補完する
-    if (val !== '-') {
-      if (newY === '-') newY = curY;
-      if (newM === '-') newM = curM;
-      if (newD === '-') newD = curD;
-    }
+    // 「-」が選択された場合、または未選択の項目は今日の日付で補完
+    const finalY = updatedY === '-' ? curY : updatedY;
+    const finalM = updatedM === '-' ? curM : updatedM;
+    const finalD = updatedD === '-' ? curD : updatedD;
 
-    // 全てが '-' の場合のみ空文字にする。
-    // それ以外は、未選択の項目があっても現在の日付で補完して反映させる。
-    if (newY === '-' && newM === '-' && newD === '-') {
-      onChange('');
+    // もし元々日付が空で、かつ全ての項目が今日の日付で補完された場合は、空文字列を返す
+    // これは、ユーザーが何も操作していない状態と、今日の日付を明示的に選択した状態を区別するため
+    if (!value && finalY === curY && finalM === curM && finalD === curD) {
+      onChange(''); 
     } else {
-      newY = newY === '-' ? curY : newY;
-      newM = newM === '-' ? curM : newM;
-      newD = newD === '-' ? curD : newD;
-      onChange(`${newY}-${newM}-${newD}`);
+      onChange(`${finalY}-${finalM}-${finalD}`);
     }
+
   };
 
   return (

@@ -521,14 +521,14 @@ const App = () => {
       document.body.classList.add('sorting-active', 'select-none', 'touch-none');
     } else {
       document.body.style.overflow = '';
-      document.body.classList.remove('sorting-active', 'select-none');
+      document.body.classList.remove('sorting-active', 'select-none', 'touch-none');
     }
 
     return () => {
       document.body.style.overflow = '';
-      document.body.classList.remove('sorting-active', 'select-none');
+      document.body.classList.remove('sorting-active', 'select-none', 'touch-none');
     };
-  }, [modals, ui.isSortingMode]);
+  }, [modals, ui.isSortingMode, ui.draggedIdx, ui.draggedIdxSb]);
 
   const handleFetchSbTemperature = (targetId = null) => {
     fetchSbTemperature(targetId, (temp) => dispatch({ type: ACTION_TYPES.UPDATE_FORM, payload: { newTemp: temp.toString() } })); // form.newTemp

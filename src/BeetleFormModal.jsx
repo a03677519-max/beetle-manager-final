@@ -73,33 +73,29 @@ const DateRollSelector = ({ label, value, onChange, accentColorClass = "text-eme
   const day = dateParts[2] || '-'; // valueが空の場合は'-'を初期値とする
 
   const handleUpdate = (part, val) => {
-    let newY = part === 'y' ? val : y;
-    let newM = part === 'm' ? val : m;
-    let newD = part === 'd' ? val : day;
+    let updatedY = part === 'y' ? val : y;
+    let updatedM = part === 'm' ? val : m;
+    let updatedD = part === 'd' ? val : day;
 
-    // いずれかのホイールが操作された場合、未選択の項目を現在の年月日で補完する
-    if (val !== '-') {
-      if (newY === '-') newY = curY;
-      if (newM === '-') newM = curM;
-      if (newD === '-') newD = curD;
-    }
+    // 「-」が選択された場合、または未選択の項目は今日の日付で補完
+    const finalY = updatedY === '-' ? curY : updatedY;
+    const finalM = updatedM === '-' ? curM : updatedM;
+    const finalD = updatedD === '-' ? curD : updatedD;
 
-    // 全てが '-' の場合のみ空文字にする。
-    // それ以外は、未選択の項目があっても現在の日付で補完して反映させる。
-    if (newY === '-' && newM === '-' && newD === '-') {
-      onChange('');
+    // もし元々日付が空で、かつ全ての項目が今日の日付で補完された場合は、空文字列を返す
+    // これは、ユーザーが何も操作していない状態と、今日の日付を明示的に選択した状態を区別するため
+    if (!value && finalY === curY && finalM === curM && finalD === curD) {
+      onChange(''); 
     } else {
-      newY = newY === '-' ? curY : newY;
-      newM = newM === '-' ? curM : newM;
-      newD = newD === '-' ? curD : newD;
-      onChange(`${newY}-${newM}-${newD}`);
+      onChange(`${finalY}-${finalM}-${finalD}`);
     }
+
   };
 
   return (
     <div className="space-y-1 col-span-2">
       <label className={`text-[10px] ${accentColorClass} font-black uppercase tracking-widest ml-1`}>{label}</label>
-      <div className="grid grid-cols-3 gap-1 bg-white/5 rounded-2xl p-1 border border-white/10">
+      <div className="grid grid-cols-3 gap-1 bg-white/5 rounded-2xl p-0.5 border border-white/10">
         <WheelPicker 
           options={['-', ...Array.from({length: 11}, (_, i) => (new Date().getFullYear() - 5 + i).toString())]} 
           value={y} 
@@ -116,7 +112,7 @@ const DateRollSelector = ({ label, value, onChange, accentColorClass = "text-eme
           onChange={(v) => handleUpdate('d', v)} 
         />
       </div>
-      <p className="text-[9px] text-white/30 text-center font-bold mt-1">Selected: {value || '未設定'}</p>
+      <p className="text-[8px] text-white/20 text-center font-bold">Selected: {value || '未設定'}</p>
     </div>
   );
 };
@@ -283,16 +279,16 @@ const BeetleFormModal = ({
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-end overscroll-none" onClick={onClose}>
       <div className="bg-white/10 backdrop-blur-2xl w-full rounded-t-[3rem] animate-slide-up max-h-[85dvh] flex flex-col overflow-x-hidden border-t border-white/20 shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-5 bg-white/5 backdrop-blur-md border-b border-white/10 shrink-0">
+        <div className="flex justify-between items-center p-4 bg-white/5 backdrop-blur-md border-b border-white/10 shrink-0">
           <h2 className={`text-xl font-black text-white tracking-tight`}>{isEditing ? '個体情報を編集' : '新規個体を登録'}</h2>
           <div className="flex items-center gap-4">
             <button onClick={onClose} className="text-white/60 hover:text-white transition-colors p-1"><X size={28} /></button>
           </div>
         </div>
         
-        <div className="p-5 space-y-4 overflow-y-auto overflow-x-hidden flex-1 text-white">
+        <div className="p-4 space-y-3 overflow-y-auto overflow-x-hidden flex-1 text-white">
           <div className="space-y-2">
-            <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>現在の状態を選択</label>
+            <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>状態</label>
             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
               {[
                 { id: 'Larva', label: '幼虫' },
@@ -318,12 +314,12 @@ const BeetleFormModal = ({
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1 col-span-2">
               <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>管理名 / 識別ID</label>
-              <input ref={nameRef} list="name-options" className={`w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring}`} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="例: 24HE-01" />
+              <input ref={nameRef} list="name-options" className={`w-full bg-white/5 border border-white/10 p-3 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring}`} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="例: 24HE-01" />
             </div>
             {!isEditing && (
               <div className="space-y-1 col-span-1">
                 <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>個体数</label>
-                <div className="bg-white/5 rounded-2xl p-1 border border-white/10">
+                <div className="bg-white/5 rounded-2xl p-0.5 border border-white/10">
                   <WheelPicker 
                     options={[...Array.from({length: 50}, (_, i) => (i + 1).toString())]} 
                     value={(formData.count || 1).toString()} 
@@ -336,25 +332,25 @@ const BeetleFormModal = ({
               <div className="flex justify-between items-center ml-1">
                 <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest`}>種類 (和名)</label>
               </div>
-              <input ref={speciesRef} list="species-options" className={`w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring} transition-all`} value={formData.species} onChange={e => setFormData({...formData, species: e.target.value})} placeholder="ヘラクレス" />
+              <input ref={speciesRef} list="species-options" className={`w-full bg-white/5 border border-white/10 p-3 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring} transition-all`} value={formData.species} onChange={e => setFormData({...formData, species: e.target.value})} placeholder="ヘラクレス" />
             </div>
             <div className="space-y-1 col-span-1">
               <div className="flex justify-between items-center ml-1">
                 <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest`}>学名</label>
               </div>
-              <input ref={sciRef} list="scientific-name-options" className={`w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring} transition-all italic`} value={formData.scientificName} onChange={e => setFormData({...formData, scientificName: e.target.value})} placeholder="Dynastes hercules" />
+              <input ref={sciRef} list="scientific-name-options" className={`w-full bg-white/5 border border-white/10 p-3 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring} transition-all italic`} value={formData.scientificName} onChange={e => setFormData({...formData, scientificName: e.target.value})} placeholder="Dynastes hercules" />
             </div>
             <div className="space-y-1 col-span-1">
               <div className="flex justify-between items-center ml-1">
                 <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest`}>産地</label>
               </div>
-              <input ref={locRef} list="locality-options" className={`w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring} transition-all`} value={formData.locality} onChange={e => setFormData({...formData, locality: e.target.value})} placeholder="グアドループ" />
+              <input ref={locRef} list="locality-options" className={`w-full bg-white/5 border border-white/10 p-3 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring} transition-all`} value={formData.locality} onChange={e => setFormData({...formData, locality: e.target.value})} placeholder="グアドループ" />
             </div>
 
             {/* 累代ロールセレクター */}
             <div className="space-y-1 col-span-2">
               <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>累代 (WD/CB - 系統 - 世代)</label>
-              <div className="grid grid-cols-3 gap-1 bg-white/5 rounded-2xl p-1 border border-white/10">
+              <div className="grid grid-cols-3 gap-1 bg-white/5 rounded-2xl p-0.5 border border-white/10">
                 <WheelPicker 
                   options={['-', 'WD', 'CB']} 
                   value={gen1} 
@@ -380,7 +376,7 @@ const BeetleFormModal = ({
                 <DateRollSelector label="羽化日" value={formData.emergenceDate} onChange={(v) => setFormData({...formData, emergenceDate: v})} accentColorClass={currentAccent.text} />
                 <DateRollSelector label="後食開始日" value={formData.feedingStartDate} onChange={(v) => setFormData({...formData, feedingStartDate: v})} accentColorClass={currentAccent.text} />
                 <DateRollSelector label="死亡日 (★)" value={formData.deathDate} onChange={(v) => setFormData({...formData, deathDate: v})} accentColorClass={currentAccent.text} />
-                <div className="col-span-2 p-4 bg-white/5 rounded-2xl border border-white/10">
+                <div className="col-span-2 p-3 bg-white/5 rounded-2xl border border-white/10">
                   <p className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest mb-1`}>幼虫時データ</p>
                   <p className="text-[11px] text-white/40 italic">※過去の飼育ログは登録後に「分析」または「詳細」から確認・紐づけできます</p>
                 </div>
@@ -389,7 +385,7 @@ const BeetleFormModal = ({
 
             {formData.status === 'Larva' && (
               <>
-                <div className="col-span-2 space-y-4 p-4 bg-white/5 rounded-[2rem] border border-white/10 shadow-inner">
+                <div className="col-span-2 space-y-3 p-3 bg-white/5 rounded-[2rem] border border-white/10 shadow-inner">
                   <p className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>初回飼育ログ (記録)</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="col-span-2">
@@ -425,7 +421,7 @@ const BeetleFormModal = ({
                   <button 
                     type="button"
                     onClick={() => setHasEmerged(!hasEmerged)}
-                    className={`w-full p-4 rounded-2xl border flex items-center justify-between transition-all ${hasEmerged ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-white/5 border-white/10 text-white/40'}`}
+                    className={`w-full p-3 rounded-2xl border flex items-center justify-between transition-all ${hasEmerged ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-white/5 border-white/10 text-white/40'}`}
                   >
                     <span className="text-xs font-black uppercase tracking-widest">既に羽化している場合はチェック</span>
                     <div className={`w-5 h-5 rounded-md border flex items-center justify-center ${hasEmerged ? 'bg-emerald-500 border-emerald-400' : 'border-white/20'}`}>
@@ -435,7 +431,7 @@ const BeetleFormModal = ({
                 </div>
 
                 {hasEmerged && (
-                  <div className="col-span-2 space-y-4 animate-in fade-in slide-in-from-top-2">
+                  <div className="col-span-2 space-y-3 animate-in fade-in slide-in-from-top-2">
                     <DateRollSelector label="羽化日" value={formData.emergenceDate} onChange={(v) => setFormData({...formData, emergenceDate: v})} accentColorClass={currentAccent.text} />
                     <div className="space-y-1">
                       <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>羽化・報告種別</label>
@@ -463,7 +459,7 @@ const BeetleFormModal = ({
 
             {formData.status === 'SpawnSet' && (
               <>
-                <div className="col-span-3 grid grid-cols-2 gap-3 p-4 bg-white/5 rounded-[2rem] border border-white/10">
+                <div className="col-span-3 grid grid-cols-2 gap-3 p-3 bg-white/5 rounded-[2rem] border border-white/10">
                    <p className={`col-span-2 text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>親個体・血統データ</p>
                    <input list="name-options" className="bg-white/5 border border-white/5 p-3 rounded-xl text-xs outline-none" value={formData.parentMaleId} onChange={e => setFormData({...formData, parentMaleId: e.target.value})} placeholder="♂ 親ID" />
                    <input list="name-options" className="bg-white/5 border border-white/5 p-3 rounded-xl text-xs outline-none" value={formData.parentFemaleId} onChange={e => setFormData({...formData, parentFemaleId: e.target.value})} placeholder="♀ 親ID" />
@@ -480,7 +476,7 @@ const BeetleFormModal = ({
                   <div className="space-y-1">
                     <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>設定温度 (℃)</label>
                     <div className="flex gap-2">
-                      <input type="number" step="0.1" className="flex-1 bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none" value={formData.temperature} onChange={e => setFormData({...formData, temperature: e.target.value})} placeholder="25.0" />
+                      <input type="number" step="0.1" className="flex-1 bg-white/5 border border-white/10 p-3 rounded-2xl text-white outline-none" value={formData.temperature} onChange={e => setFormData({...formData, temperature: e.target.value})} placeholder="25.0" />
                       <button type="button" onClick={() => fetchSbTemperature()} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-emerald-400"><RefreshCw size={18} className={isFetchingSb ? "animate-spin" : ""} /></button>
                     </div>
                   </div>
@@ -506,7 +502,7 @@ const BeetleFormModal = ({
           </div>
         </div>
 
-        <div className="p-5 bg-white/5 border-t border-white/10 shrink-0">
+        <div className="p-4 bg-white/5 border-t border-white/10 shrink-0">
           <button ref={saveRef} onClick={handleLocalSave} className={`w-full bg-gradient-to-r ${currentAccent.buttonFrom} ${currentAccent.buttonTo} text-white py-5 rounded-[2rem] font-black text-lg ${currentAccent.shadow} active:scale-95 transition-all`}>
             {isEditing ? '変更を保存' : '個体を登録'}
           </button>
