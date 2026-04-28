@@ -103,7 +103,7 @@ export function BeetleManager() {
 
   return (
     <div className="app-container">
-      <header className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-4">
+      <header className="bg-white/60 backdrop-blur-lg p-6 rounded-3xl border border-white/50 shadow-sm mb-4">
         <div>
           <p className="eyebrow">Beetle Manager</p>
           <h1>昆虫管理アプリ</h1>
@@ -146,99 +146,102 @@ export function BeetleManager() {
         ))}
       </section>
 
-      {isCreating || editingEntry ? (
-        <section className="card form-grid">
-          <div className="section-title">{editingEntry ? "編集タイプ" : "登録タイプ"}</div>
-          <div className="chip-row">
-            {ENTRY_TYPES.map((type) => (
-              <button
-                key={type}
-                type="button"
-                className={createType === type ? "chip active" : "chip"}
-                onClick={() => {
-                  setCreateType(type);
-                  if (!editingEntry) return;
-                  startEditing(null);
-                  setIsCreating(true);
-                }}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-        </section>
-      ) : null}
+      <Modal
+        isOpen={isCreating || !!editingEntry}
+        onClose={() => {
+          setIsCreating(false);
+          startEditing(null);
+        }}
+        title={editingEntry ? "編集" : "新規登録"}
+      >
+        <div className="section-title">{editingEntry ? "編集タイプ" : "登録タイプ"}</div>
+        <div className="chip-row mb-6">
+          {ENTRY_TYPES.map((type) => (
+            <button
+              key={type}
+              type="button"
+              className={createType === type ? "chip active" : "chip"}
+              onClick={() => {
+                setCreateType(type);
+                if (!editingEntry) return;
+                startEditing(null);
+                setIsCreating(true);
+              }}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
 
-      <SwitchBotCard />
+        {isCreating && !editingEntry && createType === "成虫" ? (
+          <AdultForm
+            initialValues={emptyAdultForm}
+            onSubmit={(value) => {
+              addAdult(value);
+              setIsCreating(false);
+            }}
+            onCancel={() => setIsCreating(false)}
+          />
+        ) : null}
+        {isCreating && !editingEntry && createType === "幼虫" ? (
+          <LarvaForm
+            initialValues={emptyLarvaForm}
+            onSubmit={(values, count) => {
+              for (let index = 0; index < count; index += 1) {
+                const suffix = count > 1 ? `-${String(index + 1).padStart(2, "0")}` : "";
+                addLarva({ ...values, japaneseName: `${values.japaneseName}${suffix}` });
+              }
+              setIsCreating(false);
+            }}
+            onCancel={() => setIsCreating(false)}
+          />
+        ) : null}
+        {isCreating && !editingEntry && createType === "産卵セット" ? (
+          <SpawnSetForm
+            initialValues={emptySpawnSetForm}
+            onSubmit={(value) => {
+              addSpawnSet(value);
+              setIsCreating(false);
+            }}
+            onCancel={() => setIsCreating(false)}
+            onFetchTemperature={fetchCurrentTemperature}
+            isFetchingTemperature={isFetching}
+          />
+        ) : null}
 
-      {isCreating && !editingEntry && createType === "成虫" ? (
-        <AdultForm
-          initialValues={emptyAdultForm}
-          onSubmit={(value) => {
-            addAdult(value);
-            setIsCreating(false);
-          }}
-          onCancel={() => setIsCreating(false)}
-        />
-      ) : null}
-      {isCreating && !editingEntry && createType === "幼虫" ? (
-        <LarvaForm
-          initialValues={emptyLarvaForm}
-          onSubmit={(values, count) => {
-            for (let index = 0; index < count; index += 1) {
-              const suffix = count > 1 ? `-${String(index + 1).padStart(2, "0")}` : "";
-              addLarva({ ...values, japaneseName: `${values.japaneseName}${suffix}` });
-            }
-            setIsCreating(false);
-          }}
-          onCancel={() => setIsCreating(false)}
-        />
-      ) : null}
-      {isCreating && !editingEntry && createType === "産卵セット" ? (
-        <SpawnSetForm
-          initialValues={emptySpawnSetForm}
-          onSubmit={(value) => {
-            addSpawnSet(value);
-            setIsCreating(false);
-          }}
-          onCancel={() => setIsCreating(false)}
-          onFetchTemperature={fetchCurrentTemperature}
-          isFetchingTemperature={isFetching}
-        />
-      ) : null}
-
-      {editingEntry?.type === "成虫" ? (
-        <AdultForm
-          initialValues={editingEntry}
-          onSubmit={(value) => {
-            updateAdult(editingEntry.id, value);
-            startEditing(null);
-          }}
-          onCancel={() => startEditing(null)}
-        />
-      ) : null}
-      {editingEntry?.type === "幼虫" ? (
-        <LarvaForm
-          initialValues={editingEntry}
-          onSubmit={(value) => {
-            updateLarva(editingEntry.id, value);
-            startEditing(null);
-          }}
-          onCancel={() => startEditing(null)}
-        />
-      ) : null}
-      {editingEntry?.type === "産卵セット" ? (
-        <SpawnSetForm
-          initialValues={editingEntry}
-          onSubmit={(value) => {
-            updateSpawnSet(editingEntry.id, value);
-            startEditing(null);
-          }}
-          onCancel={() => startEditing(null)}
-          onFetchTemperature={fetchCurrentTemperature}
-          isFetchingTemperature={isFetching}
-        />
-      ) : null}
+        {editingEntry?.type === "成虫" ? (
+          <AdultForm
+            initialValues={editingEntry}
+            onSubmit={(value) => {
+              updateAdult(editingEntry.id, value);
+              startEditing(null);
+            }}
+            onCancel={() => startEditing(null)}
+          />
+        ) : null}
+        {editingEntry?.type === "幼虫" ? (
+          <LarvaForm
+            initialValues={editingEntry}
+            onSubmit={(value) => {
+              updateLarva(editingEntry.id, value);
+              startEditing(null);
+            }}
+            onCancel={() => startEditing(null)}
+          />
+        ) : null}
+        {editingEntry?.type === "産卵セット" ? (
+          <SpawnSetForm
+            initialValues={editingEntry}
+            onSubmit={(value) => {
+              updateSpawnSet(editingEntry.id, value);
+              startEditing(null);
+            }}
+            onCancel={() => startEditing(null)}
+            onFetchTemperature={fetchCurrentTemperature}
+            isFetchingTemperature={isFetching}
+          />
+        ) : null}
+      </Modal>
 
       <section className="summary-grid">
         <div className="summary-card"><span>登録数</span><strong>{entries.length}</strong></div>
@@ -272,7 +275,14 @@ export function BeetleManager() {
           isFetchingTemperature={isFetching}
         />
       ) : null}
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        onTabChange={(tab) => {
+          if (tab === "ホーム") setSelectedType("すべて");
+          else if (ENTRY_TYPES.includes(tab as any)) setSelectedType(tab as EntryType);
+        }}
+      />
       <FloatingButton onClick={() => setIsCreating(true)} />
     </div>
   );

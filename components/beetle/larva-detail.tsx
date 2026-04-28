@@ -15,7 +15,7 @@ import { buildGenerationLabel } from "@/components/entry-fields";
 import { daysBetween, formatDate } from "@/lib/utils";
 import { useBeetleStore } from "@/store/use-beetle-store";
 import type { LarvaBeetle } from "@/types/beetle";
-import { LarvaLogForm } from "./larva-form";
+import { LarvaLogForm } from "./larva-log-form";
 
 export function LarvaDetail({
   entry,
@@ -46,80 +46,65 @@ export function LarvaDetail({
 
   return (
     <>
-      <section className="card">
-        <div className="section-title">幼虫詳細</div>
-        <dl className="detail-list">
-          <div>
-            <dt>和名</dt>
-            <dd>{entry.japaneseName}</dd>
-          </div>
-          <div>
-            <dt>学名</dt>
-            <dd>{entry.scientificName}</dd>
-          </div>
-          <div>
-            <dt>産地</dt>
-            <dd>{entry.locality || "-"}</dd>
-          </div>
-          <div>
-            <dt>累代</dt>
-            <dd>{buildGenerationLabel(entry.generation)}</dd>
-          </div>
-          <div>
-            <dt>羽化日</dt>
-            <dd>{formatDate(entry.actualEmergenceDate)}</dd>
-          </div>
-          <div>
-            <dt>羽化区分</dt>
-            <dd>{entry.emergenceType}</dd>
-          </div>
-          <div>
-            <dt>羽化まで日数</dt>
-            <dd>{daysToEmergence ?? "-"}</dd>
-          </div>
-        </dl>
-      </section>
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-gray-50 p-4 rounded-2xl">
+          <div className="text-xs text-gray-500">和名</div>
+          <div className="font-bold text-gray-800 truncate">{entry.japaneseName}</div>
+        </div>
+        <div className="bg-gray-50 p-4 rounded-2xl">
+          <div className="text-xs text-gray-500">累代</div>
+          <div className="font-bold text-gray-800 truncate">{buildGenerationLabel(entry.generation)}</div>
+        </div>
+        <div className="bg-gray-50 p-4 rounded-2xl">
+          <div className="text-xs text-gray-500">羽化日</div>
+          <div className="font-bold text-gray-800 truncate">{formatDate(entry.actualEmergenceDate)}</div>
+        </div>
+        <div className="bg-gray-50 p-4 rounded-2xl">
+          <div className="text-xs text-gray-500">羽化まで</div>
+          <div className="font-bold text-gray-800 truncate">{daysToEmergence ? `${daysToEmergence}日` : "-"}</div>
+        </div>
+      </div>
       <LarvaLogForm
         onSubmit={(value) => useBeetleStore.getState().addLarvaLog(entry.id, value)}
         onFetchTemperature={onFetchTemperature}
         isFetchingTemperature={isFetchingTemperature}
       />
-      <section className="card">
-        <div className="section-title">体重・温度グラフ</div>
-        <div className="chart-box">
+      <section className="mt-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">体重推移グラフ</h3>
+        </div>
+        <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="weight" stroke="#2f8f57" name="体重" />
-              <Line type="monotone" dataKey="temperature" stroke="#cf4d4d" name="温度" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis dataKey="date" stroke="#9ca3af" fontSize={10} />
+              <YAxis stroke="#9ca3af" fontSize={10} />
+              <Tooltip 
+                contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              />
+              <Line type="monotone" dataKey="weight" stroke="#059669" strokeWidth={3} name="体重(g)" dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       </section>
-      <section className="card">
-        <div className="section-title">飼育ログ一覧</div>
-        <div className="log-list">
+
+      <section className="mt-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="section-title text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">飼育ログ一覧</div>
+        <div className="space-y-3">
           {entry.logs.length === 0 ? (
-            <p className="empty-text">飼育ログはまだありません。</p>
+            <p className="text-sm text-gray-400 text-center py-4">飼育ログはまだありません。</p>
           ) : (
             entry.logs.map((log) => (
-              <div className="log-item" key={log.id}>
-                <div className="log-content">
-                  <div className="log-meta">
-                    <span>{formatDate(log.date)}</span>
-                    <span>{log.stage}</span>
+              <div className="flex items-center justify-between bg-gray-50 p-4 rounded-2xl" key={log.id}>
+                <div>
+                  <div className="text-xs text-gray-500">{formatDate(log.date)} ({log.stage})</div>
+                  <div className="font-bold text-gray-800">
+                    {log.weight}g / {log.temperature}℃ / {log.gender}
                   </div>
-                  <p>
-                    {log.substrate || "-"} / {log.bottleSize || "-"} / {""}
-                    {log.weight || ""}g / {log.temperature || ""}℃ / {log.gender}
-                  </p>
                 </div>
                 <button
                   type="button"
-                  className="icon-button danger"
+                  className="p-2 text-gray-400 hover:text-red-500"
                   onClick={() => deleteLarvaLog(entry.id, log.id)}
                 >
                   <Trash2 size={16} />

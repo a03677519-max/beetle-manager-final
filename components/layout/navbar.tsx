@@ -1,6 +1,6 @@
 import { Home, Bug, CircleDot, Database, ListChecks, PieChart } from "lucide-react";
 
-export function Navbar({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (tab: string) => void }) {
+export function Navbar({ activeTab, setActiveTab, onTabChange }: { activeTab: string, setActiveTab: (tab: string) => void, onTabChange?: (tab: string) => void }) {
   const tabs = [
     { name: "ホーム", icon: Home },
     { name: "成虫", icon: Bug },
@@ -11,11 +11,14 @@ export function Navbar({ activeTab, setActiveTab }: { activeTab: string, setActi
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-2 flex justify-around">
+    <nav className="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-md border-t border-white/20 p-2 flex justify-around">
       {tabs.map((tab) => (
         <button
           key={tab.name}
-          onClick={() => setActiveTab(tab.name)}
+          onClick={() => {
+            setActiveTab(tab.name);
+            onTabChange?.(tab.name);
+          }}
           className={`flex flex-col items-center p-2 rounded-lg ${activeTab === tab.name ? "text-green-600" : "text-gray-500"}`}
         >
           <tab.icon size={20} />

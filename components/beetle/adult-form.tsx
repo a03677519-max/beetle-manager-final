@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DateRollField, Field } from "@/components/entry-fields";
 import type { AdultFormValues } from "@/types/beetle";
 import { EntryBaseFields } from "./entry-base-fields";
+import { useBeetleStore } from "@/store/use-beetle-store";
 
 export function AdultForm({
   initialValues,
@@ -27,6 +28,8 @@ export function AdultForm({
       <div className="section-title">成虫項目</div>
       <EntryBaseFields
         {...values}
+        linkedEntryId={values.linkedEntryId}
+        allEntries={useBeetleStore.getState().entries}
         onChange={(patch) => setValues({ ...values, ...patch })}
       />
       <DateRollField

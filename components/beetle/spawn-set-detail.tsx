@@ -6,62 +6,31 @@ import { formatDate } from "@/lib/utils";
 
 export function SpawnSetDetail({ entry }: { entry: SpawnSet }) {
   return (
-    <section className="card">
-      <div className="section-title">産卵セット詳細</div>
-      <dl className="detail-list">
-        <div>
-          <dt>和名</dt>
-          <dd>{entry.japaneseName}</dd>
-        </div>
-        <div>
-          <dt>学名</dt>
-          <dd>{entry.scientificName}</dd>
-        </div>
-        <div>
-          <dt>産地</dt>
-          <dd>{entry.locality || "-"}</dd>
-        </div>
-        <div>
-          <dt>累代</dt>
-          <dd>{buildGenerationLabel(entry.generation)}</dd>
-        </div>
-        <div>
-          <dt>羽化日</dt>
-          <dd>{formatDate(entry.emergenceDate)}</dd>
-        </div>
-        <div>
-          <dt>後食日</dt>
-          <dd>{formatDate(entry.feedingDate)}</dd>
-        </div>
-        <div>
-          <dt>セット日</dt>
-          <dd>{formatDate(entry.setDate)}</dd>
-        </div>
-        <div>
-          <dt>使用マット</dt>
-          <dd>{entry.substrate || "-"}</dd>
-        </div>
-        <div>
-          <dt>容器サイズ</dt>
-          <dd>{entry.containerSize || "-"}</dd>
-        </div>
-        <div>
-          <dt>詰圧</dt>
-          <dd>{entry.pressure}</dd>
-        </div>
-        <div>
-          <dt>水分量</dt>
-          <dd>{entry.moisture}</dd>
-        </div>
-        <div>
-          <dt>温度</dt>
-          <dd>{entry.temperature || "-"}</dd>
-        </div>
-        <div>
-          <dt>同居の有無</dt>
-          <dd>{entry.cohabitation}</dd>
-        </div>
-      </dl>
-    </section>
+    <div className="grid grid-cols-2 gap-3">
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">セット日</div>
+        <div className="font-bold text-gray-800 truncate">{formatDate(entry.setDate)}</div>
+      </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">累代</div>
+        <div className="font-bold text-gray-800 truncate">{buildGenerationLabel(entry.generation)}</div>
+      </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">使用マット</div>
+        <div className="font-bold text-gray-800 truncate">{entry.substrate || "-"}</div>
+      </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">容器サイズ</div>
+        <div className="font-bold text-gray-800 truncate">{entry.containerSize || "-"}</div>
+      </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">詰圧</div>
+        <div className="font-bold text-gray-800 truncate">{entry.pressure}</div>
+      </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">水分量</div>
+        <div className="font-bold text-gray-800 truncate">{entry.moisture}</div>
+      </div>
+    </div>
   );
 }

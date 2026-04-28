@@ -1,24 +1,29 @@
 "use client";
 
-import { Field, GenerationRollField } from "@/components/entry-fields";
-import type { AdultFormValues } from "@/types/beetle";
+import { Field, GenerationRollField, WheelSelect } from "@/components/entry-fields";
+import type { AdultFormValues, BeetleEntry } from "@/types/beetle";
 
 export function EntryBaseFields({
   japaneseName,
   scientificName,
   locality,
   generation,
+  linkedEntryId,
+  allEntries,
   onChange,
 }: {
   japaneseName: string;
   scientificName: string;
   locality: string;
   generation: AdultFormValues["generation"];
+  linkedEntryId?: string;
+  allEntries: BeetleEntry[];
   onChange: (patch: {
     japaneseName?: string;
     scientificName?: string;
     locality?: string;
     generation?: AdultFormValues["generation"];
+    linkedEntryId?: string;
   }) => void;
 }) {
   return (
@@ -44,6 +49,12 @@ export function EntryBaseFields({
       <GenerationRollField
         value={generation}
         onChange={(value) => onChange({ generation: value })}
+      />
+      <WheelSelect
+        label="紐付け個体"
+        value={linkedEntryId || ""}
+        options={["", ...allEntries.map((e) => e.id)]}
+        onChange={(value) => onChange({ linkedEntryId: value || undefined })}
       />
     </>
   );

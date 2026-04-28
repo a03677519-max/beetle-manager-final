@@ -16,14 +16,20 @@ export function EntryCard({
 }) {
   const deleteEntry = useBeetleStore((state) => state.deleteEntry);
 
+  const typeColor = {
+    "幼虫": "border-amber-500",
+    "成虫": "border-sky-500",
+    "産卵セット": "border-rose-500"
+  }[entry.type] || "border-gray-200";
+
   return (
-    <article className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onOpen(entry)}>
+    <article className={`card cursor-pointer hover:shadow-lg transition-shadow border-l-4 ${typeColor} bg-white p-4 rounded-r-lg shadow-sm`} onClick={() => onOpen(entry)}>
       <div className="flex items-start justify-between mb-4">
         <div>
           <h3 className="font-bold text-lg">{entry.japaneseName}</h3>
-          <p className="text-sm text-gray-500">{entry.scientificName}</p>
+          <p className="text-sm text-gray-500 font-serif italic">{entry.scientificName}</p>
         </div>
-        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">{entry.type}</span>
+        <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">{entry.type}</span>
       </div>
       <dl className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
         <div>
