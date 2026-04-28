@@ -1527,6 +1527,7 @@ const App = () => {
             </button>
           </nav>
         </div>
+        </div>
 
       {/* 詳細モーダルの利用 */}
       <BeetleDetailModal

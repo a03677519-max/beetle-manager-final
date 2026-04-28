@@ -475,7 +475,7 @@ const BeetleFormModal = ({
                     ))}
                   </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>
