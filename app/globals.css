@@ -15,11 +15,24 @@
     @apply bg-white rounded-3xl p-6 shadow-md border border-gray-100 mb-6;
   }
 
-  .btn-primary {
+  .button {
     @apply bg-green-600 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2;
   }
-
-  .btn-secondary {
+  .button-secondary {
     @apply bg-gray-100 text-gray-800 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2;
+  }
+  
+  .filter {
+    @apply bg-gray-100 px-4 py-2 rounded-full text-sm font-medium;
+  }
+  .filter.active {
+    @apply bg-green-600 text-white;
+  }
+  
+  .chip {
+    @apply bg-gray-100 px-4 py-2 rounded-full text-sm font-medium;
+  }
+  .chip.active {
+    @apply bg-green-600 text-white;
   }
 }

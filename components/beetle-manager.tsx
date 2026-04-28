@@ -124,11 +124,11 @@ export function BeetleManager() {
           <Search size={16} />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="和名・学名・産地で検索" />
         </label>
-        <button type="button" className="button button-secondary toolbar-button" onClick={handleExport}>
+        <button type="button" className="button-secondary toolbar-button" onClick={handleExport}>
           <Download size={16} />
           保存
         </button>
-        <label className="button button-secondary toolbar-button upload-button">
+        <label className="button-secondary toolbar-button upload-button">
           <Upload size={16} />
           復元
           <input type="file" accept="application/json" hidden onChange={handleImport} />
