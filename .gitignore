@@ -11,4 +11,4 @@ dist-ssr/
 
 # Logs and system files
 *.log
-.DS_Store
+.DS_Store".next/"  

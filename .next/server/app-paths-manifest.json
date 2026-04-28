@@ -1,3 +1,6 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/switchbot/devices/route": "app/api/switchbot/devices/route.js",
+  "/api/switchbot/temperature/route": "app/api/switchbot/temperature/route.js",
   "/page": "app/page.js"
 }
