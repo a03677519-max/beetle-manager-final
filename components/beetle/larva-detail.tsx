@@ -14,7 +14,7 @@ import {
 import { buildGenerationLabel } from "@/components/entry-fields";
 import { daysBetween, formatDate } from "@/lib/utils";
 import { useBeetleStore } from "@/store/use-beetle-store";
-import type { LarvaBeetle, LarvaLog } from "@/types/beetle";
+import type { LarvaBeetle } from "@/types/beetle";
 import { LarvaLogForm } from "./larva-form";
 
 export function LarvaDetail({

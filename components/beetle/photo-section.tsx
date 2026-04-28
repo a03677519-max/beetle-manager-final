@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Download, Upload, X, Trash2 } from "lucide-react";
+import { Upload, Trash2 } from "lucide-react";
 import { useBeetleStore } from "@/store/use-beetle-store";
 import type { BeetleEntry } from "@/types/beetle";
 import { toBase64 } from "@/lib/utils";

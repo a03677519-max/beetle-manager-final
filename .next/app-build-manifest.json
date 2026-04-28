@@ -7,6 +7,13 @@
       "static/chunks/main-app-f8fd2c6936469bb4.js",
       "static/chunks/app/_not-found/page-100c3d7605f918b9.js"
     ],
+    "/api/switchbot/devices/route": [
+      "static/chunks/webpack-669ed450fc80d55c.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-4f212684648fcab9.js",
+      "static/chunks/main-app-f8fd2c6936469bb4.js",
+      "static/chunks/app/api/switchbot/devices/route-59890e2da4a2bd50.js"
+    ],
     "/layout": [
       "static/chunks/webpack-669ed450fc80d55c.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -14,13 +21,6 @@
       "static/chunks/main-app-f8fd2c6936469bb4.js",
       "static/css/8c0f2b4a64180d5e.css",
       "static/chunks/app/layout-b6456f49e8269bb9.js"
-    ],
-    "/api/switchbot/devices/route": [
-      "static/chunks/webpack-669ed450fc80d55c.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-4f212684648fcab9.js",
-      "static/chunks/main-app-f8fd2c6936469bb4.js",
-      "static/chunks/app/api/switchbot/devices/route-59890e2da4a2bd50.js"
     ],
     "/api/switchbot/temperature/route": [
       "static/chunks/webpack-669ed450fc80d55c.js",

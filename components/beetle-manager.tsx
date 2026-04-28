@@ -3,10 +3,8 @@
 import { useMemo, useState } from "react";
 import { Search, Download, Upload } from "lucide-react";
 
-import { buildGenerationLabel } from "@/components/entry-fields";
 import { useSwitchBot } from "@/components/use-switchbot";
 import {
-  formatDate,
   formatGeneration,
   today,
 } from "@/lib/utils";
