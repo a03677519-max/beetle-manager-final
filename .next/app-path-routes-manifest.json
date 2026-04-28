@@ -1,6 +1,0 @@
-{
-  "/api/switchbot/devices/route": "/api/switchbot/devices",
-  "/_not-found/page": "/_not-found",
-  "/api/switchbot/temperature/route": "/api/switchbot/temperature",
-  "/page": "/"
-}
