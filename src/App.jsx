@@ -15,7 +15,8 @@ import {
   getStatSummary, 
   CATEGORIES,
   parseBeetleText,
-  isValidBeetleData // カンマを追加
+  convertToCSV,
+  isValidBeetleData
 } from './beetleUtils.js';
 import BeetleFormModal from './BeetleFormModal.jsx';
 import { useSwitchBot } from './useSwitchBot.js';
@@ -300,6 +301,15 @@ const App = () => {
     };
     if (isDataLoaded.current) manageBackups();
   }, [beetles, config, userId]);
+
+  // バックアップ履歴を表示する際に最新データを取得
+  useEffect(() => {
+    if (modals.backupHistory) {
+      getItem('beetle_backup_history', []).then(history => {
+        setBackupHistoryList(history);
+      });
+    }
+  }, [modals.backupHistory]);
 
   // Web Share API を使用してデータを共有・保存する関数
   const shareData = async () => {
@@ -806,7 +816,7 @@ const App = () => {
           {activeTab === 'home' && (
             <div className="animate-in fade-in duration-500 space-y-4">
               {(() => {
-                const filteredBeetles = beetles.filter(b => (filterStatus === 'All' ? !b.archived : b.status === filterStatus && !b.archived));
+                const filteredBeetles = safeBeetles.filter(b => (filterStatus === 'All' ? !b.archived : b.status === filterStatus && !b.archived));
                 return (
                   <>
                     <div className="flex justify-between items-center px-1">
@@ -1622,6 +1632,19 @@ const App = () => {
         isFetchingSb={isFetchingSb} // Pass the state
       />
 
+      {/* バックアップ履歴モーダルの追加 */}
+      <BackupHistoryModal
+        isOpen={modals.backupHistory}
+        onClose={() => dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'backupHistory' })}
+        history={backupHistoryList}
+        onRestore={(data) => {
+          if (window.confirm('この時点のデータに復元しますか？現在のデータは上書きされます。')) {
+            dispatch({ type: ACTION_TYPES.SET_BEETLES, payload: data.beetles });
+            if (data.config) dispatch({ type: ACTION_TYPES.SET_DATA, payload: { config: data.config } });
+            dispatch({ type: ACTION_TYPES.CLOSE_MODAL, modal: 'backupHistory' });
+          }
+        }}
+      />
     </>
   );
 };
