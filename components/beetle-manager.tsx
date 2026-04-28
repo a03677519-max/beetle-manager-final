@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { Search, Download, Upload } from "lucide-react";
-
+import { Navbar } from "@/components/layout/navbar";
+import { FloatingButton } from "@/components/ui/floating-button";
 import { useSwitchBot } from "@/components/use-switchbot";
 import {
   formatGeneration,
@@ -44,6 +45,7 @@ export function BeetleManager() {
   const { fetchTemperature, isFetching } = useSwitchBot();
 
   const [selectedEntry, setSelectedEntry] = useState<BeetleEntry | null>(null);
+  const [activeTab, setActiveTab] = useState("ホーム");
   const [query, setQuery] = useState("");
   const [createType, setCreateType] = useState<EntryType>("幼虫");
   const [isCreating, setIsCreating] = useState(false);
@@ -270,6 +272,8 @@ export function BeetleManager() {
           isFetchingTemperature={isFetching}
         />
       ) : null}
+      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <FloatingButton onClick={() => setIsCreating(true)} />
     </div>
   );
 }
