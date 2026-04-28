@@ -847,7 +847,7 @@ const App = () => {
                           beetle.status === 'Adult' ? 'bg-emerald-500/20 border-emerald-500/30 shadow-emerald-500/10' :
                           'bg-rose-500/20 border-rose-500/30 shadow-rose-500/10'
                         }`}>
-                          {beetle.status === 'Larva' ? <Activity className="text-amber-400" size={36} /> : 
+                          {beetle.status === 'Larva' ? <Ghost className="text-amber-400" size={36} /> : 
                            beetle.status === 'SpawnSet' ? <Egg className="text-rose-400" size={36} /> :
                            <Bug className="text-emerald-400" size={36} />}
                         </div>
@@ -1488,40 +1488,40 @@ const App = () => {
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-20">
-        <nav className="bg-white/60 backdrop-blur-lg border-t border-white/20 px-2 py-3 pb-[calc(1rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)]">
-            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: 'All', isSortingMode: false } }); }} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' && filterStatus === 'All' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
-              <Home size={26} fill={activeTab === 'home' && filterStatus === 'All' ? "currentColor" : "none"} />
-              <span className="text-[10px] font-bold">ホーム</span>
+        <nav className="bg-white/60 backdrop-blur-lg border-t border-white/20 px-1 py-2.5 pb-[calc(1.2rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)]">
+            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: 'All', isSortingMode: false } }); }} className={`flex-1 flex flex-col items-center gap-0.5 transition-all ${activeTab === 'home' && filterStatus === 'All' ? 'text-emerald-700 scale-105' : 'text-slate-400'}`}>
+              <Home size={22} fill={activeTab === 'home' && filterStatus === 'All' ? "currentColor" : "none"} />
+              <span className="text-[11px] font-black">ホーム</span>
             </button>
 
-            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'Adult' ? 'All' : 'Adult', isSortingMode: false } }); }} className={`flex flex-col items-center gap-1 transition-all ${filterStatus === 'Adult' && activeTab === 'home' ? 'text-emerald-600 scale-110' : 'text-slate-400'}`}>
-              <Bug size={24} />
-              <span className="text-[10px] font-bold">成</span>
+            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'Adult' ? 'All' : 'Adult', isSortingMode: false } }); }} className={`flex-1 flex flex-col items-center gap-0.5 transition-all ${filterStatus === 'Adult' && activeTab === 'home' ? 'text-emerald-600 scale-105' : 'text-slate-400'}`}>
+              <Bug size={22} />
+              <span className="text-[11px] font-black">成虫</span>
             </button>
 
-            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'Larva' ? 'All' : 'Larva' } }); }} className={`flex flex-col items-center gap-1 transition-all ${filterStatus === 'Larva' && activeTab === 'home' ? 'text-amber-500 scale-110' : 'text-slate-400'}`}>
-              <Activity size={24} />
-              <span className="text-[10px] font-bold">幼</span>
+            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'Larva' ? 'All' : 'Larva' } }); }} className={`flex-1 flex flex-col items-center gap-0.5 transition-all ${filterStatus === 'Larva' && activeTab === 'home' ? 'text-amber-500 scale-105' : 'text-slate-400'}`}>
+              <Ghost size={22} />
+              <span className="text-[11px] font-black">幼虫</span>
             </button>
 
-            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'SpawnSet' ? 'All' : 'SpawnSet', isSortingMode: false } }); }} className={`flex flex-col items-center gap-1 transition-all ${filterStatus === 'SpawnSet' && activeTab === 'home' ? 'text-rose-500 scale-110' : 'text-slate-400'}`}>
-              <Egg size={24} />
-              <span className="text-[10px] font-bold">産</span>
+            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'SpawnSet' ? 'All' : 'SpawnSet', isSortingMode: false } }); }} className={`flex-1 flex flex-col items-center gap-0.5 transition-all ${filterStatus === 'SpawnSet' && activeTab === 'home' ? 'text-rose-500 scale-105' : 'text-slate-400'}`}>
+              <Egg size={22} />
+              <span className="text-[11px] font-black">産卵</span>
             </button>
 
-            <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'tasks', isSortingMode: false } })} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'tasks' ? 'text-slate-800 scale-110' : 'text-slate-400'}`}>
-              <ClipboardCheck size={24} />
-              <span className="text-[10px] font-bold">タスク</span>
+            <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'tasks', isSortingMode: false } })} className={`flex-1 flex flex-col items-center gap-0.5 transition-all ${activeTab === 'tasks' ? 'text-slate-800 scale-105' : 'text-slate-400'}`}>
+              <ClipboardCheck size={22} />
+              <span className="text-[11px] font-black">タスク</span>
             </button>
 
-            <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'stats', isSortingMode: false } })} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'stats' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
-              <BarChart2 size={24} />
-              <span className="text-[10px] font-bold">分析</span>
+            <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'stats', isSortingMode: false } })} className={`flex-1 flex flex-col items-center gap-0.5 transition-all ${activeTab === 'stats' ? 'text-emerald-700 scale-105' : 'text-slate-400'}`}>
+              <BarChart2 size={22} />
+              <span className="text-[11px] font-black">分析</span>
             </button>
 
             <button 
               onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isFabMenuOpen: !ui.isFabMenuOpen } })}
-              className={`w-10 h-10 bg-emerald-600 text-white rounded-xl shadow-md flex items-center justify-center active:scale-90 transition-all duration-300 ${ui.isFabMenuOpen ? 'rotate-[135deg] bg-slate-800' : ''}`}
+              className={`w-9 h-9 ml-1 mr-1 bg-emerald-600 text-white rounded-xl shadow-md flex items-center justify-center active:scale-90 transition-all duration-300 ${ui.isFabMenuOpen ? 'rotate-[135deg] bg-slate-800' : ''}`}
             >
               <Plus size={24} />
             </button>

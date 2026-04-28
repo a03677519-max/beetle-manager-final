@@ -61,15 +61,20 @@ const WheelPicker = ({ options, value, onChange, className = "" }) => {
  * 年月日をまとめてロール選択するコンポーネント
  */
 const DateRollSelector = ({ label, value, onChange, accentColorClass = "text-emerald-400" }) => {
+  const now = new Date();
+  const curY = now.getFullYear().toString();
+  const curM = (now.getMonth() + 1).toString().padStart(2, '0');
+  const curD = now.getDate().toString().padStart(2, '0');
+
   const d = value ? new Date(value) : null;
-  const y = d ? d.getFullYear().toString() : '-';
-  const m = d ? (d.getMonth() + 1).toString().padStart(2, '0') : '-';
-  const day = d ? d.getDate().toString().padStart(2, '0') : '-';
+  const y = d ? d.getFullYear().toString() : curY;
+  const m = d ? (d.getMonth() + 1).toString().padStart(2, '0') : curM;
+  const day = d ? d.getDate().toString().padStart(2, '0') : curD;
 
   const handleUpdate = (part, val) => {
-    const newY = (part === 'y' ? val : y) || '-';
-    const newM = (part === 'm' ? val : m) || '-';
-    const newD = (part === 'd' ? val : day) || '-';
+    const newY = part === 'y' ? val : y;
+    const newM = part === 'm' ? val : m;
+    const newD = part === 'd' ? val : day;
     
     if (newY === '-' || newM === '-' || newD === '-') {
       onChange('');
@@ -116,6 +121,7 @@ const BeetleFormModal = ({
   const sciRef = useRef(null);
   const locRef = useRef(null);
   const saveRef = useRef(null);
+  const [hasEmerged, setHasEmerged] = useState(false); // 幼虫時の羽化トグル
 
   // ステータスに応じたアクセントカラーを定義
   const accentColors = {
@@ -250,7 +256,7 @@ const BeetleFormModal = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-end overscroll-none" onClick={onClose}>
-      <div className="bg-white/10 backdrop-blur-2xl w-full rounded-t-[3rem] animate-slide-up max-h-[85dvh] flex flex-col overflow-hidden border-t border-white/20 shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-white/10 backdrop-blur-2xl w-full rounded-t-[3rem] animate-slide-up max-h-[85dvh] flex flex-col overflow-x-hidden border-t border-white/20 shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center p-5 bg-white/5 backdrop-blur-md border-b border-white/10 shrink-0">
           <h2 className={`text-xl font-black text-white tracking-tight`}>{isEditing ? '個体情報を編集' : '新規個体を登録'}</h2>
           <div className="flex items-center gap-4">
@@ -258,7 +264,7 @@ const BeetleFormModal = ({
           </div>
         </div>
         
-        <div className="p-5 space-y-4 overflow-y-auto flex-1 text-white">
+        <div className="p-5 space-y-4 overflow-y-auto overflow-x-hidden flex-1 text-white">
           <div className="space-y-2">
             <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>現在の状態を選択</label>
             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
@@ -270,7 +276,7 @@ const BeetleFormModal = ({
                 <button
                   key={opt.id}
                   type="button"
-                  onClick={() => setFormData({...formData, status: opt.id})}
+                  onClick={() => { setFormData({...formData, status: opt.id}); setHasEmerged(false); }}
                   className={`shrink-0 px-6 py-3.5 rounded-2xl font-black text-xs transition-all border ${
                     formData.status === opt.id 
                       ? `${currentAccent.chipActiveBg} ${currentAccent.chipActiveBorder} text-white ${currentAccent.chipActiveShadow} scale-105` 
@@ -283,13 +289,23 @@ const BeetleFormModal = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1 col-span-2">
-              <div className="flex justify-between items-center ml-1">
-                <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest`}>管理名 / 識別ID</label>
-              </div>
-              <input ref={nameRef} list="name-options" className={`w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring} transition-all`} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="例: 24HE-01" />
+              <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>管理名 / 識別ID</label>
+              <input ref={nameRef} list="name-options" className={`w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring}`} value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="例: 24HE-01" />
             </div>
+            {!isEditing && (
+              <div className="space-y-1 col-span-1">
+                <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>個体数</label>
+                <div className="bg-white/5 rounded-2xl p-1 border border-white/10">
+                  <WheelPicker 
+                    options={['-', ...Array.from({length: 50}, (_, i) => (i + 1).toString())]} 
+                    value={(formData.count === 0 || formData.count === undefined) ? '-' : formData.count.toString()} 
+                    onChange={(v) => setFormData({...formData, count: v === '-' ? 0 : parseInt(v) || 1})} 
+                  />
+                </div>
+              </div>
+            )}
             <div className="space-y-1 col-span-1">
               <div className="flex justify-between items-center ml-1">
                 <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest`}>種類 (和名)</label>
@@ -379,54 +395,61 @@ const BeetleFormModal = ({
                   </div>
                 </div>
 
-                <DateRollSelector label="羽化日 (予定/実績)" value={formData.emergenceDate} onChange={(v) => setFormData({...formData, emergenceDate: v})} accentColorClass={currentAccent.text} />
-                <div className="space-y-1 col-span-2">
-                  <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>羽化・報告種別</label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFormData({...formData, isDigOut: false})}
-                      className={`flex-1 py-3 rounded-xl text-[10px] font-black border transition-all ${
-                        !formData.isDigOut 
-                          ? `${currentAccent.chipActiveBg} text-white` 
-                          : 'bg-white/5 border-white/10 text-white/30'
-                      }`}
-                    >
-                      羽化確認
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData({...formData, isDigOut: true})}
-                      className={`flex-1 py-3 rounded-xl text-[10px] font-black border transition-all ${
-                        formData.isDigOut 
-                          ? `${currentAccent.chipActiveBg} text-white` 
-                          : 'bg-white/5 border-white/10 text-white/30'
-                      }`}
-                    >
-                      掘り出し
-                    </button>
-                  </div>
+                <div className="col-span-2">
+                  <button 
+                    type="button"
+                    onClick={() => setHasEmerged(!hasEmerged)}
+                    className={`w-full p-4 rounded-2xl border flex items-center justify-between transition-all ${hasEmerged ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-white/5 border-white/10 text-white/40'}`}
+                  >
+                    <span className="text-xs font-black uppercase tracking-widest">既に羽化している場合はチェック</span>
+                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center ${hasEmerged ? 'bg-emerald-500 border-emerald-400' : 'border-white/20'}`}>
+                      {hasEmerged && <ChevronRight size={14} className="text-white" />}
+                    </div>
+                  </button>
                 </div>
+
+                {hasEmerged && (
+                  <div className="col-span-2 space-y-4 animate-in fade-in slide-in-from-top-2">
+                    <DateRollSelector label="羽化日" value={formData.emergenceDate} onChange={(v) => setFormData({...formData, emergenceDate: v})} accentColorClass={currentAccent.text} />
+                    <div className="space-y-1">
+                      <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>羽化・報告種別</label>
+                      <div className="flex gap-2">
+                        {[{val: false, label: '羽化確認'}, {val: true, label: '掘り出し'}].map(opt => (
+                          <button
+                            key={opt.label}
+                            type="button"
+                            onClick={() => setFormData({...formData, isDigOut: opt.val})}
+                            className={`flex-1 py-3 rounded-xl text-[10px] font-black border transition-all ${
+                              formData.isDigOut === opt.val 
+                                ? `${currentAccent.chipActiveBg} text-white` 
+                                : 'bg-white/5 border-white/10 text-white/30'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
             {formData.status === 'SpawnSet' && (
               <>
-                <div className="col-span-2 grid grid-cols-2 gap-3 p-4 bg-white/5 rounded-[2rem] border border-white/10">
+                <div className="col-span-3 grid grid-cols-2 gap-3 p-4 bg-white/5 rounded-[2rem] border border-white/10">
                    <p className={`col-span-2 text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>親個体・血統データ</p>
                    <input list="name-options" className="bg-white/5 border border-white/5 p-3 rounded-xl text-xs outline-none" value={formData.parentMaleId} onChange={e => setFormData({...formData, parentMaleId: e.target.value})} placeholder="♂ 親ID" />
                    <input list="name-options" className="bg-white/5 border border-white/5 p-3 rounded-xl text-xs outline-none" value={formData.parentFemaleId} onChange={e => setFormData({...formData, parentFemaleId: e.target.value})} placeholder="♀ 親ID" />
-                   <div className="col-span-2 space-y-3">
-                     <DateRollSelector label="親:羽化日" value={formData.emergenceDate} onChange={(v) => setFormData({...formData, emergenceDate: v})} accentColorClass={currentAccent.text} />
-                     <DateRollSelector label="親:後食開始日" value={formData.feedingStartDate} onChange={(v) => setFormData({...formData, feedingStartDate: v})} accentColorClass={currentAccent.text} />
-                   </div>
                 </div>
 
-                <DateRollSelector label="セット開始日" value={formData.setDate} onChange={(v) => setFormData({...formData, setDate: v})} accentColorClass={currentAccent.text} />
-                <input className="bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none" value={formData.substrate} onChange={e => setFormData({...formData, substrate: e.target.value})} placeholder="使用マット" />
-                <input className="bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none" value={formData.containerSize} onChange={e => setFormData({...formData, containerSize: e.target.value})} placeholder="容器サイズ" />
+                <div className="col-span-3">
+                  <DateRollSelector label="セット開始日" value={formData.setDate} onChange={(v) => setFormData({...formData, setDate: v})} accentColorClass={currentAccent.text} />
+                </div>
+                <input className="col-span-1 bg-white/5 border border-white/10 p-3 rounded-xl text-white text-xs outline-none" value={formData.substrate} onChange={e => setFormData({...formData, substrate: e.target.value})} placeholder="マット" />
+                <input className="col-span-1 bg-white/5 border border-white/10 p-3 rounded-xl text-white text-xs outline-none" value={formData.containerSize} onChange={e => setFormData({...formData, containerSize: e.target.value})} placeholder="サイズ" />
                 
-                <div className="col-span-2 grid grid-cols-2 gap-4">
+                <div className="col-span-3 grid grid-cols-2 gap-4">
                   <LevelSelector label="水分量 (1-5)" value={formData.moisture} onChange={(v) => setFormData({...formData, moisture: v})} />
                   <div className="space-y-1">
                     <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>設定温度 (℃)</label>
@@ -437,28 +460,20 @@ const BeetleFormModal = ({
                   </div>
                 </div>
 
-                <div className="col-span-2 space-y-1">
+                <div className="col-span-3 space-y-1">
                   <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>同居の有無</label>
-                  <select className={`w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none focus:ring-2 ${currentAccent.ring}`} value={formData.cohabitation} onChange={e => setFormData({...formData, cohabitation: e.target.value})}>
-                    <option value="No" className="bg-slate-800">なし (メスのみ)</option>
-                    <option value="Yes" className="bg-slate-800">あり (ペアリング中)</option>
-                  </select>
-                </div>
-              </>
-            )}
-
-            {!isEditing && (
-              <div className="space-y-1 col-span-2">
-                <div className="flex justify-between items-center ml-1">
-                  <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest`}>登録頭数 (連番で作成)</label>
-                  <span className="text-[8px] font-black text-white/20 uppercase italic">Last Field</span>
-                </div>
-                <div className="bg-white/5 rounded-2xl p-1 border border-white/10">
-                  <WheelPicker 
-                    options={['-', ...Array.from({length: 50}, (_, i) => (i + 1).toString())]} 
-                    value={(formData.count === 0 || formData.count === undefined) ? '-' : formData.count.toString()} 
-                    onChange={(v) => setFormData({...formData, count: v === '-' ? 0 : parseInt(v) || 1})} 
-                  />
+                  <div className="flex gap-2">
+                    {['No', 'Yes'].map(opt => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => setFormData({...formData, cohabitation: opt})}
+                        className={`flex-1 py-3 rounded-xl text-[10px] font-black border transition-all ${formData.cohabitation === opt ? 'bg-rose-500 text-white' : 'bg-white/5 border-white/10 text-white/30'}`}
+                      >
+                        {opt === 'No' ? 'メスのみ' : 'ペアリング中'}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

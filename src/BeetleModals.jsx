@@ -65,15 +65,20 @@ export const WheelPicker = ({ options, value, onChange, className = "" }) => {
  * 年月日をまとめてロール選択するコンポーネント
  */
 export const DateRollSelector = ({ label, value, onChange, accentColorClass = "text-emerald-400" }) => {
+  const now = new Date();
+  const curY = now.getFullYear().toString();
+  const curM = (now.getMonth() + 1).toString().padStart(2, '0');
+  const curD = now.getDate().toString().padStart(2, '0');
+
   const d = value ? new Date(value) : null;
-  const y = d ? d.getFullYear().toString() : '-';
-  const m = d ? (d.getMonth() + 1).toString().padStart(2, '0') : '-';
-  const day = d ? d.getDate().toString().padStart(2, '0') : '-';
+  const y = d ? d.getFullYear().toString() : curY;
+  const m = d ? (d.getMonth() + 1).toString().padStart(2, '0') : curM;
+  const day = d ? d.getDate().toString().padStart(2, '0') : curD;
 
   const handleUpdate = (part, val) => {
-    const newY = (part === 'y' ? val : y) || '-';
-    const newM = (part === 'm' ? val : m) || '-';
-    const newD = (part === 'd' ? val : day) || '-';
+    const newY = part === 'y' ? val : y;
+    const newM = part === 'm' ? val : m;
+    const newD = part === 'd' ? val : day;
     
     if (newY === '-' || newM === '-' || newD === '-') {
       onChange('');
