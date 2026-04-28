@@ -1,5 +1,5 @@
 import React, { useRef, useCallback, useEffect } from 'react';
-import { X, Copy, Edit3, Bug, Ghost, Trash2, Scale, Activity, Thermometer, MessageSquare, Crown, RefreshCw, ArrowUpDown, Camera, Image as ImageIcon, Plus } from 'lucide-react';
+import { X, Copy, Edit3, Bug, Ghost, Trash2, Scale, Activity, Thermometer, MessageSquare, Crown, RefreshCw, ArrowUpDown, Camera, Image as ImageIcon, Plus, History } from 'lucide-react';
 import { CATEGORIES, calculateLarvalPeriodDays, calculateAdultLifespanDays, calculateDaysBetweenDates } from './beetleUtils.js';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 
