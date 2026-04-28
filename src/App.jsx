@@ -59,7 +59,7 @@ const initialFormState = {
 
 const initialState = {
   isLoggedIn: true, // ログイン機能を削除するため、常にtrueとする
-  userId: '',
+  userId: 'default_user',
   beetles: [],
   config: { labels: { Adult: '成虫', Larva: '幼虫', SpawnSet: '産卵セット' } },
   ui: {
@@ -176,7 +176,7 @@ const App = () => {
   // 非同期でのデータ初期化
   useEffect(() => {
     const loadInitialData = async () => {
-      const currentId = localStorage.getItem('beetle_user_id') || '';
+      const currentId = localStorage.getItem('beetle_user_id') || 'default_user';
       // 初回のみ移行を実行
       if (!localStorage.getItem('beetle_db_migrated')) {
         await migrateFromLocalStorage([`beetle_pwa_data_${currentId}`, 'beetle_app_config', 'beetle_temp_history']);
@@ -257,11 +257,6 @@ const App = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
-
-  // Save data
-  useEffect(() => {
-    if (beetles.length > 0) isDataLoaded.current = true;
   }, []);
 
   useEffect(() => {
@@ -511,7 +506,7 @@ const App = () => {
       val === true || (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Set))
     );
     
-    if (isAnyModalOpen || ui.isSortingMode) {
+    if (isAnyModalOpen || ui.draggedIdx !== null || ui.draggedIdxSb !== null) {
       document.body.style.overflow = 'hidden'; // スクロール禁止
       document.body.classList.add('sorting-active', 'select-none', 'touch-none');
     } else {
@@ -1499,7 +1494,7 @@ const App = () => {
               <span className="text-[11px] font-black">成虫</span>
             </button>
 
-            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'Larva' ? 'All' : 'Larva' } }); }} className={`flex-1 flex flex-col items-center gap-0.5 transition-all ${filterStatus === 'Larva' && activeTab === 'home' ? 'text-amber-500 scale-105' : 'text-slate-400'}`}>
+            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'Larva' ? 'All' : 'Larva', isSortingMode: false } }); }} className={`flex-1 flex flex-col items-center gap-0.5 transition-all ${filterStatus === 'Larva' && activeTab === 'home' ? 'text-amber-500 scale-105' : 'text-slate-400'}`}>
               <Ghost size={22} />
               <span className="text-[11px] font-black">幼虫</span>
             </button>

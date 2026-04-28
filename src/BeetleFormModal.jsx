@@ -227,7 +227,7 @@ const BeetleFormModal = ({
   const updateGen = (g1, g2, g3) => {
     let generationString = '';
     if (g1 === '-') { // g1が未選択なら全体も未選択
-      generationString = '-';
+      generationString = '';
     } else {
       if (g2 !== '-') { // g2 (WF/CBF)が選択されていればそれを優先
         generationString = g2;

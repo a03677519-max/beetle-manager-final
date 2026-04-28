@@ -48,7 +48,6 @@
   /* 並べ替え中のカード専用：スクロールを完全に止める */
   .sorting-active {
     overflow: hidden !important;
-    touch-action: none !important;
   }
 
   .sorting-item {
