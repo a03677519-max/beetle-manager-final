@@ -101,7 +101,8 @@ const DateRollSelector = ({ label, value, onChange, accentColorClass = "text-eme
 
 const BeetleFormModal = ({ 
   isOpen, onClose, formData, setFormData, isEditing, onSave, onImport,
-  existingNames, existingSpecies, existingScientificNames, existingLocalities, existingGenerations 
+  existingNames, existingSpecies, existingScientificNames, existingLocalities, existingGenerations,
+  fetchSbTemperature, isFetchingSb
 }) => {
   if (!isOpen) return null;
 
@@ -363,7 +364,7 @@ const BeetleFormModal = ({
                         <p className="text-[8px] text-white/40 font-bold uppercase mb-1">温度 (℃)</p>
                         <input type="number" step="0.1" className="w-full bg-transparent text-sm font-black outline-none" value={formData.initialRecordTemperature} onChange={e => setFormData({...formData, initialRecordTemperature: e.target.value})} placeholder="25.0" />
                       </div>
-                      <button type="button" onClick={() => fetchSbTemperatureSpawnSet()} className="text-emerald-400 p-1"><RefreshCw size={14} /></button>
+                      <button type="button" onClick={() => fetchSbTemperature()} className="text-emerald-400 p-1"><RefreshCw size={14} className={isFetchingSb ? "animate-spin" : ""} /></button>
                     </div>
                     <div className="col-span-2 space-y-1">
                       <label className="text-[8px] text-white/40 font-bold uppercase ml-1">加齢状況</label>
@@ -433,7 +434,7 @@ const BeetleFormModal = ({
                     <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>設定温度 (℃)</label>
                     <div className="flex gap-2">
                       <input type="number" step="0.1" className="flex-1 bg-white/5 border border-white/10 p-4 rounded-2xl text-white outline-none" value={formData.temperature} onChange={e => setFormData({...formData, temperature: e.target.value})} placeholder="25.0" />
-                      <button type="button" onClick={() => fetchSbTemperatureSpawnSet()} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-emerald-400"><RefreshCw size={18} /></button>
+                      <button type="button" onClick={() => fetchSbTemperature()} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-emerald-400"><RefreshCw size={18} className={isFetchingSb ? "animate-spin" : ""} /></button>
                     </div>
                   </div>
                 </div>

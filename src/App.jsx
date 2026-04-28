@@ -154,11 +154,11 @@ const App = () => {
     return Array.isArray(beetles) ? beetles.filter(b => b && typeof b === 'object' && b.id) : [];
   }, [beetles]);
 
-  const existingNames = useMemo(() => Array.from(new Set(beetles.map(b => b.name).filter(Boolean))), [beetles]); // existingNames
-  const existingSpecies = useMemo(() => Array.from(new Set(beetles.map(b => b.species).filter(Boolean))), [beetles]);
-  const existingScientificNames = useMemo(() => Array.from(new Set(beetles.map(b => b.scientificName).filter(Boolean))), [beetles]);
-  const existingLocalities = useMemo(() => Array.from(new Set(beetles.map(b => b.locality).filter(Boolean))), [beetles]);
-  const existingGenerations = useMemo(() => Array.from(new Set(beetles.map(b => b.generation).filter(Boolean))), [beetles]);
+  const existingNames = useMemo(() => Array.from(new Set(safeBeetles.map(b => b.name).filter(Boolean))), [safeBeetles]);
+  const existingSpecies = useMemo(() => Array.from(new Set(safeBeetles.map(b => b.species).filter(Boolean))), [safeBeetles]);
+  const existingScientificNames = useMemo(() => Array.from(new Set(safeBeetles.map(b => b.scientificName).filter(Boolean))), [safeBeetles]);
+  const existingLocalities = useMemo(() => Array.from(new Set(safeBeetles.map(b => b.locality).filter(Boolean))), [safeBeetles]);
+  const existingGenerations = useMemo(() => Array.from(new Set(safeBeetles.map(b => b.generation).filter(Boolean))), [safeBeetles]);
 
   const {
     sbToken, setSbToken, sbSecret, setSbSecret, selectedSbDeviceId, setSelectedSbDeviceId, availableSbDevices,
@@ -549,14 +549,14 @@ const App = () => {
     longPressStartRef.current.y = e.clientY;
     longPressStartRef.current.target = e.target;
 
+    const currentIdx = e.currentTarget.getAttribute('data-idx');
+
     longPressStartRef.current.timer = setTimeout(() => {
-        const idx = e.currentTarget.getAttribute('data-idx');
-        if (idx !== null) {
-          dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { draggedIdx: parseInt(idx), isSortingMode: true } });
+        if (currentIdx !== null) {
+          dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { draggedIdx: parseInt(currentIdx), isSortingMode: true } });
         } else {
           dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isSortingMode: true } });
         }
-        dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { isSortingMode: true } });
         if (window.navigator.vibrate) window.navigator.vibrate(80);
       }, 600);
     },
