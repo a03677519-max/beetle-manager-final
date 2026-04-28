@@ -49,7 +49,7 @@ const WheelPicker = ({ options, value, onChange, className = "" }) => {
       >
         {options.map((opt, i) => (
           <div key={i} className={`h-10 flex items-center justify-center text-sm font-black transition-all picker-item snap-center ${opt.toString() === value?.toString() ? 'text-white scale-110' : 'text-white/20'}`}>
-            {opt === '-' ? '-' : opt}
+            {opt}
           </div>
         ))}
       </div>
@@ -371,7 +371,7 @@ const BeetleFormModal = ({
                   onChange={(v) => { setGen3(v); updateGen(gen1, gen2, v); }} 
                 />
               </div>
-              <p className="text-[10px] text-white/40 text-center font-black mt-1 tracking-widest">RESULT: <span className="text-white">{formData.generation || '-'}</span></p>
+              <p className="text-[10px] text-white/40 text-center font-black mt-1 tracking-widest">RESULT: <span className="text-white">{formData.generation || '未設定'}</span></p>
             </div>
 
             {/* 状態別の追加項目 */}

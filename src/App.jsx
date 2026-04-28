@@ -185,6 +185,8 @@ const App = () => {
 
       const savedBeetles = await getItem(`beetle_pwa_data_${currentId}`, []);
       const savedConfig = await getItem('beetle_app_config', initialState.config);
+      const savedTab = localStorage.getItem('beetle_active_tab') || 'home';
+      const savedFilter = localStorage.getItem('beetle_filter_status') || 'All';
       
       dispatch({
         type: ACTION_TYPES.SET_DATA, 
@@ -192,7 +194,7 @@ const App = () => {
           beetles: savedBeetles, 
           config: savedConfig,
           isLoggedIn: true, // ログイン機能を削除するため、常にtrue
-          ui: { ...state.ui, isInitialLoading: false, pushPermission: 'Notification' in window ? Notification.permission : 'unsupported' },
+          ui: { ...initialState.ui, activeTab: savedTab, filterStatus: savedFilter, isInitialLoading: false, pushPermission: 'Notification' in window ? Notification.permission : 'unsupported' },
           userId: currentId,
         } 
       });
@@ -279,6 +281,14 @@ const App = () => {
   useEffect(() => { // config
     setItem('beetle_app_config', config);
   }, [config]);
+
+  // タブ状態の保存
+  useEffect(() => {
+    if (!ui.isInitialLoading && isDataLoaded.current) {
+      localStorage.setItem('beetle_active_tab', activeTab);
+      localStorage.setItem('beetle_filter_status', filterStatus);
+    }
+  }, [activeTab, filterStatus, ui.isInitialLoading, isDataLoaded.current]);
 
   // 自動バックアップ (履歴管理: 最大5件)
   useEffect(() => {
@@ -1149,7 +1159,11 @@ const App = () => {
                                 onDrop: () => onDrop(idx),
                                 onPointerDown: (e) => {
                                   if (ui.isSortingMode) {
-                                    e.preventDefault(); // 並べ替え中はスクロールを阻止
+                                    e.preventDefault();
+                                    const idx = e.currentTarget.getAttribute('data-idx');
+                                    if (idx !== null) {
+                                      dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { draggedIdx: parseInt(idx) } });
+                                    }
                                   } else {
                                     // 通常時は長押し判定を開始
                                     handleDraggablePointerDown(e);
