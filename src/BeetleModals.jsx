@@ -18,7 +18,7 @@ export const WheelPicker = ({ options, value, onChange, className = "" }) => {
     const index = Math.round(scrollTop / itemHeight);
     
     if (options[index] !== undefined && options[index].toString() !== value?.toString()) {
-      if (window.navigator.vibrate) window.navigator.vibrate(10);
+      if (window.navigator.vibrate) window.navigator.vibrate(5); // より鋭いクリック感
       onChange(options[index]);
     }
 
@@ -49,8 +49,7 @@ export const WheelPicker = ({ options, value, onChange, className = "" }) => {
       <div 
         ref={wheelRef}
         onScroll={handleScroll}
-        onTouchStart={(e) => e.stopPropagation()}
-        className="h-full overflow-y-auto picker-wheel py-[40px] px-2 overscroll-contain snap-y snap-mandatory scrollbar-none"
+        className="h-full w-full overflow-y-auto overflow-x-hidden picker-wheel py-[40px] px-2 overscroll-contain snap-y snap-mandatory scrollbar-none touch-pan-y"
       >
         {options.map((opt, i) => (
           <div key={i} className={`h-10 flex items-center justify-center text-sm font-black transition-all picker-item snap-center ${opt.toString() === value?.toString() ? 'text-white scale-110' : 'text-white/20'}`}>
@@ -66,25 +65,30 @@ export const WheelPicker = ({ options, value, onChange, className = "" }) => {
  * 年月日をまとめてロール選択するコンポーネント
  */
 export const DateRollSelector = ({ label, value, onChange, accentColorClass = "text-emerald-400" }) => {
-  const d = value ? new Date(value) : new Date();
-  const y = d.getFullYear().toString();
-  const m = (d.getMonth() + 1).toString().padStart(2, '0');
-  const day = d.getDate().toString().padStart(2, '0');
+  const d = value ? new Date(value) : null;
+  const y = d ? d.getFullYear().toString() : '-';
+  const m = d ? (d.getMonth() + 1).toString().padStart(2, '0') : '-';
+  const day = d ? d.getDate().toString().padStart(2, '0') : '-';
 
   const handleUpdate = (part, val) => {
-    const newY = part === 'y' ? val : y;
-    const newM = part === 'm' ? val : m;
-    const newD = part === 'd' ? val : day;
-    onChange(`${newY}-${newM}-${newD}`);
+    const newY = (part === 'y' ? val : y) || '-';
+    const newM = (part === 'm' ? val : m) || '-';
+    const newD = (part === 'd' ? val : day) || '-';
+    
+    if (newY === '-' || newM === '-' || newD === '-') {
+      onChange('');
+    } else {
+      onChange(`${newY}-${newM}-${newD}`);
+    }
   };
 
   return (
     <div className="space-y-2 col-span-2">
       <label className={`text-[10px] ${accentColorClass} font-black uppercase tracking-widest ml-1`}>{label} (ロール選択)</label>
       <div className="grid grid-cols-3 gap-1 bg-white/5 rounded-2xl p-1 border border-white/10">
-        <WheelPicker options={Array.from({length: 11}, (_, i) => (new Date().getFullYear() - 5 + i).toString())} value={y} onChange={(v) => handleUpdate('y', v)} />
-        <WheelPicker options={Array.from({length: 12}, (_, i) => (i + 1).toString().padStart(2, '0'))} value={m} onChange={(v) => handleUpdate('m', v)} />
-        <WheelPicker options={Array.from({length: 31}, (_, i) => (i + 1).toString().padStart(2, '0'))} value={day} onChange={(v) => handleUpdate('d', v)} />
+        <WheelPicker options={['-', ...Array.from({length: 11}, (_, i) => (new Date().getFullYear() - 5 + i).toString())]} value={y} onChange={(v) => handleUpdate('y', v)} />
+        <WheelPicker options={['-', ...Array.from({length: 12}, (_, i) => (i + 1).toString().padStart(2, '0'))]} value={m} onChange={(v) => handleUpdate('m', v)} />
+        <WheelPicker options={['-', ...Array.from({length: 31}, (_, i) => (i + 1).toString().padStart(2, '0'))]} value={day} onChange={(v) => handleUpdate('d', v)} />
       </div>
       <p className="text-[9px] text-white/30 text-center font-bold mt-1">選択中: {value || '未設定'}</p>
     </div>
@@ -260,13 +264,6 @@ export const BeetleDetailModal = ({
       bg: 'bg-rose-500/10',
       border: 'border-rose-500/20',
       badge: 'bg-rose-500/10 text-rose-400 border-rose-500/30'
-    },
-    Pupa: {
-      text: 'text-indigo-400',
-      textMuted: 'text-indigo-400/60',
-      bg: 'bg-indigo-500/10',
-      border: 'border-indigo-500/20',
-      badge: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
     }
   };
 
@@ -457,7 +454,7 @@ export const BeetleDetailModal = ({
                  <label className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest ml-1">加齢状況 (ロール選択)</label>
                  <div className="bg-white/5 rounded-2xl p-1 border border-white/10">
                    <WheelPicker 
-                     options={['L1', 'L2', 'L3', 'Pupa', 'Adult']} 
+                     options={['-', 'L1', 'L2', 'L3', 'Adult']} 
                      value={newLog.stage} 
                      onChange={(v) => setNewLog({...newLog, stage: v})} 
                    />

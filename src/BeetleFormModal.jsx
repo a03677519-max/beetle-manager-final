@@ -16,7 +16,7 @@ const WheelPicker = ({ options, value, onChange, className = "" }) => {
     const index = Math.min(options.length - 1, Math.max(0, Math.round(scrollTop / itemHeight)));
     
     if (options[index] !== undefined && options[index].toString() !== value?.toString()) {
-      if (window.navigator.vibrate) window.navigator.vibrate(10);
+      if (window.navigator.vibrate) window.navigator.vibrate(5); // より鋭いクリック感
       onChange(options[index]);
     }
 
@@ -45,8 +45,7 @@ const WheelPicker = ({ options, value, onChange, className = "" }) => {
       <div 
         ref={wheelRef}
         onScroll={handleScroll}
-        onTouchStart={(e) => e.stopPropagation()}
-        className="h-full overflow-y-auto picker-wheel py-[40px] px-2 overscroll-contain snap-y snap-mandatory scrollbar-none"
+        className="h-full w-full overflow-y-auto overflow-x-hidden picker-wheel py-[40px] px-2 overscroll-contain snap-y snap-mandatory scrollbar-none touch-pan-y"
       >
         {options.map((opt, i) => (
           <div key={i} className={`h-10 flex items-center justify-center text-sm font-black transition-all picker-item snap-center ${opt.toString() === value?.toString() ? 'text-white scale-110' : 'text-white/20'}`}>
@@ -62,16 +61,21 @@ const WheelPicker = ({ options, value, onChange, className = "" }) => {
  * 年月日をまとめてロール選択するコンポーネント
  */
 const DateRollSelector = ({ label, value, onChange, accentColorClass = "text-emerald-400" }) => {
-  const d = value ? new Date(value) : new Date();
-  const y = d.getFullYear().toString();
-  const m = (d.getMonth() + 1).toString().padStart(2, '0');
-  const day = d.getDate().toString().padStart(2, '0');
+  const d = value ? new Date(value) : null;
+  const y = d ? d.getFullYear().toString() : '-';
+  const m = d ? (d.getMonth() + 1).toString().padStart(2, '0') : '-';
+  const day = d ? d.getDate().toString().padStart(2, '0') : '-';
 
   const handleUpdate = (part, val) => {
-    const newY = part === 'y' ? val : y;
-    const newM = part === 'm' ? val : m;
-    const newD = part === 'd' ? val : day;
-    onChange(`${newY}-${newM}-${newD}`);
+    const newY = (part === 'y' ? val : y) || '-';
+    const newM = (part === 'm' ? val : m) || '-';
+    const newD = (part === 'd' ? val : day) || '-';
+    
+    if (newY === '-' || newM === '-' || newD === '-') {
+      onChange('');
+    } else {
+      onChange(`${newY}-${newM}-${newD}`);
+    }
   };
 
   return (
@@ -79,17 +83,17 @@ const DateRollSelector = ({ label, value, onChange, accentColorClass = "text-eme
       <label className={`text-[10px] ${accentColorClass} font-black uppercase tracking-widest ml-1`}>{label}</label>
       <div className="grid grid-cols-3 gap-1 bg-white/5 rounded-2xl p-1 border border-white/10">
         <WheelPicker 
-          options={Array.from({length: 11}, (_, i) => (new Date().getFullYear() - 5 + i).toString())} 
+          options={['-', ...Array.from({length: 11}, (_, i) => (new Date().getFullYear() - 5 + i).toString())]} 
           value={y} 
           onChange={(v) => handleUpdate('y', v)} 
         />
         <WheelPicker 
-          options={Array.from({length: 12}, (_, i) => (i + 1).toString().padStart(2, '0'))} 
+          options={['-', ...Array.from({length: 12}, (_, i) => (i + 1).toString().padStart(2, '0'))]} 
           value={m} 
           onChange={(v) => handleUpdate('m', v)} 
         />
         <WheelPicker 
-          options={Array.from({length: 31}, (_, i) => (i + 1).toString().padStart(2, '0'))} 
+          options={['-', ...Array.from({length: 31}, (_, i) => (i + 1).toString().padStart(2, '0'))]} 
           value={day} 
           onChange={(v) => handleUpdate('d', v)} 
         />
@@ -150,18 +154,6 @@ const BeetleFormModal = ({
       chipActiveBg: 'bg-rose-500',
       chipActiveBorder: 'border-rose-400',
       chipActiveShadow: 'shadow-[0_0_15px_rgba(244,63,94,0.3)]'
-    },
-    Pupa: {
-      main: 'indigo',
-      buttonFrom: 'from-indigo-600',
-      buttonTo: 'to-indigo-500',
-      shadow: 'shadow-[0_20px_40px_-10px_rgba(99,102,241,0.3)]',
-      ring: 'focus:ring-indigo-500',
-      border: 'focus:border-indigo-500',
-      text: 'text-indigo-400/60',
-      chipActiveBg: 'bg-indigo-500',
-      chipActiveBorder: 'border-indigo-400',
-      chipActiveShadow: 'shadow-[0_0_15px_rgba(99,102,241,0.3)]'
     }
   };
 
@@ -169,7 +161,7 @@ const BeetleFormModal = ({
 
   // 累代の3カラムパース - 初期値を動的に決定
   const initializeGenerationState = () => {
-    if (!formData.generation) return { g1: 'CB', g2: '-', g3: '-' };
+    if (!formData.generation) return { g1: '-', g2: '-', g3: '-' };
     
     const genStr = formData.generation;
     if (genStr === 'WD') return { g1: 'WD', g2: '-', g3: '-' };
@@ -183,7 +175,10 @@ const BeetleFormModal = ({
       if (prefix === 'CB') return { g1: 'CB', g2: '-', g3: num === '-' ? '-' : num };
       if (prefix === 'CBF') return { g1: 'CB', g2: 'CBF', g3: num === '-' ? '-' : num };
     }
-    return { g1: 'CB', g2: '-', g3: '-' };
+    // Handle cases like WF, CBF without number
+    if (genStr === 'WF') return { g1: 'WD', g2: 'WF', g3: '-' };
+    if (genStr === 'CBF') return { g1: 'CB', g2: 'CBF', g3: '-' };
+    return { g1: '-', g2: '-', g3: '-' }; // Fallback to unselected
   };
   
   const initialGen = initializeGenerationState();
@@ -200,17 +195,21 @@ const BeetleFormModal = ({
   }, [isOpen]);
 
   const updateGen = (g1, g2, g3) => {
-    let res = '';
-    if (g2 !== '-') {
-      res = g2;
+    let generationString = '';
+    if (g1 === '-') {
+      generationString = '-'; // If main type is unselected, whole generation is unselected
     } else if (g1 !== '-') {
-      res = g1;
+      if (g2 !== '-') {
+        generationString = g2; // If subtype is selected, use subtype
+      } else {
+        generationString = g1; // Otherwise use main type
+      }
+      if (g3 !== '-') generationString += g3; // Append generation number if selected
     }
-    if (g3 !== '-') res += g3;
     
     setFormData(prev => ({ 
       ...prev, 
-      generation: res,
+      generation: generationString,
       _genState: { g1, g2, g3 } // 状態保持用
     }));
   };
@@ -252,22 +251,21 @@ const BeetleFormModal = ({
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[60] flex items-end overscroll-none" onClick={onClose}>
       <div className="bg-white/10 backdrop-blur-2xl w-full rounded-t-[3rem] animate-slide-up max-h-[85dvh] flex flex-col overflow-hidden border-t border-white/20 shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex justify-between items-center p-8 bg-white/5 backdrop-blur-md border-b border-white/10 shrink-0">
+        <div className="flex justify-between items-center p-5 bg-white/5 backdrop-blur-md border-b border-white/10 shrink-0">
           <h2 className={`text-xl font-black text-white tracking-tight`}>{isEditing ? '個体情報を編集' : '新規個体を登録'}</h2>
           <div className="flex items-center gap-4">
             <button onClick={onClose} className="text-white/60 hover:text-white transition-colors p-1"><X size={28} /></button>
           </div>
         </div>
         
-        <div className="p-8 space-y-6 overflow-y-auto flex-1 text-white">
+        <div className="p-5 space-y-4 overflow-y-auto flex-1 text-white">
           <div className="space-y-2">
             <label className={`text-[10px] ${currentAccent.text} font-black uppercase tracking-widest ml-1`}>現在の状態を選択</label>
             <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
               {[
                 { id: 'Larva', label: '幼虫' },
                 { id: 'Adult', label: '成虫' },
-                { id: 'SpawnSet', label: '産卵' },
-                { id: 'Pupa', label: '蛹' }
+                { id: 'SpawnSet', label: '産卵' }
               ].map(opt => (
                 <button
                   key={opt.id}
@@ -457,9 +455,9 @@ const BeetleFormModal = ({
                 </div>
                 <div className="bg-white/5 rounded-2xl p-1 border border-white/10">
                   <WheelPicker 
-                    options={Array.from({length: 50}, (_, i) => (i + 1).toString())} 
-                    value={(formData.count || 1).toString()} 
-                    onChange={(v) => setFormData({...formData, count: parseInt(v) || 1})} 
+                    options={['-', ...Array.from({length: 50}, (_, i) => (i + 1).toString())]} 
+                    value={(formData.count === 0 || formData.count === undefined) ? '-' : formData.count.toString()} 
+                    onChange={(v) => setFormData({...formData, count: v === '-' ? 0 : parseInt(v) || 1})} 
                   />
                 </div>
               </div>
@@ -467,7 +465,7 @@ const BeetleFormModal = ({
           </div>
         </div>
 
-        <div className="p-8 bg-white/5 border-t border-white/10 shrink-0">
+        <div className="p-5 bg-white/5 border-t border-white/10 shrink-0">
           <button ref={saveRef} onClick={handleLocalSave} className={`w-full bg-gradient-to-r ${currentAccent.buttonFrom} ${currentAccent.buttonTo} text-white py-5 rounded-[2rem] font-black text-lg ${currentAccent.shadow} active:scale-95 transition-all`}>
             {isEditing ? '変更を保存' : '個体を登録'}
           </button>

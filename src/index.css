@@ -80,6 +80,8 @@
     scroll-snap-type: y mandatory;
     scrollbar-width: none;
     -ms-overflow-style: none;
+    overflow-x: hidden;
+    touch-action: pan-y;
   }
 
   /* picker-wheelとscrollbar-noneの両方でWebkit系スクロールバーを非表示 */

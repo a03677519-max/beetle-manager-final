@@ -51,9 +51,9 @@ const initialFormState = {
   name: '', species: '', scientificName: '', locality: '', type: 'Kuwagata', gender: 'Unknown', sexDetermined: 'Unknown', status: 'Larva', generation: '', isDigOut: false,
   parentMaleId: '', parentFemaleId: '', hatchDate: '', emergenceDate: '', feedingStartDate: '', deathDate: '',
   setDate: '', substrate: '', containerSize: '', packingPressure: '', moisture: 3, cohabitation: 'No', archived: false, notes: '', adultSize: '', parentSpawnSetId: '',
-  count: 1, images: [], records: [], temperature: '',
+  count: 0, images: [], records: [], temperature: '',
   // Fields for initial larva record (if status is Larva)
-  initialRecordWeight: '', initialRecordTemperature: '', initialRecordStage: 'L1', initialRecordGender: 'Unknown',
+  initialRecordWeight: '', initialRecordTemperature: '', initialRecordStage: '-', initialRecordGender: 'Unknown',
   initialRecordSubstrate: '', initialRecordContainerSize: '', initialRecordPackingPressure: 3, initialRecordMoisture: 3
 };
 
@@ -61,7 +61,7 @@ const initialState = {
   isLoggedIn: true, // ログイン機能を削除するため、常にtrueとする
   userId: '',
   beetles: [],
-  config: { labels: { Adult: '成虫', Larva: '幼虫', SpawnSet: '産卵セット', Pupa: '蛹' } },
+  config: { labels: { Adult: '成虫', Larva: '幼虫', SpawnSet: '産卵セット' } },
   ui: {
     activeTab: 'home',
     filterStatus: 'All',
@@ -103,7 +103,7 @@ const initialState = {
     newWeight: '',
     newTemp: '',
     editingRecord: null,
-    newLog: { date: new Date().toISOString().split('T')[0], substrate: '', packingPressure: 3, moisture: 3, containerSize: '', stage: 'L1', weight: '', gender: 'Unknown', logNotes: '', temperature: '' }
+    newLog: { date: '', substrate: '', packingPressure: 3, moisture: 3, containerSize: '', stage: '-', weight: '', gender: 'Unknown', logNotes: '', temperature: '' }
   }
 };
 
@@ -921,11 +921,9 @@ const App = () => {
                           <div className="absolute inset-0 bg-emerald-500/20 blur-[60px] rounded-full scale-150 animate-pulse" />
                           <div className="absolute inset-0 border-2 border-emerald-500/10 rounded-full scale-125 animate-[ping_3s_infinite]" />
                           
-                          <div className="relative bg-white p-14 rounded-[4rem] shadow-[0_25px_60px_rgba(0,0,0,0.08)] border border-slate-50 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-500">
-                            <Bug size={84} className="text-slate-200 animate-float relative z-10" />
-                            <div className="absolute -top-1 -right-1 bg-gradient-to-br from-emerald-500 to-emerald-700 w-12 h-12 rounded-full border-4 border-white shadow-lg flex items-center justify-center z-20">
-                              <Plus size={20} className="text-white font-black" />
-                            </div>
+                          <div className="relative bg-gradient-to-b from-white to-slate-50 p-16 rounded-[5rem] shadow-[0_40px_90px_-20px_rgba(16,185,129,0.15)] border border-white flex items-center justify-center overflow-hidden group-hover:scale-105 group-hover:shadow-[0_50px_110px_-20px_rgba(16,185,129,0.25)] transition-all duration-700">
+                            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-50 to-transparent opacity-80" />
+                            <Bug size={90} className="text-emerald-500/10 animate-float relative z-10 group-hover:text-emerald-500/20 transition-colors" />
                           </div>
                         </div>
                         <h3 className="text-2xl font-black text-slate-800 mb-4 tracking-tight group-hover:text-emerald-600 transition-colors">
@@ -1491,12 +1489,12 @@ const App = () => {
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-20">
         <nav className="bg-white/60 backdrop-blur-lg border-t border-white/20 px-2 py-3 pb-[calc(1rem+env(safe-area-inset-bottom))] flex justify-between items-center shadow-[0_-10px_30px_-15px_rgba(0,0,0,0.1)]">
-            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: 'All' } }); }} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' && filterStatus === 'All' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
+            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: 'All', isSortingMode: false } }); }} className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' && filterStatus === 'All' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
               <Home size={26} fill={activeTab === 'home' && filterStatus === 'All' ? "currentColor" : "none"} />
               <span className="text-[10px] font-bold">ホーム</span>
             </button>
 
-            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'Adult' ? 'All' : 'Adult' } }); }} className={`flex flex-col items-center gap-1 transition-all ${filterStatus === 'Adult' && activeTab === 'home' ? 'text-emerald-600 scale-110' : 'text-slate-400'}`}>
+            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'Adult' ? 'All' : 'Adult', isSortingMode: false } }); }} className={`flex flex-col items-center gap-1 transition-all ${filterStatus === 'Adult' && activeTab === 'home' ? 'text-emerald-600 scale-110' : 'text-slate-400'}`}>
               <Bug size={24} />
               <span className="text-[10px] font-bold">成</span>
             </button>
@@ -1506,17 +1504,17 @@ const App = () => {
               <span className="text-[10px] font-bold">幼</span>
             </button>
 
-            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'SpawnSet' ? 'All' : 'SpawnSet' } }); }} className={`flex flex-col items-center gap-1 transition-all ${filterStatus === 'SpawnSet' && activeTab === 'home' ? 'text-rose-500 scale-110' : 'text-slate-400'}`}>
+            <button onClick={() => { dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'home', filterStatus: filterStatus === 'SpawnSet' ? 'All' : 'SpawnSet', isSortingMode: false } }); }} className={`flex flex-col items-center gap-1 transition-all ${filterStatus === 'SpawnSet' && activeTab === 'home' ? 'text-rose-500 scale-110' : 'text-slate-400'}`}>
               <Egg size={24} />
               <span className="text-[10px] font-bold">産</span>
             </button>
 
-            <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'tasks' } })} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'tasks' ? 'text-slate-800 scale-110' : 'text-slate-400'}`}>
+            <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'tasks', isSortingMode: false } })} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'tasks' ? 'text-slate-800 scale-110' : 'text-slate-400'}`}>
               <ClipboardCheck size={24} />
               <span className="text-[10px] font-bold">タスク</span>
             </button>
 
-            <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'stats' } })} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'stats' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
+            <button onClick={() => dispatch({ type: ACTION_TYPES.UPDATE_UI, payload: { activeTab: 'stats', isSortingMode: false } })} className={`flex flex-col items-center gap-1 transition-all ${activeTab === 'stats' ? 'text-emerald-700 scale-110' : 'text-slate-400'}`}>
               <BarChart2 size={24} />
               <span className="text-[10px] font-bold">分析</span>
             </button>

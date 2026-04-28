@@ -10,8 +10,7 @@ export const calculateDaysBetweenDates = (startDate, endDate) => {
 export const CATEGORIES = {
   Adults: '成虫',
   Larvae: '幼虫',
-  SpawnSets: '産卵セット',
-  Pupas: '蛹'
+  SpawnSets: '産卵セット'
 };
 
 export const getInitials = (sci) => {
@@ -169,8 +168,7 @@ export const parseBeetleText = (text) => {
   });
 
   if (!data.status) {
-    if (data.records.some(r => r.stage === 'Pupa')) data.status = 'Pupa';
-    else if (data.records.length > 0) data.status = 'Larva';
+    if (data.records.length > 0) data.status = 'Larva';
     else data.status = 'Adult';
   }
 
