@@ -1526,9 +1526,8 @@ const App = () => {
               <Plus size={24} />
             </button>
           </nav>
-        </div>
-        </div>
-        </div>
+        </div> {/* Closes the fixed bottom-0 div */}
+      </div> {/* Closes the min-h-screen div */}
 
       {/* 詳細モーダルの利用 */}
       <BeetleDetailModal
