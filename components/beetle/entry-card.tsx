@@ -17,28 +17,28 @@ export function EntryCard({
   const deleteEntry = useBeetleStore((state) => state.deleteEntry);
 
   return (
-    <article className="card beetle-card" onClick={() => onOpen(entry)}>
-      <div className="beetle-card-top">
+    <article className="card cursor-pointer hover:shadow-lg transition-shadow" onClick={() => onOpen(entry)}>
+      <div className="flex items-start justify-between mb-4">
         <div>
-          <h3>{entry.japaneseName}</h3>
-          <p>{entry.scientificName}</p>
+          <h3 className="font-bold text-lg">{entry.japaneseName}</h3>
+          <p className="text-sm text-gray-500">{entry.scientificName}</p>
         </div>
-        <span className="stage-chip">{entry.type}</span>
+        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">{entry.type}</span>
       </div>
-      <dl className="info-grid">
+      <dl className="grid grid-cols-2 gap-4 text-sm text-gray-600 mb-4">
         <div>
-          <dt>産地</dt>
+          <dt className="text-gray-400">産地</dt>
           <dd>{entry.locality || "-"}</dd>
         </div>
         <div>
-          <dt>累代</dt>
+          <dt className="text-gray-400">累代</dt>
           <dd>{buildGenerationLabel(entry.generation)}</dd>
         </div>
       </dl>
-      <div className="beetle-card-actions">
+      <div className="flex justify-end gap-2 border-t pt-4">
         <button
           type="button"
-          className="icon-button"
+          className="p-2 text-gray-500 hover:text-green-600 transition-colors"
           onClick={(event) => {
             event.stopPropagation();
             onEdit(entry);
@@ -48,7 +48,7 @@ export function EntryCard({
         </button>
         <button
           type="button"
-          className="icon-button danger"
+          className="p-2 text-gray-500 hover:text-red-600 transition-colors"
           onClick={(event) => {
             event.stopPropagation();
             deleteEntry(entry.id);
