@@ -222,7 +222,7 @@ const BeetleFormModal = ({
       setGen2(gen.g2 || '-');
       setGen3(gen.g3 || '-');
     }
-  }, [isOpen, formData.generation]); // 外部からのリセットにも反応するように追加
+  }, [isOpen]); // formData.generationへの依存を削除し、開いた時のリセットを優先
 
   const updateGen = (g1, g2, g3) => {
     let generationString = '';
