@@ -146,6 +146,7 @@ const App = () => {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
   const { beetles, config, isLoggedIn, userId, ui, modals, form } = state;
+  const [backupHistoryList, setBackupHistoryList] = useState([]);
   const isDataLoaded = useRef(false);
 
   // 安全な個体リスト（万が一データが壊れていても配列を保証）
