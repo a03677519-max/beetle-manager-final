@@ -1,16 +1,19 @@
-# React + Vite
+# Beetle Manager PWA
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Next.js + TypeScript + Zustand で作成した昆虫管理アプリです。
 
-Currently, two official plugins are available:
+## 機能
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- 個体登録: 名前、種類、産地、温度、ステージ
+- ステージ管理: 卵、幼虫、蛹、成虫
+- 履歴ログ: 交換、産卵、観察、給餌、その他
+- 編集と削除
+- ローカルストレージ保存
+- スマホ向けUI
 
-## React Compiler
+## 開発
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
