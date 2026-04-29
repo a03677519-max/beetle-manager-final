@@ -52,6 +52,7 @@ export const emptyAdultForm: AdultFormValues = {
   locality: "",
   generation: { ...emptyGeneration },
   emergenceDate: "",
+  emergenceType: "羽化",
   feedingDate: "",
   deathDate: "",
   larvaMemo: "",

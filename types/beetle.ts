@@ -26,6 +26,19 @@ export type GenerationValue = {
   count: string;
 };
 
+export type BaseBeetle = {
+  id: string;
+  japaneseName: string;
+  scientificName: string;
+  locality: string;
+  generation: GenerationValue;
+  photos: string[];
+  createdAt: string;
+  updatedAt: string;
+  managementName?: string;
+  linkedEntryId?: string;
+};
+
 export type LarvaLog = {
   id: string;
   date: string;
@@ -34,55 +47,31 @@ export type LarvaLog = {
   moisture: number;
   bottleSize: string;
   stage: LogStage;
-  weight: string;
+  weight: number;
   gender: Gender;
-  temperature: string;
+  temperature: number;
 };
 
-export type AdultBeetle = {
-  id: string;
+export type AdultBeetle = BaseBeetle & {
   type: "成虫";
-  japaneseName: string;
-  scientificName: string;
-  locality: string;
-  generation: GenerationValue;
   emergenceDate: string;
+  emergenceType: EmergenceType;
   feedingDate: string;
   deathDate: string;
   larvaMemo: string;
-  photos: string[];
-  createdAt: string;
-  updatedAt: string;
   gender: Gender;
-  managementName?: string;
-  linkedEntryId?: string;
 };
 
-export type LarvaBeetle = {
-  id: string;
+export type LarvaBeetle = BaseBeetle & {
   type: "幼虫";
-  japaneseName: string;
-  scientificName: string;
-  locality: string;
-  generation: GenerationValue;
   logs: LarvaLog[];
   plannedEmergenceDate: string;
   actualEmergenceDate: string;
   emergenceType: EmergenceType;
-  photos: string[];
-  createdAt: string;
-  updatedAt: string;
-  managementName?: string;
-  linkedEntryId?: string;
 };
 
-export type SpawnSet = {
-  id: string;
+export type SpawnSet = BaseBeetle & {
   type: "産卵セット";
-  japaneseName: string;
-  scientificName: string;
-  locality: string;
-  generation: GenerationValue;
   emergenceDate: string;
   feedingDate: string;
   setDate: string;
@@ -92,17 +81,14 @@ export type SpawnSet = {
   moisture: number;
   temperature: string;
   cohabitation: CohabitationOption;
-  photos: string[];
-  createdAt: string;
-  updatedAt: string;
-  managementName?: string;
-  linkedEntryId?: string;
 };
 
 export type BeetleEntry = AdultBeetle | LarvaBeetle | SpawnSet;
 
 export type AdultFormValues = Omit<AdultBeetle, "id" | "photos" | "createdAt" | "updatedAt">;
-export type LarvaFormValues = Omit<LarvaBeetle, "id" | "photos" | "createdAt" | "updatedAt">;
+export type LarvaFormValues = Omit<LarvaBeetle, "id" | "photos" | "updatedAt"> & {
+  hatchDate?: string;
+};
 export type SpawnSetFormValues = Omit<SpawnSet, "id" | "photos" | "createdAt" | "updatedAt">;
 
 export type SwitchBotSettings = {

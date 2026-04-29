@@ -22,16 +22,26 @@ export function LarvaLogForm({
   onFetchTemperature: (setter: (value: string) => void) => void;
   isFetchingTemperature: boolean;
 }) {
-  const [values, setValues] = useState<Omit<LarvaLog, "id">>({
+  const [values, setValues] = useState<{
+    date: string;
+    substrate: string;
+    pressure: number;
+    moisture: number;
+    bottleSize: string;
+    stage: LogStage;
+    weight: number;
+    gender: Gender;
+    temperature: number;
+  }>({
     date: today(),
     substrate: "",
     pressure: 3,
     moisture: 3,
     bottleSize: "",
     stage: "L1",
-    weight: "",
+    weight: 0,
     gender: "不明",
-    temperature: "",
+    temperature: 0,
   });
 
   return (
@@ -47,9 +57,9 @@ export function LarvaLogForm({
           moisture: 3,
           bottleSize: "",
           stage: "L1",
-          weight: "",
+          weight: 0,
           gender: "不明",
-          temperature: "",
+          temperature: 0,
         });
       }}
     >
@@ -65,13 +75,18 @@ export function LarvaLogForm({
       </Field>
       <LarvaStageField value={values.stage} onChange={(value) => setValues({ ...values, stage: value })} />
       <Field label="体重">
-        <input value={values.weight} onChange={(event) => setValues({ ...values, weight: event.target.value })} />
+        <input 
+          type="number"
+          step="0.1"
+          value={values.weight} 
+          onChange={(event) => setValues({ ...values, weight: parseFloat(event.target.value) || 0 })} 
+        />
       </Field>
       <GenderField value={values.gender} onChange={(value) => setValues({ ...values, gender: value })} />
       <SwitchBotTemperatureField
-        value={values.temperature}
-        onChange={(value) => setValues({ ...values, temperature: value })}
-        onFetch={() => onFetchTemperature((value) => setValues((current) => ({ ...current, temperature: value })))}
+        value={String(values.temperature)}
+        onChange={(value) => setValues({ ...values, temperature: parseFloat(value) || 0 })}
+        onFetch={() => onFetchTemperature((value) => setValues((current) => ({ ...current, temperature: parseFloat(value) || 0 })))}
         isFetching={isFetchingTemperature}
       />
       <button type="submit" className="button">

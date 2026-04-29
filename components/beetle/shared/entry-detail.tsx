@@ -3,10 +3,10 @@
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import type { BeetleEntry } from "@/types/beetle";
-import { AdultDetail } from "./adult-detail";
-import { LarvaDetail } from "./larva-detail";
-import { SpawnSetDetail } from "./spawn-set-detail";
-import { PhotoSection } from "./photo-section";
+import { AdultDetail } from "@/components/beetle/adult/adult-detail";
+import { LarvaDetail } from "@/components/beetle/larva/larva-detail";
+import { SpawnSetDetail } from "@/components/beetle/spawn-set/spawn-set-detail";
+import { PhotoSection } from "@/components/beetle/shared/photo-section";
 
 export function EntryDetail({
   entry,

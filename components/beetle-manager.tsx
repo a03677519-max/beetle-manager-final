@@ -23,14 +23,14 @@ import type {
 } from "@/types/beetle";
 import { ENTRY_TYPES } from "@/types/beetle";
 
-import { AdultForm } from "./beetle/adult-form";
-import { LarvaForm } from "./beetle/larva-form";
-import { SpawnSetForm } from "./beetle/spawn-set-form";
-import { EntryCard } from "./beetle/entry-card";
-import { EmptyState } from "./beetle/empty-state";
-import { EntryDetail } from "./beetle/entry-detail";
-import { AnalysisView } from "./beetle/analysis-view";
-import { TaskView } from "./beetle/task-view";
+import { AdultForm } from "./beetle/adult/adult-form";
+import { LarvaForm } from "./beetle/larva/larva-form";
+import { SpawnSetForm } from "./beetle/spawn-set/spawn-set-form";
+import { EntryCard } from "./beetle/shared/entry-card";
+import { EmptyState } from "./beetle/shared/empty-state";
+import { EntryDetail } from "./beetle/shared/entry-detail";
+import { AnalysisView } from "./beetle/features/analysis-view";
+import { TaskView } from "./beetle/features/task-view";
 
 export function BeetleManager() {
   const entries = useBeetleStore((state) => state.entries);
@@ -159,6 +159,7 @@ export function BeetleManager() {
       locality: entry.locality,
       generation: entry.generation,
       emergenceDate: entry.actualEmergenceDate || today(),
+      emergenceType: "羽化",
       feedingDate: "",
       deathDate: "",
       larvaMemo: entry.logs.length > 0 ? `幼虫時ログ: ${entry.logs.length}件。最終体重: ${entry.logs[0].weight}g` : "幼虫データより移行",
