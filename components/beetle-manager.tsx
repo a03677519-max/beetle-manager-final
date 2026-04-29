@@ -224,7 +224,7 @@ export function BeetleManager() {
           <LarvaForm
             initialValues={editingEntry}
             allEntries={entries}
-            onSubmit={(value, _count) => {
+            onSubmit={(value, _) => {
               updateLarva(editingEntry.id, value);
               startEditing(null);
             }}
