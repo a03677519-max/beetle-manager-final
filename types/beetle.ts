@@ -88,6 +88,7 @@ export type BeetleEntry = AdultBeetle | LarvaBeetle | SpawnSet;
 export type AdultFormValues = Omit<AdultBeetle, "id" | "photos" | "createdAt" | "updatedAt">;
 export type LarvaFormValues = Omit<LarvaBeetle, "id" | "photos" | "createdAt" | "updatedAt"> & {
   hatchDate?: string;
+  createdAt?: string;
 };
 export type SpawnSetFormValues = Omit<SpawnSet, "id" | "photos" | "createdAt" | "updatedAt">;
 
