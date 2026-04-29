@@ -33,7 +33,7 @@ export function Field({
 }) {
   return (
     <label className="field">
-      <span>{label}</span>
+      <span className="text-[12px] font-bold text-[var(--secondary)] mb-2 block tracking-wider uppercase">{label}</span>
       {children}
     </label>
   );
@@ -46,8 +46,8 @@ export function WheelSelect({
   onChange,
 }: {
   label: string;
-  value: string;
-  options: string[];
+  value: string | number;
+  options: (string | number)[];
   onChange: (value: string) => void;
 }) {
   return (
@@ -193,11 +193,11 @@ export function CountRollField({
   onChange: (value: number) => void;
 }) {
   return (
-    <LevelButtonGroup
+    <WheelSelect
       label="登録頭数"
       value={value}
-      values={COUNT_OPTIONS}
-      onChange={onChange}
+      options={COUNT_OPTIONS}
+      onChange={(nextValue) => onChange(Number(nextValue))}
     />
   );
 }
