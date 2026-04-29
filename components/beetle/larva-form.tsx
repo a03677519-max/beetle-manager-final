@@ -15,7 +15,7 @@ export function LarvaForm({
   initialValues: LarvaFormValues;
   onSubmit: (value: LarvaFormValues, count: number) => void;
   onCancel: () => void;
-  allEntries: any[];
+  allEntries: BeetleEntry[];
 }) {
   const [values, setValues] = useState(initialValues);
   const [count, setCount] = useState(1);
