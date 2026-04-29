@@ -11,7 +11,6 @@ import {
 } from "@/components/entry-fields";
 import type { BeetleEntry, SpawnSetFormValues } from "@/types/beetle";
 import { EntryBaseFields } from "./entry-base-fields";
-import { EntryBaseFields } from "./entry-base-fields";
 
 export function SpawnSetForm({
   initialValues,
