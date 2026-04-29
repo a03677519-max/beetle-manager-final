@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Search, Download, Upload } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { FloatingButton } from "@/components/ui/floating-button";
+import { Modal } from "./ui/modal";
 import { useSwitchBot } from "@/components/use-switchbot";
 import {
   formatGeneration,
@@ -26,7 +27,6 @@ import { LarvaForm } from "./beetle/larva-form";
 import { SpawnSetForm } from "./beetle/spawn-set-form";
 import { EntryCard } from "./beetle/entry-card";
 import { EntryDetail } from "./beetle/entry-detail";
-import { SwitchBotCard } from "./beetle/switchbot-card";
 
 export function BeetleManager() {
   const entries = useBeetleStore((state) => state.entries);
@@ -280,7 +280,7 @@ export function BeetleManager() {
         setActiveTab={setActiveTab}
         onTabChange={(tab) => {
           if (tab === "ホーム") setSelectedType("すべて");
-          else if (ENTRY_TYPES.includes(tab as any)) setSelectedType(tab as EntryType);
+          else if (ENTRY_TYPES.includes(tab as EntryType)) setSelectedType(tab as EntryType);
         }}
       />
       <FloatingButton onClick={() => setIsCreating(true)} />
