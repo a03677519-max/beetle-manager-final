@@ -47,19 +47,40 @@ interface DrumrollPickerProps<T> {
 
 function DrumrollPicker<T extends string | number>({ options, value, onChange }: DrumrollPickerProps<T>) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 初期表示時に選択値までスクロール
   useEffect(() => {
     const index = options.indexOf(value);
     if (index !== -1 && scrollRef.current) {
-      scrollRef.current.scrollTop = index * 40;
+      const targetScroll = index * 40;
+      if (scrollRef.current.scrollTop !== targetScroll) {
+        scrollRef.current.scrollTop = targetScroll;
+      }
     }
-  }, [value, options]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [options]); // 初期マウント時のみ。value変更での再スクロールはループを防ぐため除外
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const index = Math.round(e.currentTarget.scrollTop / 40);
-    if (options[index] !== undefined && String(options[index]) !== String(value)) {
-      onChange(String(options[index]));
+    // スクロール干渉を抑えるため、スクロールが止まってから値を確定させる
+    if (timerRef.current) clearTimeout(timerRef.current);
+    
+    const container = e.currentTarget;
+    timerRef.current = setTimeout(() => {
+      const index = Math.round(container.scrollTop / 40);
+      if (options[index] !== undefined && String(options[index]) !== String(value)) {
+        onChange(String(options[index]));
+      }
+    }, 150); // 150ms スクロールが止まったら確定
+  };
+
+  // スクロールエリア外でのタッチによるスクロール干渉を抑制
+  const stopPropagation = (e: React.TouchEvent) => {
+    if (scrollRef.current) {
+      const isScrollable = scrollRef.current.scrollHeight > scrollRef.current.clientHeight;
+      if (isScrollable) {
+        e.stopPropagation();
+      }
     }
   };
 
@@ -67,6 +88,8 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
     <div
       ref={scrollRef}
       onScroll={handleScroll}
+      onTouchStart={stopPropagation}
+      onTouchMove={stopPropagation}
       className="flex-1 h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[55px]"
     >
       {options.map((option) => (
@@ -246,15 +269,11 @@ export function LevelButtonGroup({
 }
 
 export function PressureField(props: { value: number; onChange: (value: number) => void }) {
-  return (
-    <WheelSelect label="詰圧" options={PRESSURE_LEVELS} value={props.value} onChange={(v) => props.onChange(Number(v))} />
-  );
+  return <LevelButtonGroup label="詰圧" values={PRESSURE_LEVELS} value={props.value} onChange={props.onChange} />;
 }
 
 export function MoistureField(props: { value: number; onChange: (value: number) => void }) {
-  return (
-    <WheelSelect label="水分量" options={MOISTURE_LEVELS} value={props.value} onChange={(v) => props.onChange(Number(v))} />
-  );
+  return <LevelButtonGroup label="水分量" values={MOISTURE_LEVELS} value={props.value} onChange={props.onChange} />;
 }
 
 export function SwitchBotTemperatureField({
@@ -295,12 +314,21 @@ export function EmergenceTypeField({
   onChange: (value: EmergenceType) => void;
 }) {
   return (
-    <WheelSelect
-      label="羽化区分"
-      value={value}
-      options={EMERGENCE_TYPES}
-      onChange={(value) => onChange(value as EmergenceType)}
-    />
+    <div className="field">
+      <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block uppercase tracking-wider">羽化区分</span>
+      <div className="flex bg-[#F1F3F5] rounded-xl p-1 gap-1">
+        {(EMERGENCE_TYPES as unknown as string[]).map((option) => (
+          <button
+            key={option}
+            type="button"
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"}`}
+            onClick={() => onChange(option as EmergenceType)}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 

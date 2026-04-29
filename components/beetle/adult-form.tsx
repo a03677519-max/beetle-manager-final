@@ -35,6 +35,18 @@ export function AdultForm({
         />
       </section>
 
+      <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-4">
+        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Management</div>
+        <Field label="管理名 (No/名前)">
+          <input
+            value={values.managementName || ""}
+            placeholder="例: P-01 / ヘラクレス太郎"
+            className="w-full bg-white/60 border border-gray-200 rounded-xl px-4 py-2.5 focus:border-[#2D5A27] outline-none"
+            onChange={(e) => setValues({ ...values, managementName: e.target.value })}
+          />
+        </Field>
+      </section>
+
       <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-5">
         <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Timeline</div>
         <DateRollField

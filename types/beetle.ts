@@ -54,6 +54,7 @@ export type AdultBeetle = {
   createdAt: string;
   updatedAt: string;
   gender: Gender;
+  managementName?: string;
   linkedEntryId?: string;
 };
 
@@ -71,6 +72,7 @@ export type LarvaBeetle = {
   photos: string[];
   createdAt: string;
   updatedAt: string;
+  managementName?: string;
   linkedEntryId?: string;
 };
 
@@ -93,6 +95,7 @@ export type SpawnSet = {
   photos: string[];
   createdAt: string;
   updatedAt: string;
+  managementName?: string;
   linkedEntryId?: string;
 };
 

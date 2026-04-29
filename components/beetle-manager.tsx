@@ -108,11 +108,16 @@ export function BeetleManager() {
       const matchesType = selectedType === "すべて" || entry.type === selectedType;
       const matchesQuery =
         normalizedQuery.length === 0 ||
-        [entry.japaneseName, entry.scientificName, entry.locality, formatGeneration(entry.generation)]
+        [entry.japaneseName, entry.scientificName, entry.locality, formatGeneration(entry.generation), entry.managementName]
           .join(" ")
           .toLowerCase()
           .includes(normalizedQuery);
       return matchesType && matchesQuery;
+    }).sort((a, b) => {
+      // 管理名がある場合は管理名、なければ和名でソート
+      const nameA = a.managementName || a.japaneseName;
+      const nameB = b.managementName || b.japaneseName;
+      return nameA.localeCompare(nameB, "ja");
     });
   }, [entries, query, selectedType]);
 
