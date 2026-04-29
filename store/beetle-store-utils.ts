@@ -51,6 +51,7 @@ export const normalizeEntries = (entries: unknown): BeetleEntry[] => {
           createdAt: typeof raw.createdAt === "string" ? raw.createdAt : today(),
           updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : today(),
           gender: "不明",
+          emergenceType: "羽化",
         },
       ];
     }
