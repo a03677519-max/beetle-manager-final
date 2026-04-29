@@ -271,21 +271,12 @@ export function EmergenceTypeField({
   onChange: (value: EmergenceType) => void;
 }) {
   return (
-    <div className="field">
-      <span>羽化区分</span>
-      <div className="chip-row">
-        {EMERGENCE_TYPES.map((option) => (
-          <button
-            key={option}
-            type="button"
-            className={option === value ? "chip active" : "chip"}
-            onClick={() => onChange(option)}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-    </div>
+    <WheelSelect
+      label="羽化区分"
+      value={value}
+      options={EMERGENCE_TYPES}
+      onChange={(value) => onChange(value as EmergenceType)}
+    />
   );
 }
 
@@ -297,21 +288,12 @@ export function GenderField({
   onChange: (value: Gender) => void;
 }) {
   return (
-    <div className="field">
-      <span>雌雄</span>
-      <div className="chip-row">
-        {GENDERS.map((option) => (
-          <button
-            key={option}
-            type="button"
-            className={option === value ? "chip active" : "chip"}
-            onClick={() => onChange(option)}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-    </div>
+    <WheelSelect
+      label="雌雄"
+      value={value}
+      options={GENDERS}
+      onChange={(value) => onChange(value as Gender)}
+    />
   );
 }
 
@@ -323,21 +305,12 @@ export function LarvaStageField({
   onChange: (value: LogStage) => void;
 }) {
   return (
-    <div className="field">
-      <span>加齢状況</span>
-      <div className="chip-row">
-        {LOG_STAGES.map((option) => (
-          <button
-            key={option}
-            type="button"
-            className={option === value ? "chip active" : "chip"}
-            onClick={() => onChange(option)}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-    </div>
+    <WheelSelect
+      label="加齢状況"
+      value={value}
+      options={LOG_STAGES}
+      onChange={(value) => onChange(value as LogStage)}
+    />
   );
 }
 
@@ -349,21 +322,12 @@ export function CohabitationField({
   onChange: (value: CohabitationOption) => void;
 }) {
   return (
-    <div className="field">
-      <span>同居の有無</span>
-      <div className="chip-row">
-        {COHABITATION_OPTIONS.map((option) => (
-          <button
-            key={option}
-            type="button"
-            className={option === value ? "chip active" : "chip"}
-            onClick={() => onChange(option)}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
-    </div>
+    <WheelSelect
+      label="同居の有無"
+      value={value}
+      options={COHABITATION_OPTIONS}
+      onChange={(value) => onChange(value as CohabitationOption)}
+    />
   );
 }
 
