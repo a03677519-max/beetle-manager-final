@@ -11,7 +11,6 @@ import {
   YAxis,
 } from "recharts";
 
-import { buildGenerationLabel } from "@/components/entry-fields";
 import { daysBetween, formatDate, today } from "@/lib/utils";
 import { useBeetleStore } from "@/store/use-beetle-store";
 import type { LarvaBeetle } from "@/types/beetle";
@@ -27,13 +26,6 @@ export function LarvaDetail({
   isFetchingTemperature: boolean;
 }) {
   const deleteLarvaLog = useBeetleStore((state) => state.deleteLarvaLog);
-  const daysToEmergence =
-    entry.logs.length > 0 && entry.actualEmergenceDate
-      ? daysBetween(
-          entry.logs[entry.logs.length - 1]?.date ?? "",
-          entry.actualEmergenceDate,
-        )
-      : null;
 
   const chartData = [...entry.logs]
     .slice()
@@ -117,7 +109,11 @@ export function LarvaDetail({
                     <button
                       type="button"
                       className="p-2 text-gray-300 hover:text-red-500"
-                      onClick={() => deleteLarvaLog(entry.id, log.id)}
+                      onClick={() => {
+                        if (window.confirm("このログを削除してもよろしいですか？一度削除すると元に戻せません。")) {
+                          deleteLarvaLog(entry.id, log.id);
+                        }
+                      }}
                     >
                       <Trash2 size={16} />
                     </button>

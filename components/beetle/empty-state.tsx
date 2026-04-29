@@ -1,6 +1,6 @@
-import { MousePointer2, Plus } from "lucide-react";
+import { MousePointer2 } from "lucide-react";
 
-export function EmptyState({ onAdd }: { onAdd: () => void }) {
+export function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
       <div className="relative mb-6">

@@ -3,24 +3,19 @@
 import { StatusBadge, Stage } from "@/components/ui/status-badge";
 import { GrowthBar } from "@/components/ui/growth-bar";
 import { buildGenerationLabel } from "@/components/entry-fields";
-import { useBeetleStore } from "@/store/use-beetle-store";
-import type { BeetleEntry, Gender } from "@/types/beetle";
+import type { BeetleEntry } from "@/types/beetle";
 import { daysBetween, today } from "@/lib/utils";
 import Image from "next/image";
 
 export function EntryCard({
   entry,
-  onEdit,
   onOpen,
   viewMode = "list",
 }: {
   entry: BeetleEntry;
-  onEdit: (entry: BeetleEntry) => void;
   onOpen: (entry: BeetleEntry) => void;
   viewMode?: "list" | "grid";
 }) {
-  const deleteEntry = useBeetleStore((state) => state.deleteEntry);
-
   const logs = entry.type === "幼虫" ? entry.logs : [];
   const latestWeight = logs.length > 0 ? parseFloat(logs[0].weight) : null;
   const prevWeight = logs.length > 1 ? parseFloat(logs[1].weight) : null;

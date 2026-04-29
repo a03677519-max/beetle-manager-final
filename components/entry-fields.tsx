@@ -2,7 +2,6 @@
 
 import { Thermometer } from "lucide-react";
 import { useMemo, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
 
 import {
   COHABITATION_OPTIONS,
@@ -133,7 +132,7 @@ export function DateRollField({
           入力
         </label>
       </div>
-      <div className="wheel-grid">
+      <div className="flex gap-2">
         <DrumrollPicker
           options={dateOptions.years}
           value={parts.year}
@@ -166,7 +165,7 @@ export function GenerationRollField({
   return (
     <div className="field">
       <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block tracking-wider uppercase">累代</span>
-      <div className="wheel-grid">
+      <div className="flex gap-2">
         <DrumrollPicker
           options={GENERATION_PRIMARY}
           value={value.primary}

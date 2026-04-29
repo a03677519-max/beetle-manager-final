@@ -35,7 +35,11 @@ export function PhotoSection({ entry }: { entry: BeetleEntry }) {
           {entry.photos.map((photo, index) => (
             <div className="photo-card" key={`${entry.id}-${index}`}>
               <Image src={photo} alt={`${entry.japaneseName} ${index + 1}`} fill unoptimized className="photo-image" />
-              <button type="button" className="icon-button danger photo-delete" onClick={() => deletePhoto(entry.id, index)}>
+              <button 
+                type="button" 
+                className="icon-button danger photo-delete" 
+                onClick={() => window.confirm("この写真を削除しますか？") && deletePhoto(entry.id, index)}
+              >
                 <Trash2 size={14} />
               </button>
             </div>
