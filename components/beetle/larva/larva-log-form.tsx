@@ -11,7 +11,7 @@ import {
   SwitchBotTemperatureField,
 } from "@/components/entry-fields";
 import { today } from "@/lib/utils";
-import type { LarvaLog } from "@/types/beetle";
+import type { LarvaLog, LogStage, Gender } from "@/types/beetle";
 
 export function LarvaLogForm({
   onSubmit,
