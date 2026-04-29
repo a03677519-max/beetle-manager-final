@@ -75,15 +75,27 @@ export function DateRollField({
   onChange: (value: string) => void;
 }) {
   const parts = splitDate(value);
+  const isEnabled = !!value;
 
   return (
     <div className="field">
-      <span>{label}</span>
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-[12px] font-bold text-[var(--secondary)] tracking-wider uppercase">{label}</span>
+        <label className="flex items-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            checked={isEnabled}
+            onChange={(event) => onChange(event.target.checked ? today() : "")}
+          />
+          入力
+        </label>
+      </div>
       <div className="wheel-grid">
         <div className="wheel-shell">
           <select
             className="wheel-select"
             value={parts.year}
+            disabled={!isEnabled}
             onChange={(event) => onChange(buildDateFromParts(event.target.value, parts.month, parts.day))}
           >
             {dateOptions.years.map((option) => (
@@ -97,6 +109,7 @@ export function DateRollField({
           <select
             className="wheel-select"
             value={parts.month}
+            disabled={!isEnabled}
             onChange={(event) => onChange(buildDateFromParts(parts.year, event.target.value, parts.day))}
           >
             {dateOptions.months.map((option) => (
@@ -110,6 +123,7 @@ export function DateRollField({
           <select
             className="wheel-select"
             value={parts.day}
+            disabled={!isEnabled}
             onChange={(event) => onChange(buildDateFromParts(parts.year, parts.month, event.target.value))}
           >
             {dateOptions.days.map((option) => (
