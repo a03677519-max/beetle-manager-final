@@ -200,6 +200,7 @@ export function BeetleManager() {
         {isCreating && !editingEntry && createType === "産卵セット" ? (
           <SpawnSetForm
             initialValues={emptySpawnSetForm}
+            allEntries={entries}
             onSubmit={(value) => {
               addSpawnSet(value);
               setIsCreating(false);
@@ -234,6 +235,7 @@ export function BeetleManager() {
         {editingEntry?.type === "産卵セット" ? (
           <SpawnSetForm
             initialValues={editingEntry}
+            allEntries={entries}
             onSubmit={(value) => {
               updateSpawnSet(editingEntry.id, value);
               startEditing(null);

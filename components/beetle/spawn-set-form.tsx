@@ -9,7 +9,8 @@ import {
   PressureField,
   SwitchBotTemperatureField,
 } from "@/components/entry-fields";
-import type { SpawnSetFormValues } from "@/types/beetle";
+import type { BeetleEntry, SpawnSetFormValues } from "@/types/beetle";
+import { EntryBaseFields } from "./entry-base-fields";
 import { EntryBaseFields } from "./entry-base-fields";
 
 export function SpawnSetForm({
@@ -18,12 +19,14 @@ export function SpawnSetForm({
   onCancel,
   onFetchTemperature,
   isFetchingTemperature,
+  allEntries,
 }: {
   initialValues: SpawnSetFormValues;
   onSubmit: (value: SpawnSetFormValues) => void;
   onCancel: () => void;
   onFetchTemperature: (setter: (value: string) => void) => void;
   isFetchingTemperature: boolean;
+  allEntries: BeetleEntry[];
 }) {
   const [values, setValues] = useState(initialValues);
 
@@ -38,6 +41,7 @@ export function SpawnSetForm({
       <div className="section-title">産卵セット項目</div>
       <EntryBaseFields
         {...values}
+        allEntries={allEntries}
         onChange={(patch) => setValues({ ...values, ...patch })}
       />
       <DateRollField
