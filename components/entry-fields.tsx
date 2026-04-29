@@ -20,7 +20,7 @@ import {
   type GenerationValue,
   type LogStage,
 } from "@/types/beetle";
-import { buildDateFromParts, createDateOptions, splitDate } from "@/lib/utils";
+import { buildDateFromParts, createDateOptions, splitDate, today } from "@/lib/utils";
 
 const dateOptions = createDateOptions();
 
