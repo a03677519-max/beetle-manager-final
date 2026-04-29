@@ -2,8 +2,8 @@
 
 import { Trash2 } from "lucide-react";
 import {
-  Line,
-  LineChart,
+  Area,
+  AreaChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -71,21 +71,27 @@ export function LarvaDetail({
         </div>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#2D5A27" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#2D5A27" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#DEE2E6" vertical={false} />
               <XAxis dataKey="date" stroke="#9ca3af" fontSize={10} />
               <YAxis stroke="#9ca3af" fontSize={10} axisLine={false} tickLine={false} />
               <Tooltip 
-                contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                contentStyle={{ borderRadius: '1.25rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)' }}
               />
-              <Line type="monotone" dataKey="weight" stroke="#2D5A27" strokeWidth={3} name="体重(g)" dot={{ r: 3, fill: "#2D5A27", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
-              <Line type="monotone" dataKey="temperature" stroke="#E67E22" strokeWidth={2} name="温度(℃)" dot={{ r: 2, fill: "#E67E22" }} strokeDasharray="5 5" />
-            </LineChart>
+              <Area type="monotone" dataKey="weight" stroke="#2D5A27" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" name="体重(g)" dot={{ r: 4, fill: "#2D5A27", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
+              <Area type="monotone" dataKey="temperature" stroke="#E67E22" strokeWidth={2} fill="transparent" name="温度(℃)" dot={{ r: 2, fill: "#E67E22" }} strokeDasharray="5 5" />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       </section>
 
-      <section className="mt-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+      <section className="mt-6 bg-white/60 backdrop-blur-md p-6 rounded-[24px] border border-white/60 shadow-sm">
         <div className="text-[10px] font-black text-[#8B5A2B] mb-6 uppercase tracking-widest border-l-4 border-[#2D5A27] pl-3">History Log</div>
         <div className="space-y-3">
           {entry.logs.length === 0 ? (
