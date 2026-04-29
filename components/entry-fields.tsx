@@ -47,7 +47,7 @@ export function WheelSelect({
 }: {
   label: string;
   value: string | number;
-  options: (string | number)[];
+  options: readonly (string | number)[];
   onChange: (value: string) => void;
 }) {
   return (
