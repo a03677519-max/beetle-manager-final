@@ -15,15 +15,26 @@ interface AnalysisViewProps {
   requestPersistence: () => void;
 }
 
+interface GroupStats {
+  scientificName: string;
+  japaneseName: string;
+  weights: number[];
+  maxWeightEntry: BeetleEntry | null;
+  spawnSetCount: number;
+  emergenceDurations: number[];
+  feedingDurations: number[];
+  temperatures: number[];
+}
+
 export function AnalysisView({ entries, setSelectedEntry, handleExport, handleImport, isPersisted, requestPersistence }: AnalysisViewProps) {
   const [expandedNames, setExpandedNames] = useState<string[]>([]);
 
   const groupedStats = useMemo(() => {
-    const groups: Record<string, any> = {};
+    const groups: Record<string, GroupStats> = {};
     entries.forEach((entry) => {
       const key = entry.scientificName || "未設定";
       if (!groups[key]) {
-        groups[key] = { scientificName: key, japaneseName: entry.japaneseName, weights: [], maxWeightEntry: null, spawnSetCount: 0, emergenceDurations: [], feedingDurations: [], temperatures: [] };
+        groups[key] = { scientificName: key, japaneseName: entry.japaneseName || "", weights: [], maxWeightEntry: null, spawnSetCount: 0, emergenceDurations: [], feedingDurations: [], temperatures: [] };
       }
       if (entry.type === "産卵セット") {
         groups[key].spawnSetCount++;
@@ -34,7 +45,7 @@ export function AnalysisView({ entries, setSelectedEntry, handleExport, handleIm
           if (log.weight) {
             const w = Number(log.weight);
             groups[key].weights.push(w);
-            if (w >= Math.max(...groups[key].weights)) groups[key].maxWeightEntry = entry;
+            if (w >= Math.max(...groups[key].weights, 0)) groups[key].maxWeightEntry = entry;
           }
           if (log.temperature) groups[key].temperatures.push(Number(log.temperature));
         });
@@ -44,11 +55,11 @@ export function AnalysisView({ entries, setSelectedEntry, handleExport, handleIm
         }
       }
     });
-    return Object.values(groups).map((group: any) => ({
+    return Object.values(groups).map((group) => ({
       ...group,
       maxWeight: group.weights.length ? Math.max(...group.weights) : null,
       minWeight: group.weights.length ? Math.min(...group.weights) : null,
-      avgEmergence: group.emergenceDurations.length ? Math.round(group.emergenceDurations.reduce((a: any, b: any) => a + b, 0) / group.emergenceDurations.length) : null,
+      avgEmergence: group.emergenceDurations.length ? Math.round(group.emergenceDurations.reduce((a, b) => a + b, 0) / group.emergenceDurations.length) : null,
     }));
   }, [entries]);
 

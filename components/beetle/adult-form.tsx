@@ -19,21 +19,24 @@ export function AdultForm({
 
   return (
     <form
-      className="card form-grid"
+      className="space-y-8"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(values);
       }}
     >
-      <div className="section-title">成虫項目</div>
-      <EntryBaseFields
-        {...values}
-        linkedEntryId={values.linkedEntryId}
-        allEntries={useBeetleStore.getState().entries}
-        onChange={(patch) => setValues({ ...values, ...patch })}
-      />
-      
-      <div className="space-y-4 py-4 border-t border-gray-100 mt-4">
+      <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-4">
+        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Basic Info</div>
+        <EntryBaseFields
+          {...values}
+          linkedEntryId={values.linkedEntryId}
+          allEntries={useBeetleStore.getState().entries}
+          onChange={(patch) => setValues({ ...values, ...patch })}
+        />
+      </section>
+
+      <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-5">
+        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Timeline</div>
         <DateRollField
           label="羽化日"
           value={values.emergenceDate}
@@ -49,17 +52,22 @@ export function AdultForm({
           value={values.deathDate}
           onChange={(value) => setValues({ ...values, deathDate: value })}
         />
-      </div>
+      </section>
 
-      <Field label="幼虫時データ">
-        <textarea
-          value={values.larvaMemo}
-          rows={4}
-          onChange={(event) =>
-            setValues({ ...values, larvaMemo: event.target.value })
-          }
-        />
-      </Field>
+      <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-4">
+        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Extra Notes</div>
+        <Field label="幼虫時データ">
+          <textarea
+            value={values.larvaMemo}
+            rows={4}
+            className="w-full bg-white/60 border border-gray-200 rounded-2xl px-4 py-3 focus:border-[#2D5A27] outline-none transition-all text-sm"
+            onChange={(event) =>
+              setValues({ ...values, larvaMemo: event.target.value })
+            }
+          />
+        </Field>
+      </section>
+
       <div className="form-actions">
         <button
           type="button"

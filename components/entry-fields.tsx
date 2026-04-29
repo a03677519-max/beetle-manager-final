@@ -39,15 +39,13 @@ export function Field({
   );
 }
 
-function DrumrollPicker<T extends string | number>({
-  options,
-  value,
-  onChange,
-}: {
+interface DrumrollPickerProps<T> {
   options: readonly T[];
   value: T;
   onChange: (value: string) => void;
-}) {
+}
+
+function DrumrollPicker<T extends string | number>({ options, value, onChange }: DrumrollPickerProps<T>) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // 初期表示時に選択値までスクロール
@@ -66,25 +64,31 @@ function DrumrollPicker<T extends string | number>({
   };
 
   return (
-    <div className="relative h-[150px] bg-gray-50/50 rounded-2xl overflow-hidden border border-gray-100">
+    <div
+      ref={scrollRef}
+      onScroll={handleScroll}
+      className="flex-1 h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[55px]"
+    >
+      {options.map((option) => (
+        <div key={option} className="h-10 flex items-center justify-center snap-center text-sm font-bold text-gray-700">
+          {option}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PickerContainer({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative h-[150px] bg-white/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/60 shadow-inner flex">
       {/* グラデーションオーバーレイ */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-50/90 via-transparent to-gray-50/90 pointer-events-none z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-transparent to-white/90 pointer-events-none z-10" />
       
       {/* センターハイライト */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-[90%] h-10 border-y-2 border-[#2D5A27]/20 bg-[#2D5A27]/5 rounded-sm" />
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
+        <div className="w-[96%] h-10 border-y border-[#2D5A27]/20 bg-[#2D5A27]/5 rounded-lg" />
       </div>
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[55px]"
-      >
-        {options.map((option) => (
-          <div key={option} className="h-10 flex items-center justify-center snap-center text-sm font-bold text-gray-700">
-            {option}
-          </div>
-        ))}
-      </div>
+      {children}
     </div>
   );
 }
@@ -102,7 +106,9 @@ export function WheelSelect({
 }) {
   return (
     <Field label={label}>
-      <DrumrollPicker options={options} value={value} onChange={onChange} />
+      <PickerContainer>
+        <DrumrollPicker options={options} value={value} onChange={onChange} />
+      </PickerContainer>
     </Field>
   );
 }
@@ -132,23 +138,25 @@ export function DateRollField({
           入力
         </label>
       </div>
-      <div className="flex gap-2">
+      <PickerContainer>
         <DrumrollPicker
           options={dateOptions.years}
           value={parts.year}
           onChange={(v) => isEnabled && onChange(buildDateFromParts(v, parts.month, parts.day))}
         />
+        <div className="w-[1px] h-full bg-gray-100/50" />
         <DrumrollPicker
           options={dateOptions.months}
           value={parts.month}
           onChange={(v) => isEnabled && onChange(buildDateFromParts(parts.year, v, parts.day))}
         />
+        <div className="w-[1px] h-full bg-gray-100/50" />
         <DrumrollPicker
           options={dateOptions.days}
           value={parts.day}
           onChange={(v) => isEnabled && onChange(buildDateFromParts(parts.year, parts.month, v))}
         />
-      </div>
+      </PickerContainer>
     </div>
   );
 }
@@ -165,23 +173,25 @@ export function GenerationRollField({
   return (
     <div className="field">
       <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block tracking-wider uppercase">累代</span>
-      <div className="flex gap-2">
+      <PickerContainer>
         <DrumrollPicker
           options={GENERATION_PRIMARY}
           value={value.primary}
           onChange={(v) => onChange({ ...value, primary: v as GenerationValue["primary"] })}
         />
+        <div className="w-[1px] h-full bg-gray-100/50" />
         <DrumrollPicker
           options={GENERATION_SECONDARY}
           value={value.secondary}
           onChange={(v) => onChange({ ...value, secondary: v as GenerationValue["secondary"] })}
         />
+        <div className="w-[1px] h-full bg-gray-100/50" />
         <DrumrollPicker
           options={["-", ...GENERATION_COUNT_OPTIONS]}
           value={value.count || "-"}
           onChange={(v) => onChange({ ...value, count: v === "-" ? "" : v })}
         />
-      </div>
+      </PickerContainer>
       <p className="field-note">表示: {preview}</p>
     </div>
   );

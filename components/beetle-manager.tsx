@@ -1,14 +1,13 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Search, Download, Upload, ChevronDown, ChevronUp, EyeOff } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
+import { Search } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Modal } from "./ui/modal";
 import { useSwitchBot } from "@/components/use-switchbot";
 import {
   formatGeneration,
-  daysBetween,
   today,
 } from "@/lib/utils";
 import {
@@ -20,6 +19,7 @@ import {
 import type {
   BeetleEntry,
   EntryType,
+  LarvaBeetle,
 } from "@/types/beetle";
 import { ENTRY_TYPES } from "@/types/beetle";
 
@@ -125,9 +125,9 @@ export function BeetleManager() {
     }
   };
 
-  const handleQuickExchange = (e: React.MouseEvent, entry: any) => {
+  const handleQuickExchange = (e: React.MouseEvent, entry: LarvaBeetle) => {
     e.stopPropagation();
-    const latestLog = entry.logs?.[0];
+    const latestLog = entry.logs[0];
     addLarvaLog(entry.id, {
       date: today(),
       substrate: latestLog?.substrate ?? "",
@@ -141,7 +141,7 @@ export function BeetleManager() {
     });
   };
 
-  const handlePromoteToAdult = (e: React.MouseEvent, entry: any) => {
+  const handlePromoteToAdult = (e: React.MouseEvent, entry: LarvaBeetle) => {
     e.stopPropagation();
     const confirm = window.confirm(`${entry.japaneseName}を成虫として登録し、幼虫データを移行しますか？`);
     if (!confirm) return;
@@ -153,11 +153,11 @@ export function BeetleManager() {
       scientificName: entry.scientificName,
       locality: entry.locality,
       generation: entry.generation,
-      emergenceDate: (entry as any).actualEmergenceDate || today(),
+      emergenceDate: entry.actualEmergenceDate || today(),
       feedingDate: "",
       deathDate: "",
       larvaMemo: entry.logs.length > 0 ? `幼虫時ログ: ${entry.logs.length}件。最終体重: ${entry.logs[0].weight}g` : "幼虫データより移行",
-    } as any);
+    });
     deleteEntry(entry.id);
   };
 
@@ -259,8 +259,9 @@ export function BeetleManager() {
         }}
         title={editingEntry ? "編集" : "新規登録"}
       >
-        <div className="text-[12px] font-bold text-[#8B5A2B] mb-2 block tracking-wider uppercase">{editingEntry ? "編集タイプ" : "登録タイプ"}</div>
-        <div className="flex bg-[#F1F3F5] rounded-xl p-1 gap-1 mb-6"> {/* Styled chip-row directly */}
+        <div className="bg-gray-50/50 p-4 rounded-2xl mb-6 border border-gray-100">
+          <div className="text-[10px] font-black text-[#8B5A2B] mb-3 block tracking-widest uppercase">Select Type</div>
+          <div className="flex bg-white shadow-inner rounded-xl p-1 gap-1">
           {ENTRY_TYPES.map((type) => (
             <button
               key={type}
@@ -279,6 +280,7 @@ export function BeetleManager() {
               {type}
             </button>
           ))}
+          </div>
         </div>
 
         {isCreating && !editingEntry && createType === "成虫" ? (
@@ -334,7 +336,7 @@ export function BeetleManager() {
           <LarvaForm
             initialValues={editingEntry}
             allEntries={entries}
-            onSubmit={(value, count) => {
+            onSubmit={(value) => {
               updateLarva(editingEntry.id, value);
               startEditing(null);
             }}
@@ -357,7 +359,7 @@ export function BeetleManager() {
       </Modal>
 
       <section className="px-6">
-        {activeTab === "ホーム" || ENTRY_TYPES.includes(activeTab as any) ? (
+        {activeTab === "ホーム" || ENTRY_TYPES.includes(activeTab as EntryType) ? (
           filteredEntries.length === 0 ? (
             <EmptyState />
           ) : (

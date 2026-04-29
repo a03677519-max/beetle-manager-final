@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { EyeOff } from "lucide-react";
-import type { BeetleEntry } from "@/types/beetle";
+import type { BeetleEntry, LarvaBeetle } from "@/types/beetle";
 import { daysBetween, today } from "@/lib/utils";
 
 interface TaskViewProps {
@@ -12,8 +12,8 @@ interface TaskViewProps {
   taskSortType: "urgency" | "type";
   setTaskSortType: (type: "urgency" | "type") => void;
   setSelectedEntry: (entry: BeetleEntry | null) => void;
-  handleQuickExchange: (e: React.MouseEvent, entry: any) => void;
-  handlePromoteToAdult: (e: React.MouseEvent, entry: any) => void;
+  handleQuickExchange: (e: React.MouseEvent, entry: LarvaBeetle) => void;
+  handlePromoteToAdult: (e: React.MouseEvent, entry: LarvaBeetle) => void;
 }
 
 export function TaskView({ 
@@ -22,8 +22,14 @@ export function TaskView({
 }: TaskViewProps) {
   const tasks = useMemo(() => {
     const visibleEntries = entries.filter((e) => !skippedTaskIds.includes(e.id));
-    const exchangeTasks = visibleEntries.filter(e => e.type === "幼虫").map(e => ({ entry: e, days: daysBetween(e.logs[0]?.date || e.createdAt, today()) ?? 0, type: "exchange" as const })).filter(t => t.days >= 60);
-    const emergenceTasks = visibleEntries.filter(e => e.type === "幼虫" && (e as any).actualEmergenceDate).map(e => ({ entry: e, days: daysBetween(today(), (e as any).actualEmergenceDate) ?? 0, type: "emergence" as const })).filter(t => t.days <= 14 && t.days >= -7);
+    const exchangeTasks = visibleEntries
+      .filter((e): e is LarvaBeetle => e.type === "幼虫")
+      .map(e => ({ entry: e, days: daysBetween(e.logs[0]?.date || e.createdAt, today()) ?? 0, type: "exchange" as const }))
+      .filter(t => t.days >= 60);
+    const emergenceTasks = visibleEntries
+      .filter((e): e is LarvaBeetle => e.type === "幼虫" && !!e.actualEmergenceDate)
+      .map(e => ({ entry: e, days: daysBetween(today(), e.actualEmergenceDate) ?? 0, type: "emergence" as const }))
+      .filter(t => t.days <= 14 && t.days >= -7);
 
     return [...exchangeTasks, ...emergenceTasks].sort((a, b) => {
       if (taskSortType === "urgency") {
@@ -44,7 +50,7 @@ export function TaskView({
         </div>
         <div className="flex bg-white/60 p-1 rounded-xl border border-white/60 backdrop-blur-sm">
           {["urgency", "type"].map((t) => (
-            <button key={t} onClick={() => setTaskSortType(t as any)} className={`px-3 py-1 text-[9px] font-black rounded-lg transition-all uppercase ${taskSortType === t ? "bg-[#2D5A27] text-white" : "text-gray-400"}`}>
+            <button key={t} onClick={() => setTaskSortType(t as "urgency" | "type")} className={`px-3 py-1 text-[9px] font-black rounded-lg transition-all uppercase ${taskSortType === t ? "bg-[#2D5A27] text-white" : "text-gray-400"}`}>
               {t === "urgency" ? "緊急度" : "種別"}
             </button>
           ))}

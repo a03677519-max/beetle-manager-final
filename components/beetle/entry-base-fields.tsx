@@ -33,12 +33,14 @@ export function EntryBaseFields({
           <input
             value={japaneseName}
             onChange={(event) => onChange({ japaneseName: event.target.value })}
+            className="w-full bg-white/60 border border-gray-200 rounded-xl px-4 py-2.5 focus:border-[#2D5A27] outline-none transition-all"
           />
         </Field>
         <Field label="学名">
           <input
             value={scientificName}
             onChange={(event) => onChange({ scientificName: event.target.value })}
+            className="w-full bg-white/60 border border-gray-200 rounded-xl px-4 py-2.5 focus:border-[#2D5A27] outline-none transition-all"
           />
         </Field>
       </div>
@@ -46,6 +48,7 @@ export function EntryBaseFields({
         <input
           value={locality}
           onChange={(event) => onChange({ locality: event.target.value })}
+          className="w-full bg-white/60 border border-gray-200 rounded-xl px-4 py-2.5 focus:border-[#2D5A27] outline-none transition-all"
         />
       </Field>
       <GenerationRollField

@@ -31,20 +31,23 @@ export function SpawnSetForm({
 
   return (
     <form
-      className="card form-grid"
+      className="space-y-8"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(values);
       }}
     >
-      <div className="section-title">産卵セット項目</div>
-      <EntryBaseFields
-        {...values}
-        allEntries={allEntries}
-        onChange={(patch) => setValues({ ...values, ...patch })}
-      />
+      <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-4">
+        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Set Identity</div>
+        <EntryBaseFields
+          {...values}
+          allEntries={allEntries}
+          onChange={(patch) => setValues({ ...values, ...patch })}
+        />
+      </section>
 
-      <div className="space-y-4 py-4 border-t border-gray-100 mt-4">
+      <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-5">
+        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Timeline</div>
         <DateRollField
           label="羽化日"
           value={values.emergenceDate}
@@ -60,18 +63,22 @@ export function SpawnSetForm({
           value={values.setDate}
           onChange={(value) => setValues({ ...values, setDate: value })}
         />
-      </div>
+      </section>
 
-      <div className="grid grid-cols-2 gap-3 mt-2">
+      <section className="bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-4">
+        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Environment</div>
+        <div className="grid grid-cols-2 gap-3">
         <Field label="使用マット">
           <input
             value={values.substrate}
+            className="w-full bg-white/60 border border-gray-200 rounded-xl px-4 py-2.5 focus:border-[#2D5A27] outline-none"
             onChange={(event) => setValues({ ...values, substrate: event.target.value })}
           />
         </Field>
         <Field label="容器サイズ">
           <input
             value={values.containerSize}
+            className="w-full bg-white/60 border border-gray-200 rounded-xl px-4 py-2.5 focus:border-[#2D5A27] outline-none"
             onChange={(event) => setValues({ ...values, containerSize: event.target.value })}
           />
         </Field>
@@ -99,6 +106,8 @@ export function SpawnSetForm({
         value={values.cohabitation}
         onChange={(value) => setValues({ ...values, cohabitation: value })}
       />
+      </section>
+
       <div className="form-actions">
         <button type="submit" className="button">
           保存
