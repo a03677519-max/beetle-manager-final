@@ -180,10 +180,9 @@ export function LarvaForm({
             onChange={(e) => setValues({ ...values, managementName: e.target.value })}
           />
         </Field>
-        {/* @ts-ignore */}
         <DateRollField
           label="孵化 / セット投入日"
-          value={values.hatchDate || values.createdAt}
+          value={values.hatchDate || values.createdAt || ""}
           onChange={(value) => setValues({ ...values, hatchDate: value })}
         />
         <CountRollField value={count} onChange={setCount} />
