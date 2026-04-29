@@ -91,7 +91,7 @@ export function LarvaDetail({
         </div>
       </section>
 
-      <section className="mt-6 bg-white/60 backdrop-blur-md p-6 rounded-[24px] border border-white/60 shadow-sm">
+      <section className="mt-6 bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
         <div className="text-[10px] font-black text-[#8B5A2B] mb-6 uppercase tracking-widest border-l-4 border-[#2D5A27] pl-3">History Log</div>
         <div className="space-y-3">
           {entry.logs.length === 0 ? (

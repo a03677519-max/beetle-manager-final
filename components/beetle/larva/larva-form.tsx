@@ -49,7 +49,7 @@ export function LarvaForm({
           }
         });
       },
-      { rootMargin: "-100px 0px -70% 0px", threshold: 0 }
+      { rootMargin: "-140px 0px -70% 0px", threshold: 0 }
     );
 
     sectionIds.forEach((id) => {
@@ -134,14 +134,14 @@ export function LarvaForm({
   return (
     <form
       ref={formRef}
-      className="space-y-6"
+      className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(values, count);
       }}
     >
       {/* Quick Nav */}
-      <nav className="sticky top-0 z-30 py-3 -mx-4 px-4 bg-[#F8F9FA]/80 backdrop-blur-md flex gap-2 overflow-x-auto no-scrollbar border-b border-white/20 mb-2">
+      <nav className="sticky top-[90px] z-30 py-2 -mx-4 px-4 bg-[#F8F9FA]/80 backdrop-blur-md flex gap-2 overflow-x-auto no-scrollbar border-b border-white/20 mb-1">
         {[
           { id: "basic-info", label: "基本" },
           { id: "management", label: "管理" },
@@ -162,7 +162,7 @@ export function LarvaForm({
         ))}
       </nav>
 
-      <section id="basic-info" className="scroll-mt-20 bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-4">
+      <section id="basic-info" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
         <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Basic Info</div>
         <EntryBaseFields
           {...values}
@@ -171,13 +171,13 @@ export function LarvaForm({
         />
       </section>
 
-      <section id="management" className="scroll-mt-20 bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-4">
+      <section id="management" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
         <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Management</div>
         <Field label="管理名 (No/名前)">
           <input
             value={values.managementName || ""}
             placeholder="例: L-24-01"
-            className="w-full bg-white/60 border border-gray-200 rounded-xl px-4 py-2.5 focus:border-[#2D5A27] focus:ring-2 focus:ring-[#2D5A27]/20 outline-none transition-all"
+            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 focus:border-[#2D5A27] focus:ring-2 focus:ring-[#2D5A27]/20 outline-none transition-all"
             onChange={(e) => setValues({ ...values, managementName: e.target.value })}
           />
         </Field>
@@ -189,7 +189,7 @@ export function LarvaForm({
         <CountRollField value={count} onChange={setCount} />
       </section>
 
-      <section id="status" className="scroll-mt-20 bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-4">
+      <section id="status" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
         <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Status</div>
         <div className="field">
           <label className="flex items-center gap-3 py-1">
@@ -228,7 +228,7 @@ export function LarvaForm({
               <div className="flex space-x-2">
                 <button
                   type="button"
-                  className={`flex-1 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all select-none ${
+                  className={`flex-1 px-4 py-2 rounded-xl border font-bold text-sm transition-all select-none ${
                     values.emergenceType === "羽化"
                       ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md shadow-[#2D5A27]/20 scale-[1.02]"
                       : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white/80 active:scale-95"
@@ -239,7 +239,7 @@ export function LarvaForm({
                 </button>
                 <button
                   type="button"
-                  className={`flex-1 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all select-none ${
+                  className={`flex-1 px-4 py-2 rounded-xl border font-bold text-sm transition-all select-none ${
                     values.emergenceType === "掘り出し"
                       ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md shadow-[#2D5A27]/20 scale-[1.02]"
                       : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white/80 active:scale-95"
@@ -254,7 +254,7 @@ export function LarvaForm({
         )}
       </section>
 
-      <section id="breeding-log" className="scroll-mt-20 bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-5">
+      <section id="breeding-log" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
         <div className="flex justify-between items-center">
           <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest border-l-4 border-[#2D5A27] pl-3">Breeding Log (飼育ログ)</div>
           <button
@@ -267,7 +267,7 @@ export function LarvaForm({
         </div>
 
         {logStats && (
-          <div className="bg-[#2D5A27]/5 rounded-2xl p-4 border border-[#2D5A27]/10 flex justify-around">
+          <div className="bg-[#2D5A27]/5 rounded-2xl p-3 border border-[#2D5A27]/10 flex justify-around">
             <div className="text-center">
               <div className="text-[9px] font-black text-[#2D5A27] uppercase">最大体重</div>
               <div className="text-xl font-black text-[#2D5A27]">{logStats.maxWeight}<span className="text-xs ml-0.5">g</span></div>
@@ -282,7 +282,7 @@ export function LarvaForm({
 
         <div className="space-y-6">
           {values.logs?.map((record, index) => (
-            <div key={index} className="relative p-5 bg-white/60 rounded-[2rem] border border-white/80 shadow-sm space-y-4">
+            <div key={index} className="relative p-4 bg-white rounded-[2rem] border border-gray-100 shadow-sm space-y-3">
               <div className="flex justify-between items-center pb-2 border-b border-gray-100">
                 <span className="text-xs font-black text-gray-400">LOG #{(values.logs?.length || 0) - index}</span>
                 <button
@@ -397,7 +397,7 @@ export function LarvaForm({
       </section>
 
       {/* Actions */}
-      <div className="pt-6 pb-10 flex gap-3">
+      <div className="pt-4 pb-6 flex gap-3">
         <button
           type="button"
           className="flex-1 h-12 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"

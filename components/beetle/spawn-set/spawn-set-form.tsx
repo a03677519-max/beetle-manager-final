@@ -56,7 +56,7 @@ export function SpawnSetForm({
           }
         });
       },
-      { rootMargin: "-100px 0px -70% 0px", threshold: 0 }
+      { rootMargin: "-140px 0px -70% 0px", threshold: 0 }
     );
 
     sectionIds.forEach((id) => {
@@ -97,14 +97,14 @@ export function SpawnSetForm({
   return (
     <form
       ref={formRef}
-      className="space-y-6"
+      className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(values, count);
       }}
     >
       {/* Quick Nav */}
-      <nav className="sticky top-0 z-30 py-3 -mx-4 px-4 bg-[#F8F9FA]/80 backdrop-blur-md flex gap-2 overflow-x-auto no-scrollbar border-b border-white/20 mb-2">
+      <nav className="sticky top-[90px] z-30 py-2 -mx-4 px-4 bg-[#F8F9FA]/80 backdrop-blur-md flex gap-2 overflow-x-auto no-scrollbar border-b border-white/20 mb-1">
         {[
           { id: "set-identity", label: "基本" },
           { id: "management", label: "期間" },
@@ -124,7 +124,7 @@ export function SpawnSetForm({
         ))}
       </nav>
 
-      <section id="set-identity" className="scroll-mt-20 bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-4">
+      <section id="set-identity" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
         <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Set Identity</div>
         <EntryBaseFields
           {...values}
@@ -133,8 +133,16 @@ export function SpawnSetForm({
         />
       </section>
 
-      <section id="management" className="scroll-mt-20 bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-5">
+      <section id="management" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
         <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Management</div>
+        <Field label="管理名 (No/名前)">
+          <input
+            value={values.managementName || ""}
+            placeholder="例: S-24-01"
+            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 focus:border-[#2D5A27] focus:ring-2 focus:ring-[#2D5A27]/20 outline-none transition-all"
+            onChange={(e) => setValues({ ...values, managementName: e.target.value })}
+          />
+        </Field>
         <DateRollField
           label="羽化日"
           value={values.emergenceDate}
@@ -153,20 +161,20 @@ export function SpawnSetForm({
         <CountRollField value={count} onChange={setCount} />
       </section>
 
-      <section id="environment" className="scroll-mt-20 bg-white/40 backdrop-blur-sm rounded-3xl p-5 border border-white/60 shadow-sm space-y-4">
+      <section id="environment" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
         <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Environment</div>
         <div className="grid grid-cols-2 gap-3">
         <Field label="使用マット">
           <input
             value={values.substrate}
-            className="w-full bg-white/60 border border-gray-200 rounded-xl px-4 py-2.5 focus:border-[#2D5A27] focus:ring-2 focus:ring-[#2D5A27]/20 outline-none transition-all"
+            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 focus:border-[#2D5A27] focus:ring-2 focus:ring-[#2D5A27]/20 outline-none transition-all"
             onChange={(event) => setValues({ ...values, substrate: event.target.value })}
           />
         </Field>
         <Field label="容器サイズ">
           <input
             value={values.containerSize}
-            className="w-full bg-white/60 border border-gray-200 rounded-xl px-4 py-2.5 focus:border-[#2D5A27] focus:ring-2 focus:ring-[#2D5A27]/20 outline-none transition-all"
+            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 focus:border-[#2D5A27] focus:ring-2 focus:ring-[#2D5A27]/20 outline-none transition-all"
             onChange={(event) => setValues({ ...values, containerSize: event.target.value })}
           />
         </Field>
@@ -197,7 +205,7 @@ export function SpawnSetForm({
       </section>
 
       {/* Actions */}
-      <div className="pt-6 pb-10 flex gap-3">
+      <div className="pt-4 pb-6 flex gap-3">
         <button
           type="button"
           className="flex-1 h-12 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"

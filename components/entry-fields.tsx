@@ -53,7 +53,7 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
   useEffect(() => {
     const index = options.indexOf(value);
     if (index !== -1 && scrollRef.current) {
-      const targetScroll = index * 40;
+      const targetScroll = index * 32;
       if (scrollRef.current.scrollTop !== targetScroll) {
         scrollRef.current.scrollTop = targetScroll;
       }
@@ -67,7 +67,7 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
     
     const container = e.currentTarget;
     timerRef.current = setTimeout(() => {
-      const index = Math.round(container.scrollTop / 40);
+      const index = Math.round(container.scrollTop / 32);
       if (options[index] !== undefined && String(options[index]) !== String(value)) {
         onChange(String(options[index]));
       }
@@ -90,10 +90,10 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
       onScroll={handleScroll}
       onTouchStart={stopPropagation}
       onTouchMove={stopPropagation}
-      className="flex-1 h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[55px]"
+      className="flex-1 h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[44px]"
     >
       {options.map((option) => (
-        <div key={option} className="h-10 flex items-center justify-center snap-center text-sm font-bold text-gray-700">
+        <div key={option} className="h-8 flex items-center justify-center snap-center text-base font-bold text-gray-700">
           {option}
         </div>
       ))}
@@ -103,13 +103,13 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
 
 function PickerContainer({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative h-[150px] bg-white/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-white/60 shadow-inner flex">
+    <div className="relative h-[120px] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-inner flex">
       {/* グラデーションオーバーレイ */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-transparent to-white/90 pointer-events-none z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white pointer-events-none z-10" />
       
       {/* センターハイライト */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-        <div className="w-[96%] h-10 border-y border-[#2D5A27]/20 bg-[#2D5A27]/5 rounded-lg" />
+        <div className="w-[96%] h-8 border-y border-[#2D5A27]/20 bg-[#2D5A27]/5 rounded-lg" />
       </div>
       {children}
     </div>
@@ -257,7 +257,7 @@ export function LevelButtonGroup({
             key={option}
             type="button"
             style={{ width: `${100 / values.length}%` }}
-            className={`py-2 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"}`}
+            className={`py-1.5 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"}`}
             onClick={() => onChange(option)}
           >
             {option}
@@ -293,7 +293,7 @@ export function SwitchBotTemperatureField({
       <div className="relative">
         <input 
           inputMode="decimal"
-          className="w-full h-[48px] px-4 rounded-xl border border-[#DEE2E6] focus:border-[#2D5A27] focus:ring-1 focus:ring-[#2D5A27] outline-none text-[16px]"
+          className="w-full h-[40px] px-4 rounded-xl border border-[#DEE2E6] focus:border-[#2D5A27] focus:ring-1 focus:ring-[#2D5A27] outline-none text-[15px]"
           value={value} 
           onChange={(event) => onChange(event.target.value)} 
           placeholder="23.5" 

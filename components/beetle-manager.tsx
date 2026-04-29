@@ -265,15 +265,16 @@ export function BeetleManager() {
         }}
         title={editingEntry ? "編集" : "新規登録"}
       >
-        <div className="bg-gray-50/50 p-4 rounded-2xl mb-6 border border-gray-100">
+        <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md -mx-6 px-6 pt-2 pb-4 border-b border-gray-100 mb-6">
           <div className="text-[10px] font-black text-[#8B5A2B] mb-3 block tracking-widest uppercase">Select Type</div>
-          <div className="flex bg-white shadow-inner rounded-xl p-1 gap-1">
+          <div className="flex bg-gray-50 shadow-inner rounded-xl p-1 gap-1">
           {ENTRY_TYPES.map((type) => (
             <button
               key={type}
               type="button"
+              data-ignore-click-outside="true"
               style={{ width: `${100 / ENTRY_TYPES.length}%` }}
-              className={`py-2 text-sm font-bold rounded-lg transition-all ${
+              className={`py-2 text-sm font-bold rounded-lg transition-all select-none ${
                 createType === type ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"
               }`}
               onClick={() => {
