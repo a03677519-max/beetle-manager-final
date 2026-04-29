@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { Search, Download, Upload } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
-import { FloatingButton } from "@/components/ui/floating-button";
 import { Modal } from "./ui/modal";
 import { useSwitchBot } from "@/components/use-switchbot";
 import {
@@ -286,8 +285,8 @@ export function BeetleManager() {
           if (tab === "ホーム") setSelectedType("すべて");
           else if (ENTRY_TYPES.includes(tab as EntryType)) setSelectedType(tab as EntryType);
         }}
+        onAdd={() => setIsCreating(true)}
       />
-      <FloatingButton onClick={() => setIsCreating(true)} />
     </div>
   );
 }

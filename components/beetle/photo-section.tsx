@@ -25,7 +25,7 @@ export function PhotoSection({ entry }: { entry: BeetleEntry }) {
         <label className="button button-secondary upload-button">
           <Upload size={16} />
           追加
-          <input type="file" accept="image/*" multiple hidden onChange={handlePhotoSelect} />
+          <input type="file" accept="image/*" capture="environment" hidden onChange={handlePhotoSelect} />
         </label>
       </div>
       {entry.photos.length === 0 ? (

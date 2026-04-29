@@ -193,11 +193,11 @@ export function CountRollField({
   onChange: (value: number) => void;
 }) {
   return (
-    <WheelSelect
+    <LevelButtonGroup
       label="登録頭数"
-      value={String(value)}
-      options={COUNT_OPTIONS.map(String)}
-      onChange={(nextValue) => onChange(Number(nextValue))}
+      value={value}
+      values={COUNT_OPTIONS}
+      onChange={onChange}
     />
   );
 }

@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --primary: #2D5A27;
+    --secondary: #8B5A2B;
+    --accent: #E67E22;
+    --background: #F8F9FA;
+    --text: #212529;
+    --card-bg: #FFFFFF;
+    --border: #DEE2E6;
+  }
   body {
-    @apply bg-gray-100 text-gray-900 font-sans antialiased min-h-screen bg-gradient-to-br from-blue-50 to-green-50;
+    @apply bg-[var(--background)] text-[var(--text)] font-sans antialiased min-h-screen;
   }
 }
 
@@ -12,47 +21,58 @@
   }
   
   .card {
-    @apply bg-white/60 backdrop-blur-lg rounded-3xl p-6 shadow-sm border border-white/50 mb-6;
+    @apply bg-[var(--card-bg)] rounded-xl p-6 shadow-sm border border-[var(--border)] mb-6;
   }
 
   h1 {
-    @apply text-2xl font-bold text-gray-800;
+    @apply text-2xl font-bold text-[var(--text)];
   }
   .hero-copy {
-    @apply text-sm text-gray-600 mt-1;
+    @apply text-sm text-[var(--text)]/80 mt-1;
   }
   .eyebrow {
-    @apply text-xs font-semibold text-green-700 tracking-wider uppercase;
+    @apply text-xs font-semibold text-[var(--primary)] tracking-wider uppercase;
   }
   
   .button {
-    @apply bg-green-600/90 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-green-500/20 backdrop-blur-sm;
+    @apply bg-[var(--primary)] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2;
   }
   .button-secondary {
-    @apply bg-white/50 text-gray-800 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm border border-white/50;
+    @apply bg-white text-[var(--text)] font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 border border-[var(--border)];
   }
   
   .filter {
-    @apply bg-white/50 px-4 py-2 rounded-full text-sm font-medium border border-white/50 text-gray-700;
+    @apply bg-white px-4 py-2 rounded-full text-sm font-medium border border-[var(--border)] text-[var(--text)];
   }
   .filter.active {
-    @apply bg-green-600 text-white shadow-md;
+    @apply bg-[var(--primary)] text-white;
   }
   
   .chip {
-    @apply bg-white/50 px-4 py-2 rounded-full text-sm font-medium border border-white/50 text-gray-700;
+    @apply bg-white px-4 py-2 rounded-full text-sm font-medium border border-[var(--border)] text-[var(--text)];
   }
   .chip.active {
-    @apply bg-green-600 text-white shadow-md;
+    @apply bg-[var(--primary)] text-white;
   }
 
   .wheel-shell {
-    @apply relative bg-white/70 backdrop-blur-sm rounded-xl overflow-hidden border border-white/50 shadow-inner;
+    @apply relative bg-white rounded-xl overflow-hidden border border-[var(--border)];
   }
   .wheel-select {
-    @apply appearance-none w-full bg-transparent p-3 text-center font-bold text-gray-800 outline-none cursor-pointer;
+    @apply appearance-none w-full bg-transparent p-3 text-center font-bold text-[var(--text)] outline-none cursor-pointer;
   }
   .wheel-grid {
     @apply grid grid-cols-3 gap-2;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select {
+    @apply h-[48px] px-4 rounded-xl border border-[var(--border)] text-[16px] w-full outline-none;
+  }
+  input:focus,
+  select:focus {
+    @apply border-2 border-[var(--primary)];
   }
 }

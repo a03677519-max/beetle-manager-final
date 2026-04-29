@@ -1,6 +1,6 @@
 "use client";
 
-import { Field, GenerationRollField, WheelSelect } from "@/components/entry-fields";
+import { Field, GenerationRollField } from "@/components/entry-fields";
 import type { AdultFormValues, BeetleEntry } from "@/types/beetle";
 
 export function EntryBaseFields({
@@ -50,12 +50,27 @@ export function EntryBaseFields({
         value={generation}
         onChange={(value) => onChange({ generation: value })}
       />
-      <WheelSelect
-        label="紐付け個体"
-        value={linkedEntryId || ""}
-        options={["", ...allEntries.map((e) => e.id)]}
-        onChange={(value) => onChange({ linkedEntryId: value || undefined })}
-      />
+      <Field label="紐付け個体">
+        <div className="chip-row">
+          <button
+            type="button"
+            className={!linkedEntryId ? "chip active" : "chip"}
+            onClick={() => onChange({ linkedEntryId: undefined })}
+          >
+            なし
+          </button>
+          {allEntries.map((e) => (
+            <button
+              key={e.id}
+              type="button"
+              className={linkedEntryId === e.id ? "chip active" : "chip"}
+              onClick={() => onChange({ linkedEntryId: e.id })}
+            >
+              {e.japaneseName}
+            </button>
+          ))}
+        </div>
+      </Field>
     </>
   );
 }
