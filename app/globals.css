@@ -31,7 +31,7 @@
   .text-muted { @apply text-[12px] text-[var(--text-muted)]; }
   
   .button {
-    @apply bg-[var(--primary)] text-white font-bold py-3 px-4 rounded-card flex items-center justify-center gap-2 transition-transform duration-100 active:scale-95;
+    @apply bg-[var(--primary)] text-white font-bold py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-transform duration-100 active:scale-95;
   }
   /* 他のスタイルは一旦そのままにしておく */
 }
