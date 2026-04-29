@@ -62,11 +62,13 @@ export function AdultForm({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
-      const isOutsideForm = formRef.current && !formRef.current.contains(target);
-      // ポータル要素（ドラムロール等）には data-portal="true" 属性が付与されていることを想定して除外判定を行う
-      const isInsidePortal = (target as Element).closest?.('[data-portal="true"]');
+      if (!target || !(target instanceof Element)) return;
 
-      if (isOutsideForm && !isInsidePortal) {
+      const isOutsideForm = formRef.current && !formRef.current.contains(target);
+      // ポータル要素または「無視属性」を持つ要素（タブ切り替えボタン等）の場合は閉じない
+      const isIgnored = target.closest?.('[data-portal="true"]') || target.closest?.('[data-ignore-click-outside="true"]');
+
+      if (isOutsideForm && !isIgnored) {
         onCancel();
       }
     };
@@ -83,7 +85,7 @@ export function AdultForm({
   return (
     <form
       ref={formRef}
-      className="space-y-6 pb-24"
+      className="space-y-6"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(values);
@@ -100,7 +102,7 @@ export function AdultForm({
           <a
             key={item.id}
             href={`#${item.id}`}
-            className={`whitespace-nowrap px-4 py-1.5 rounded-full border shadow-sm text-[11px] font-bold transition-all active:scale-95 ${
+            className={`whitespace-nowrap px-4 py-1.5 rounded-full border shadow-sm text-[11px] font-bold transition-all active:scale-95 select-none ${
               activeSection === item.id
                 ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md"
                 : "bg-white/80 border-white/60 text-[#2D5A27] hover:bg-gray-50"
@@ -144,7 +146,7 @@ export function AdultForm({
           <div className="flex space-x-2">
             <button
               type="button"
-              className={`flex-1 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all duration-200 ${
+              className={`flex-1 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all duration-200 select-none ${
                 values.emergenceType === "羽化"
                   ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md shadow-[#2D5A27]/20 scale-[1.02]"
                   : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white/80 active:scale-95"
@@ -155,7 +157,7 @@ export function AdultForm({
             </button>
             <button
               type="button"
-              className={`flex-1 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all duration-200 ${
+              className={`flex-1 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all duration-200 select-none ${
                 values.emergenceType === "掘り出し"
                   ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md shadow-[#2D5A27]/20 scale-[1.02]"
                   : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white/80 active:scale-95"
@@ -192,18 +194,18 @@ export function AdultForm({
         </Field>
       </section>
 
-      {/* Sticky Actions */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-white/60 flex gap-3 z-50 max-w-md mx-auto">
+      {/* Actions */}
+      <div className="pt-6 pb-10 flex gap-3">
         <button
           type="button"
-          className="flex-1 h-12 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all"
+          className="flex-1 h-12 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"
           onClick={onCancel}
         >
           キャンセル
         </button>
         <button 
           type="submit" 
-          className="flex-[2] h-12 rounded-2xl font-bold text-white bg-[#2D5A27] shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all"
+          className="flex-[2] h-12 rounded-2xl font-bold text-white bg-[#2D5A27] shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all select-none"
         >
           保存する
         </button>

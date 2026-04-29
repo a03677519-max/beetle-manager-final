@@ -74,11 +74,13 @@ export function SpawnSetForm({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
-      const isOutsideForm = formRef.current && !formRef.current.contains(target);
-      // ポータル要素（ドラムロール等）の判定
-      const isInsidePortal = (target as Element).closest?.('[data-portal="true"]');
+      if (!target || !(target instanceof Element)) return;
 
-      if (isOutsideForm && !isInsidePortal) {
+      const isOutsideForm = formRef.current && !formRef.current.contains(target);
+      // ポータル要素または「無視属性」を持つ要素の判定
+      const isIgnored = target.closest?.('[data-portal="true"]') || target.closest?.('[data-ignore-click-outside="true"]');
+
+      if (isOutsideForm && !isIgnored) {
         onCancel();
       }
     };
@@ -95,7 +97,7 @@ export function SpawnSetForm({
   return (
     <form
       ref={formRef}
-      className="space-y-6 pb-24"
+      className="space-y-6"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(values, count);
@@ -111,7 +113,7 @@ export function SpawnSetForm({
           <a
             key={item.id}
             href={`#${item.id}`}
-            className={`whitespace-nowrap px-4 py-1.5 rounded-full border shadow-sm text-[11px] font-bold transition-all active:scale-95 ${
+            className={`whitespace-nowrap px-4 py-1.5 rounded-full border shadow-sm text-[11px] font-bold transition-all active:scale-95 select-none ${
               activeSection === item.id
                 ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md"
                 : "bg-white/80 border-white/60 text-[#2D5A27] hover:bg-gray-50"
@@ -194,18 +196,18 @@ export function SpawnSetForm({
       />
       </section>
 
-      {/* Sticky Actions */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-white/60 flex gap-3 z-50 max-w-md mx-auto">
+      {/* Actions */}
+      <div className="pt-6 pb-10 flex gap-3">
         <button
           type="button"
-          className="flex-1 h-12 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all"
+          className="flex-1 h-12 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"
           onClick={onCancel}
         >
           キャンセル
         </button>
         <button 
           type="submit" 
-          className="flex-[2] h-12 rounded-2xl font-bold text-white bg-[#2D5A27] shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all"
+          className="flex-[2] h-12 rounded-2xl font-bold text-white bg-[#2D5A27] shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all select-none"
         >
           保存する
         </button>

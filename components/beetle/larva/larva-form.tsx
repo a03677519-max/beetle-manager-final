@@ -67,11 +67,13 @@ export function LarvaForm({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
-      const isOutsideForm = formRef.current && !formRef.current.contains(target);
-      // ポータル要素（ドラムロール等）の判定
-      const isInsidePortal = (target as Element).closest?.('[data-portal="true"]');
+      if (!target || !(target instanceof Element)) return;
 
-      if (isOutsideForm && !isInsidePortal) {
+      const isOutsideForm = formRef.current && !formRef.current.contains(target);
+      // ポータル要素または「無視属性」を持つ要素の判定
+      const isIgnored = target.closest?.('[data-portal="true"]') || target.closest?.('[data-ignore-click-outside="true"]');
+
+      if (isOutsideForm && !isIgnored) {
         onCancel();
       }
     };
@@ -105,7 +107,6 @@ export function LarvaForm({
   // 孵化日から羽化までの日数を計算
   const daysUntilEmergence = useMemo(() => {
     // LarvaBeetleにはhatchDateがないため、ここは要修正かもだが、現状維持
-    // @ts-ignore
     const hatchDate = values.hatchDate;
     if (!hatchDate || !values.actualEmergenceDate) return null;
     try {
@@ -116,7 +117,7 @@ export function LarvaForm({
     } catch {
       return null;
     }
-  }, [values.actualEmergenceDate]); // hatchDate依存を削除
+  }, [values.actualEmergenceDate, values.hatchDate]);
 
   // 入力されたデータから体重と温度の推移を計算（簡易グラフ用データ）
   const logStats = useMemo(() => {
@@ -133,7 +134,7 @@ export function LarvaForm({
   return (
     <form
       ref={formRef}
-      className="space-y-6 pb-24"
+      className="space-y-6"
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(values, count);
@@ -150,7 +151,7 @@ export function LarvaForm({
           <a
             key={item.id}
             href={`#${item.id}`}
-            className={`whitespace-nowrap px-4 py-1.5 rounded-full border shadow-sm text-[11px] font-bold transition-all active:scale-95 ${
+            className={`whitespace-nowrap px-4 py-1.5 rounded-full border shadow-sm text-[11px] font-bold transition-all active:scale-95 select-none ${
               activeSection === item.id
                 ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md"
                 : "bg-white/80 border-white/60 text-[#2D5A27] hover:bg-gray-50"
@@ -194,7 +195,7 @@ export function LarvaForm({
           <label className="flex items-center gap-3 py-1">
             <input
               type="checkbox"
-              className="w-5 h-5 rounded-lg border-gray-300 text-[#2D5A27] focus:ring-[#2D5A27]"
+              className="w-5 h-5 rounded-lg border-gray-300 text-[#2D5A27] focus:ring-[#2D5A27] select-none"
               checked={isEmerged}
               onChange={(e) =>
                 setValues({
@@ -227,7 +228,7 @@ export function LarvaForm({
               <div className="flex space-x-2">
                 <button
                   type="button"
-                  className={`flex-1 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all ${
+                  className={`flex-1 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all select-none ${
                     values.emergenceType === "羽化"
                       ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md shadow-[#2D5A27]/20 scale-[1.02]"
                       : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white/80 active:scale-95"
@@ -238,7 +239,7 @@ export function LarvaForm({
                 </button>
                 <button
                   type="button"
-                  className={`flex-1 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all ${
+                  className={`flex-1 px-4 py-2.5 rounded-xl border font-bold text-sm transition-all select-none ${
                     values.emergenceType === "掘り出し"
                       ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md shadow-[#2D5A27]/20 scale-[1.02]"
                       : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white/80 active:scale-95"
@@ -259,7 +260,7 @@ export function LarvaForm({
           <button
             type="button"
             onClick={addRecord}
-            className="text-[10px] bg-[#2D5A27] text-white px-4 py-1.5 rounded-full font-black shadow-sm active:scale-95 transition-all"
+            className="text-[10px] bg-[#2D5A27] text-white px-4 py-1.5 rounded-full font-black shadow-sm active:scale-95 transition-all select-none"
           >
             + ログを追加
           </button>
@@ -286,7 +287,7 @@ export function LarvaForm({
                 <span className="text-xs font-black text-gray-400">LOG #{(values.logs?.length || 0) - index}</span>
                 <button
                   type="button"
-                  className="text-red-400 p-1"
+                  className="text-red-400 p-1 select-none"
                   onClick={() => {
                     const newLogs = [...(values.logs || [])];
                     newLogs.splice(index, 1);
@@ -329,7 +330,7 @@ export function LarvaForm({
                       <button
                         key={stage}
                         type="button"
-                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${record.stage === stage ? 'bg-white shadow-sm text-[#2D5A27]' : 'text-gray-400'}`}
+                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all select-none ${record.stage === stage ? 'bg-white shadow-sm text-[#2D5A27]' : 'text-gray-400'}`}
                         onClick={() => {
                           const newLogs = [...(values.logs || [])];
                           newLogs[index] = { ...record, stage: stage as LogStage };
@@ -347,7 +348,7 @@ export function LarvaForm({
                       <button
                         key={s}
                         type="button"
-                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${record.gender === s ? 'bg-white shadow-sm text-[#2D5A27]' : 'text-gray-400'}`}
+                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all select-none ${record.gender === s ? 'bg-white shadow-sm text-[#2D5A27]' : 'text-gray-400'}`}
                         onClick={() => {
                           const newLogs = [...(values.logs || [])];
                           newLogs[index] = { ...record, gender: s as Gender };
@@ -395,18 +396,18 @@ export function LarvaForm({
         </div>
       </section>
 
-      {/* Sticky Actions */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-white/60 flex gap-3 z-50 max-w-md mx-auto">
+      {/* Actions */}
+      <div className="pt-6 pb-10 flex gap-3">
         <button
           type="button"
-          className="flex-1 h-12 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all"
+          className="flex-1 h-12 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"
           onClick={onCancel}
         >
           キャンセル
         </button>
         <button 
           type="submit" 
-          className="flex-[2] h-12 rounded-2xl font-bold text-white bg-[#2D5A27] shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all"
+          className="flex-[2] h-12 rounded-2xl font-bold text-white bg-[#2D5A27] shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all select-none"
         >
           保存する
         </button>
