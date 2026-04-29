@@ -1,6 +1,7 @@
 "use client";
 
-import { Edit3, Trash2 } from "lucide-react";
+import { StatusBadge, Stage } from "@/components/ui/status-badge";
+import { GrowthBar } from "@/components/ui/growth-bar";
 import { buildGenerationLabel } from "@/components/entry-fields";
 import { useBeetleStore } from "@/store/use-beetle-store";
 import type { BeetleEntry } from "@/types/beetle";
@@ -17,6 +18,8 @@ export function EntryCard({
   const deleteEntry = useBeetleStore((state) => state.deleteEntry);
 
   const latestWeight = entry.type === "幼虫" && entry.logs.length > 0 ? entry.logs[0].weight : null;
+  const stageMap: Record<string, Stage> = { "成虫": "成虫", "幼虫": "幼虫", "産卵セット": "卵" };
+  const stage = stageMap[entry.type] || "卵";
 
   return (
     <article 
@@ -28,9 +31,7 @@ export function EntryCard({
           <h3 className="text-heading">{entry.japaneseName}</h3>
           <p className="text-body italic">{entry.scientificName}</p>
         </div>
-        <span className="text-[12px] h-[24px] flex items-center px-3 rounded-full bg-gray-100 text-[var(--text-secondary)]">
-          {entry.type}
-        </span>
+        <StatusBadge stage={stage} />
       </div>
       
       <div className="flex justify-between items-end mt-4">
@@ -44,8 +45,9 @@ export function EntryCard({
         </dl>
         
         {latestWeight && (
-          <div className="text-right">
+          <div className="text-right w-1/2">
             <div className="text-[20px] font-bold text-[var(--primary)]">{latestWeight}g</div>
+            <GrowthBar weight={parseFloat(latestWeight)} />
           </div>
         )}
       </div>
