@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Field } from "@/components/entry-fields";
+import { Field, WheelSelect } from "@/components/entry-fields";
 import { useSwitchBot } from "@/components/use-switchbot";
 import { useBeetleStore } from "@/store/use-beetle-store";
 
@@ -38,22 +38,15 @@ export function SwitchBotCard() {
       <Field label="Secret">
         <input value={switchBot.secret} onChange={(event) => updateSwitchBot({ secret: event.target.value })} />
       </Field>
-      <Field label="対象デバイス">
-        <select
-          value={switchBot.deviceId}
-          onChange={(event) => {
-            const nextDevice = devices.find((device) => device.deviceId === event.target.value);
-            updateSwitchBot({ deviceId: event.target.value, deviceName: nextDevice?.deviceName ?? "" });
-          }}
-        >
-          <option value="">デバイスを選択</option>
-          {devices.map((device) => (
-            <option key={device.deviceId} value={device.deviceId}>
-              {device.deviceName}
-            </option>
-          ))}
-        </select>
-      </Field>
+      <WheelSelect
+        label="対象デバイス"
+        value={devices.find(d => d.deviceId === switchBot.deviceId)?.deviceName ?? "未選択"}
+        options={devices.length > 0 ? devices.map(d => d.deviceName) : ["未接続"]}
+        onChange={(name) => {
+          const nextDevice = devices.find((device) => device.deviceName === name);
+          if (nextDevice) updateSwitchBot({ deviceId: nextDevice.deviceId, deviceName: nextDevice.deviceName });
+        }}
+      />
       <div className="form-actions">
         <button type="button" className="button button-secondary" onClick={handleFetchDevices}>
           {isFetchingDevices ? "取得中..." : "デバイス取得"}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { AnimatePresence } from "framer-motion";
 import { Search, Download, Upload } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Modal } from "./ui/modal";
@@ -270,14 +271,16 @@ export function BeetleManager() {
         )}
       </section>
 
-      {selectedEntry ? (
-        <EntryDetail
-          entry={entries.find((item) => item.id === selectedEntry.id) ?? selectedEntry}
-          onClose={() => setSelectedEntry(null)}
-          onFetchTemperature={fetchCurrentTemperature}
-          isFetchingTemperature={isFetching}
-        />
-      ) : null}
+      <AnimatePresence>
+        {selectedEntry && (
+          <EntryDetail
+            entry={entries.find((item) => item.id === selectedEntry.id) ?? selectedEntry}
+            onClose={() => setSelectedEntry(null)}
+            onFetchTemperature={fetchCurrentTemperature}
+            isFetchingTemperature={isFetching}
+          />
+        )}
+      </AnimatePresence>
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}

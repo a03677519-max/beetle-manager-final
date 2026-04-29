@@ -1,7 +1,8 @@
 "use client";
 
 import { Thermometer } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
 
 import {
   COHABITATION_OPTIONS,
@@ -33,9 +34,56 @@ export function Field({
 }) {
   return (
     <label className="field">
-      <span className="text-[12px] font-bold text-[var(--secondary)] mb-2 block tracking-wider uppercase">{label}</span>
+      <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block tracking-wider uppercase">{label}</span>
       {children}
     </label>
+  );
+}
+
+function DrumrollPicker<T extends string | number>({
+  options,
+  value,
+  onChange,
+}: {
+  options: readonly T[];
+  value: T;
+  onChange: (value: string) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 初期表示時に選択値までスクロール
+  useEffect(() => {
+    const index = options.indexOf(value);
+    if (index !== -1 && scrollRef.current) {
+      scrollRef.current.scrollTop = index * 40;
+    }
+  }, [value, options]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const index = Math.round(e.currentTarget.scrollTop / 40);
+    if (options[index] !== undefined && String(options[index]) !== String(value)) {
+      onChange(String(options[index]));
+    }
+  };
+
+  return (
+    <div className="relative h-[120px] bg-gray-50/50 rounded-xl overflow-hidden border border-gray-100">
+      {/* 中央のハイライト */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-full h-10 border-y border-primary/20 bg-primary/5" />
+      </div>
+      <div 
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-10"
+      >
+        {options.map((option) => (
+          <div key={option} className="h-10 flex items-center justify-center snap-center text-sm font-bold text-gray-700">
+            {option}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -52,15 +100,7 @@ export function WheelSelect({
 }) {
   return (
     <Field label={label}>
-      <div className="wheel-shell">
-        <select className="wheel-select" value={value} onChange={(event) => onChange(event.target.value)}>
-          {options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
+      <DrumrollPicker options={options} value={value} onChange={onChange} />
     </Field>
   );
 }
@@ -91,48 +131,21 @@ export function DateRollField({
         </label>
       </div>
       <div className="wheel-grid">
-        <div className="wheel-shell">
-          <select
-            className="wheel-select"
-            value={parts.year}
-            disabled={!isEnabled}
-            onChange={(event) => onChange(buildDateFromParts(event.target.value, parts.month, parts.day))}
-          >
-            {dateOptions.years.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="wheel-shell">
-          <select
-            className="wheel-select"
-            value={parts.month}
-            disabled={!isEnabled}
-            onChange={(event) => onChange(buildDateFromParts(parts.year, event.target.value, parts.day))}
-          >
-            {dateOptions.months.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="wheel-shell">
-          <select
-            className="wheel-select"
-            value={parts.day}
-            disabled={!isEnabled}
-            onChange={(event) => onChange(buildDateFromParts(parts.year, parts.month, event.target.value))}
-          >
-            {dateOptions.days.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
+        <DrumrollPicker
+          options={dateOptions.years}
+          value={parts.year}
+          onChange={(v) => isEnabled && onChange(buildDateFromParts(v, parts.month, parts.day))}
+        />
+        <DrumrollPicker
+          options={dateOptions.months}
+          value={parts.month}
+          onChange={(v) => isEnabled && onChange(buildDateFromParts(parts.year, v, parts.day))}
+        />
+        <DrumrollPicker
+          options={dateOptions.days}
+          value={parts.day}
+          onChange={(v) => isEnabled && onChange(buildDateFromParts(parts.year, parts.month, v))}
+        />
       </div>
     </div>
   );
@@ -149,50 +162,23 @@ export function GenerationRollField({
 
   return (
     <div className="field">
-      <span>累代</span>
+      <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block tracking-wider uppercase">累代</span>
       <div className="wheel-grid">
-        <div className="wheel-shell">
-          <select
-            className="wheel-select"
-            value={value.primary}
-            onChange={(event) => onChange({ ...value, primary: event.target.value as GenerationValue["primary"] })}
-          >
-            {GENERATION_PRIMARY.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="wheel-shell">
-          <select
-            className="wheel-select"
-            value={value.secondary}
-            onChange={(event) =>
-              onChange({ ...value, secondary: event.target.value as GenerationValue["secondary"] })
-            }
-          >
-            {GENERATION_SECONDARY.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="wheel-shell">
-          <select
-            className="wheel-select"
-            value={value.count}
-            onChange={(event) => onChange({ ...value, count: event.target.value })}
-          >
-            <option value="">-</option>
-            {GENERATION_COUNT_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </div>
+        <DrumrollPicker
+          options={GENERATION_PRIMARY}
+          value={value.primary}
+          onChange={(v) => onChange({ ...value, primary: v as GenerationValue["primary"] })}
+        />
+        <DrumrollPicker
+          options={GENERATION_SECONDARY}
+          value={value.secondary}
+          onChange={(v) => onChange({ ...value, secondary: v as GenerationValue["secondary"] })}
+        />
+        <DrumrollPicker
+          options={["-", ...GENERATION_COUNT_OPTIONS]}
+          value={value.count || "-"}
+          onChange={(v) => onChange({ ...value, count: v === "-" ? "" : v })}
+        />
       </div>
       <p className="field-note">表示: {preview}</p>
     </div>
@@ -229,13 +215,14 @@ export function LevelButtonGroup({
 }) {
   return (
     <div className="field">
-      <span>{label}</span>
-      <div className="chip-row">
+      <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block uppercase tracking-wider">{label}</span>
+      <div className="flex bg-[#F1F3F5] rounded-xl p-1 gap-1">
         {values.map((option) => (
           <button
             key={option}
             type="button"
-            className={option === value ? "chip active" : "chip"}
+            style={{ width: `${100 / values.length}%` }}
+            className={`py-2 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"}`}
             onClick={() => onChange(option)}
           >
             {option}
@@ -247,11 +234,15 @@ export function LevelButtonGroup({
 }
 
 export function PressureField(props: { value: number; onChange: (value: number) => void }) {
-  return <LevelButtonGroup label="詰圧" values={PRESSURE_LEVELS} {...props} />;
+  return (
+    <WheelSelect label="詰圧" options={PRESSURE_LEVELS} value={props.value} onChange={(v) => props.onChange(Number(v))} />
+  );
 }
 
 export function MoistureField(props: { value: number; onChange: (value: number) => void }) {
-  return <LevelButtonGroup label="水分量" values={MOISTURE_LEVELS} {...props} />;
+  return (
+    <WheelSelect label="水分量" options={MOISTURE_LEVELS} value={props.value} onChange={(v) => props.onChange(Number(v))} />
+  );
 }
 
 export function SwitchBotTemperatureField({
@@ -266,14 +257,21 @@ export function SwitchBotTemperatureField({
   isFetching: boolean;
 }) {
   return (
-    <Field label="温度">
-      <div className="temp-row">
-        <input value={value} onChange={(event) => onChange(event.target.value)} placeholder="例: 23.5" />
-        <button type="button" className="icon-button" onClick={onFetch} aria-label="SwitchBot温度取得">
+    <div className="field">
+      <span className="text-[12px] font-bold text-[#8B5A2B] mb-1 block uppercase tracking-wider">温度 (℃)</span>
+      <div className="relative">
+        <input 
+          inputMode="decimal"
+          className="w-full h-[48px] px-4 rounded-xl border border-[#DEE2E6] focus:border-[#2D5A27] focus:ring-1 focus:ring-[#2D5A27] outline-none text-[16px]"
+          value={value} 
+          onChange={(event) => onChange(event.target.value)} 
+          placeholder="23.5" 
+        />
+        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2D5A27] p-2" onClick={onFetch}>
           <Thermometer size={18} className={isFetching ? "spin" : undefined} />
         </button>
       </div>
-    </Field>
+    </div>
   );
 }
 

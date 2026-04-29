@@ -66,13 +66,10 @@ export function SpawnSetForm({
           }
         />
       </Field>
-      <Field label="詰圧">
-        <input
-          type="number"
-          value={values.pressure}
-          onChange={(event) => setValues({ ...values, pressure: Number(event.target.value) })}
-        />
-      </Field>
+      <PressureField
+        value={values.pressure}
+        onChange={(value) => setValues({ ...values, pressure: value })}
+      />
       <MoistureField
         value={values.moisture}
         onChange={(value) => setValues({ ...values, moisture: value })}

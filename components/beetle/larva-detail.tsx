@@ -47,16 +47,16 @@ export function LarvaDetail({
   return (
     <>
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-gray-50 p-4 rounded-2xl">
-          <div className="text-xs text-gray-500">和名</div>
-          <div className="font-bold text-gray-800 truncate">{entry.japaneseName}</div>
+        <div className="bg-[#F1F3F5] p-4 rounded-2xl border border-gray-100">
+          <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest">総ログ数</div>
+          <div className="text-xl font-bold text-[#212529]">{entry.logs.length}件</div>
+        </div>
+        <div className="bg-[#F1F3F5] p-4 rounded-2xl border border-gray-100">
+          <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest">最新体重</div>
+          <div className="text-xl font-bold text-[#2D5A27]">{entry.logs[0]?.weight || "-"}g</div>
         </div>
         <div className="bg-gray-50 p-4 rounded-2xl">
-          <div className="text-xs text-gray-500">累代</div>
-          <div className="font-bold text-gray-800 truncate">{buildGenerationLabel(entry.generation)}</div>
-        </div>
-        <div className="bg-gray-50 p-4 rounded-2xl">
-          <div className="text-xs text-gray-500">羽化日</div>
+          <div className="text-xs text-gray-500">羽化予定日</div>
           <div className="font-bold text-gray-800 truncate">{formatDate(entry.actualEmergenceDate)}</div>
         </div>
         <div className="bg-gray-50 p-4 rounded-2xl">
@@ -76,13 +76,13 @@ export function LarvaDetail({
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#DEE2E6" vertical={false} />
               <XAxis dataKey="date" stroke="#9ca3af" fontSize={10} />
-              <YAxis stroke="#9ca3af" fontSize={10} />
+              <YAxis stroke="#9ca3af" fontSize={10} axisLine={false} tickLine={false} />
               <Tooltip 
                 contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
               />
-              <Line type="monotone" dataKey="weight" stroke="#059669" strokeWidth={3} name="体重(g)" dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="weight" stroke="#2D5A27" strokeWidth={3} name="体重(g)" dot={{ r: 3, fill: "#2D5A27", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
