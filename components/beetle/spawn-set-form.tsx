@@ -43,21 +43,13 @@ export function SpawnSetForm({
         allEntries={allEntries}
         onChange={(patch) => setValues({ ...values, ...patch })}
       />
-      <DateRollField
-        label="羽化日"
-        value={values.emergenceDate}
-        onChange={(value) => setValues({ ...values, emergenceDate: value })}
-      />
-      <DateRollField
-        label="後食日"
-        value={values.feedingDate}
-        onChange={(value) => setValues({ ...values, feedingDate: value })}
-      />
-      <DateRollField
-        label="セット日"
-        value={values.setDate}
-        onChange={(value) => setValues({ ...values, setDate: value })}
-      />
+      <Field label="セット日">
+        <DateRollField
+          label=""
+          value={values.setDate}
+          onChange={(value) => setValues({ ...values, setDate: value })}
+        />
+      </Field>
       <Field label="使用マット">
         <input
           value={values.substrate}
@@ -74,10 +66,13 @@ export function SpawnSetForm({
           }
         />
       </Field>
-      <PressureField
-        value={values.pressure}
-        onChange={(value) => setValues({ ...values, pressure: value })}
-      />
+      <Field label="詰圧">
+        <input
+          type="number"
+          value={values.pressure}
+          onChange={(event) => setValues({ ...values, pressure: Number(event.target.value) })}
+        />
+      </Field>
       <MoistureField
         value={values.moisture}
         onChange={(value) => setValues({ ...values, moisture: value })}
@@ -97,15 +92,15 @@ export function SpawnSetForm({
         onChange={(value) => setValues({ ...values, cohabitation: value })}
       />
       <div className="form-actions">
+        <button type="submit" className="button">
+          保存
+        </button>
         <button
           type="button"
           className="button button-secondary"
           onClick={onCancel}
         >
           キャンセル
-        </button>
-        <button type="submit" className="button">
-          保存
         </button>
       </div>
     </form>

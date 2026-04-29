@@ -5,6 +5,7 @@ import { CountRollField, EmergenceTypeField } from "@/components/entry-fields";
 import type { BeetleEntry, LarvaFormValues } from "@/types/beetle";
 import { EntryBaseFields } from "./entry-base-fields";
 import { DateRollField } from "../entry-fields";
+import { today } from "@/lib/utils";
 
 export function LarvaForm({
   initialValues,
@@ -19,6 +20,7 @@ export function LarvaForm({
 }) {
   const [values, setValues] = useState(initialValues);
   const [count, setCount] = useState(1);
+  const isEmerged = !!values.actualEmergenceDate;
 
   return (
     <form
@@ -35,32 +37,48 @@ export function LarvaForm({
         onChange={(patch) => setValues({ ...values, ...patch })}
       />
       <CountRollField value={count} onChange={setCount} />
-      <DateRollField
-        label="羽化予定日"
-        value={values.plannedEmergenceDate}
-        onChange={(value) =>
-          setValues({ ...values, plannedEmergenceDate: value })
-        }
-      />
-      <DateRollField
-        label="羽化日"
-        value={values.actualEmergenceDate}
-        onChange={(value) => setValues({ ...values, actualEmergenceDate: value })}
-      />
-      <EmergenceTypeField
-        value={values.emergenceType}
-        onChange={(value) => setValues({ ...values, emergenceType: value })}
-      />
+
+      <div className="field">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={isEmerged}
+            onChange={(e) =>
+              setValues({
+                ...values,
+                actualEmergenceDate: e.target.checked ? today() : "",
+              })
+            }
+          />
+          羽化済み
+        </label>
+      </div>
+
+      {isEmerged && (
+        <>
+          <DateRollField
+            label="羽化日"
+            value={values.actualEmergenceDate}
+            onChange={(value) =>
+              setValues({ ...values, actualEmergenceDate: value })
+            }
+          />
+          <EmergenceTypeField
+            value={values.emergenceType}
+            onChange={(value) => setValues({ ...values, emergenceType: value })}
+          />
+        </>
+      )}
       <div className="form-actions">
+        <button type="submit" className="button">
+          保存
+        </button>
         <button
           type="button"
           className="button button-secondary"
           onClick={onCancel}
         >
           キャンセル
-        </button>
-        <button type="submit" className="button">
-          保存
         </button>
       </div>
     </form>
