@@ -50,6 +50,7 @@ export const normalizeEntries = (entries: unknown): BeetleEntry[] => {
           photos: Array.isArray(raw.photos) ? (raw.photos as string[]) : [],
           createdAt: typeof raw.createdAt === "string" ? raw.createdAt : today(),
           updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : today(),
+          gender: "不明",
         },
       ];
     }

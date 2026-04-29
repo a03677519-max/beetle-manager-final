@@ -12,10 +12,10 @@ const STAGE_CONFIG: Record<Stage, { icon: string, bg: string, text: string }> = 
   "幼虫": { icon: "🐛", bg: "bg-[#E0F2F1]", text: "text-[#00695C]" },
 };
 
-export function StatusBadge({ stage }: { stage: Stage }) {
+export function StatusBadge({ stage, className = "" }: { stage: Stage, className?: string }) {
   const config = STAGE_CONFIG[stage];
   return (
-    <span className={`text-[11px] h-[22px] flex items-center gap-1 px-3 rounded-[100px] ${config.bg} ${config.text} font-bold border border-black/5 shadow-sm whitespace-nowrap`}>
+    <span className={`text-[10px] h-[20px] flex items-center gap-1 px-2.5 rounded-full ${config.bg} ${config.text} font-black border border-black/[0.03] shadow-[0_1px_2px_rgba(0,0,0,0.02)] whitespace-nowrap uppercase tracking-wider ${className}`}>
       <span className="text-[12px]">{config.icon}</span> {stage}
     </span>
   );

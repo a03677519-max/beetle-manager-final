@@ -89,28 +89,37 @@ export function LarvaDetail({
       </section>
 
       <section className="mt-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-        <div className="section-title text-sm font-bold text-gray-500 mb-4 uppercase tracking-wider">飼育ログ一覧</div>
+        <div className="text-[10px] font-black text-[#8B5A2B] mb-6 uppercase tracking-widest border-l-4 border-[#2D5A27] pl-3">History Log</div>
         <div className="space-y-3">
           {entry.logs.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-4">飼育ログはまだありません。</p>
           ) : (
-            entry.logs.map((log) => (
-              <div className="flex items-center justify-between bg-gray-50 p-4 rounded-2xl" key={log.id}>
-                <div>
-                  <div className="text-xs text-gray-500">{formatDate(log.date)} ({log.stage})</div>
-                  <div className="font-bold text-gray-800">
-                    {log.weight}g / {log.temperature}℃ / {log.gender}
+            <div className="relative ml-2 border-l-2 border-gray-50 pl-6 space-y-6">
+              {entry.logs.map((log) => (
+                <div className="relative" key={log.id}>
+                  <div className="absolute -left-[31px] top-4 w-4 h-4 rounded-full bg-white border-4 border-[#2D5A27] shadow-sm z-10" />
+                  <div className="flex items-center justify-between bg-[#F8F9FA] border border-gray-50 p-4 rounded-2xl transition-active active:bg-gray-100">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-500 uppercase">{log.stage}</span>
+                        <span className="text-xs text-gray-400 font-medium">{formatDate(log.date)}</span>
+                      </div>
+                      <div className="font-black text-[#212529] text-lg">
+                        {log.weight}g <span className="text-[10px] text-gray-400 font-normal">/ {log.temperature}℃</span>
+                      </div>
+                      <div className="text-[10px] text-gray-400 font-bold mt-1">性別: {log.gender}</div>
+                    </div>
+                    <button
+                      type="button"
+                      className="p-2 text-gray-300 hover:text-red-500"
+                      onClick={() => deleteLarvaLog(entry.id, log.id)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="p-2 text-gray-400 hover:text-red-500"
-                  onClick={() => deleteLarvaLog(entry.id, log.id)}
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </section>

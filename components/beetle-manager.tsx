@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Search, Download, Upload } from "lucide-react";
+import { Search, Download, Upload, Bug, CircleDot, Database, Users } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Modal } from "./ui/modal";
 import { useSwitchBot } from "@/components/use-switchbot";
@@ -26,6 +26,7 @@ import { AdultForm } from "./beetle/adult-form";
 import { LarvaForm } from "./beetle/larva-form";
 import { SpawnSetForm } from "./beetle/spawn-set-form";
 import { EntryCard } from "./beetle/entry-card";
+import { EmptyState } from "./beetle/empty-state";
 import { EntryDetail } from "./beetle/entry-detail";
 
 export function BeetleManager() {
@@ -51,6 +52,12 @@ export function BeetleManager() {
   const [isCreating, setIsCreating] = useState(false);
 
   const editingEntry = entries.find((entry) => entry.id === editingId) ?? null;
+
+  const stats = useMemo(() => ({
+    adults: entries.filter(e => e.type === "成虫").length,
+    larvae: entries.filter(e => e.type === "幼虫").length,
+    spawnSets: entries.filter(e => e.type === "産卵セット").length,
+  }), [entries]);
 
   const filteredEntries = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -102,48 +109,64 @@ export function BeetleManager() {
   };
 
   return (
-    <div className="app-container">
-      <header className="bg-white/60 backdrop-blur-lg p-6 rounded-3xl border border-white/50 shadow-sm mb-4">
+    <div className="app-container bg-[#F8F9FA] min-h-screen pb-[120px]">
+      <header className="px-6 pt-8 pb-4 flex justify-between items-end">
         <div>
-          <p className="eyebrow">Beetle Manager</p>
-          <h1>昆虫管理アプリ</h1>
-          <p className="hero-copy">成虫、幼虫、産卵セットを分けて管理し、幼虫ログはグラフ表示できます。</p>
+          <p className="text-[12px] font-bold text-[#8B5A2B] uppercase tracking-widest mb-1">Breeding Log</p>
+          <h1 className="text-2xl font-black text-[#212529]">マイブリード</h1>
         </div>
-        <button
-          type="button"
-          className="button"
-          onClick={() => {
-            setIsCreating((value) => !value);
-            startEditing(null);
-          }}
-        >
-          {isCreating ? "登録を閉じる" : "新規登録を開く"}
-        </button>
       </header>
 
-      <section className="toolbar-row">
-        <label className="search-box">
-          <Search size={16} />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="和名・学名・産地で検索" />
-        </label>
-        <button type="button" className="button-secondary toolbar-button" onClick={handleExport}>
-          <Download size={16} />
-          保存
-        </button>
-        <label className="button-secondary toolbar-button upload-button">
-          <Upload size={16} />
-          復元
-          <input type="file" accept="application/json" hidden onChange={handleImport} />
-        </label>
+      {/* 統計ダッシュボード */}
+      <section className="px-6 mb-6 grid grid-cols-3 gap-3">
+        <div className="bg-[#F1F3F5] p-3 rounded-2xl border border-gray-100 shadow-sm">
+          <p className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">成虫</p>
+          <p className="text-xl font-black text-[#212529]">{stats.adults}<span className="text-[10px] ml-0.5 font-bold">頭</span></p>
+        </div>
+        <div className="bg-[#F1F3F5] p-3 rounded-2xl border border-gray-100 shadow-sm">
+          <p className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">幼虫</p>
+          <p className="text-xl font-black text-[#212529]">{stats.larvae}<span className="text-[10px] ml-0.5 font-bold">頭</span></p>
+        </div>
+        <div className="bg-[#F1F3F5] p-3 rounded-2xl border border-gray-100 shadow-sm">
+          <p className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">セット</p>
+          <p className="text-xl font-black text-[#212529]">{stats.spawnSets}<span className="text-[10px] ml-0.5 font-bold">件</span></p>
+        </div>
       </section>
 
-      <section className="filter-row">
-        <button type="button" className={selectedType === "すべて" ? "filter active" : "filter"} onClick={() => setSelectedType("すべて")}>すべて</button>
-        {ENTRY_TYPES.map((type) => (
-          <button type="button" key={type} className={selectedType === type ? "filter active" : "filter"} onClick={() => setSelectedType(type)}>
-            {type}
+      <section className="px-6 mb-4 sticky top-0 z-30 bg-[#F8F9FA]/80 backdrop-blur-md py-2">
+        <label className="flex items-center bg-white rounded-2xl px-4 py-3 shadow-sm border border-[#DEE2E6]/50 focus-within:border-[#2D5A27] transition-all">
+          <Search size={18} className="text-[#6C757D] mr-3" />
+          <input
+            type="text"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="個体名・学名・産地で検索"
+            className="flex-1 text-[16px] text-[#212529] outline-none bg-transparent"
+          />
+        </label>
+        <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
+          <button
+            type="button"
+            className={`px-4 py-1.5 rounded-full text-[13px] font-bold transition-all whitespace-nowrap ${
+              selectedType === "すべて" ? "bg-[#2D5A27] text-white shadow-md" : "bg-white text-[#6C757D] border border-[#DEE2E6]"
+            }`}
+            onClick={() => setSelectedType("すべて")}
+          >
+            すべて
           </button>
-        ))}
+          {ENTRY_TYPES.map((type) => (
+            <button
+              key={type}
+              type="button"
+              className={`px-4 py-1.5 rounded-full text-[13px] font-bold transition-all whitespace-nowrap ${
+                selectedType === type ? "bg-[#2D5A27] text-white shadow-md" : "bg-white text-[#6C757D] border border-[#DEE2E6]"
+              }`}
+              onClick={() => setSelectedType(type)}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
       </section>
 
       <Modal
@@ -154,13 +177,16 @@ export function BeetleManager() {
         }}
         title={editingEntry ? "編集" : "新規登録"}
       >
-        <div className="section-title">{editingEntry ? "編集タイプ" : "登録タイプ"}</div>
-        <div className="chip-row mb-6">
+        <div className="text-[12px] font-bold text-[#8B5A2B] mb-2 block tracking-wider uppercase">{editingEntry ? "編集タイプ" : "登録タイプ"}</div>
+        <div className="flex bg-[#F1F3F5] rounded-xl p-1 gap-1 mb-6"> {/* Styled chip-row directly */}
           {ENTRY_TYPES.map((type) => (
             <button
               key={type}
               type="button"
-              className={createType === type ? "chip active" : "chip"}
+              style={{ width: `${100 / ENTRY_TYPES.length}%` }}
+              className={`py-2 text-sm font-bold rounded-lg transition-all ${
+                createType === type ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"
+              }`}
               onClick={() => {
                 setCreateType(type);
                 if (!editingEntry) return;
@@ -247,14 +273,9 @@ export function BeetleManager() {
         ) : null}
       </Modal>
 
-      <section className="summary-grid">
-        <div className="summary-card"><span>登録数</span><strong>{entries.length}</strong></div>
-        <div className="summary-card"><span>検索結果</span><strong>{filteredEntries.length}</strong></div>
-      </section>
-
-      <section className="list-section">
+      <section className="px-6">
         {filteredEntries.length === 0 ? (
-          <div className="empty-state"><p>登録されたデータがありません。</p></div>
+          <EmptyState onAdd={() => setIsCreating(true)} />
         ) : (
           filteredEntries.map((entry) => (
             <EntryCard

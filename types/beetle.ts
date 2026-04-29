@@ -53,6 +53,7 @@ export type AdultBeetle = {
   photos: string[];
   createdAt: string;
   updatedAt: string;
+  gender: Gender;
   linkedEntryId?: string;
 };
 

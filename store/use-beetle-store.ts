@@ -55,6 +55,7 @@ export const emptyAdultForm: AdultFormValues = {
   feedingDate: "",
   deathDate: "",
   larvaMemo: "",
+  gender: "不明",
 };
 
 export const emptyLarvaForm: LarvaFormValues = {

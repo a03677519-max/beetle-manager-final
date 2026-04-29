@@ -67,15 +67,18 @@ function DrumrollPicker<T extends string | number>({
   };
 
   return (
-    <div className="relative h-[120px] bg-gray-50/50 rounded-xl overflow-hidden border border-gray-100">
-      {/* 中央のハイライト */}
+    <div className="relative h-[150px] bg-gray-50/50 rounded-2xl overflow-hidden border border-gray-100">
+      {/* グラデーションオーバーレイ */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-50/90 via-transparent to-gray-50/90 pointer-events-none z-10" />
+      
+      {/* センターハイライト */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-full h-10 border-y border-primary/20 bg-primary/5" />
+        <div className="w-[90%] h-10 border-y-2 border-[#2D5A27]/20 bg-[#2D5A27]/5 rounded-sm" />
       </div>
-      <div 
+      <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-10"
+        className="h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[55px]"
       >
         {options.map((option) => (
           <div key={option} className="h-10 flex items-center justify-center snap-center text-sm font-bold text-gray-700">
