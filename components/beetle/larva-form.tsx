@@ -10,10 +10,12 @@ export function LarvaForm({
   initialValues,
   onSubmit,
   onCancel,
+  allEntries,
 }: {
   initialValues: LarvaFormValues;
   onSubmit: (value: LarvaFormValues, count: number) => void;
   onCancel: () => void;
+  allEntries: BeetleEntry[];
 }) {
   const [values, setValues] = useState(initialValues);
   const [count, setCount] = useState(1);
@@ -29,6 +31,7 @@ export function LarvaForm({
       <div className="section-title">幼虫項目</div>
       <EntryBaseFields
         {...values}
+        allEntries={allEntries}
         onChange={(patch) => setValues({ ...values, ...patch })}
       />
       <CountRollField value={count} onChange={setCount} />

@@ -186,6 +186,7 @@ export function BeetleManager() {
         {isCreating && !editingEntry && createType === "幼虫" ? (
           <LarvaForm
             initialValues={emptyLarvaForm}
+            allEntries={entries}
             onSubmit={(values, count) => {
               for (let index = 0; index < count; index += 1) {
                 const suffix = count > 1 ? `-${String(index + 1).padStart(2, "0")}` : "";
@@ -222,7 +223,8 @@ export function BeetleManager() {
         {editingEntry?.type === "幼虫" ? (
           <LarvaForm
             initialValues={editingEntry}
-            onSubmit={(value) => {
+            allEntries={entries}
+            onSubmit={(value, _count) => {
               updateLarva(editingEntry.id, value);
               startEditing(null);
             }}
