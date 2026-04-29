@@ -17,8 +17,8 @@ export function EntryCard({
   viewMode?: "list" | "grid";
 }) {
   const logs = entry.type === "幼虫" ? entry.logs : [];
-  const latestWeight = logs.length > 0 ? parseFloat(logs[0].weight) : null;
-  const prevWeight = logs.length > 1 ? parseFloat(logs[1].weight) : null;
+  const latestWeight = logs.length > 0 ? logs[0].weight : null;
+  const prevWeight = logs.length > 1 ? logs[1].weight : null;
   const weightDiff = latestWeight && prevWeight ? latestWeight - prevWeight : 0;
 
   // エサ交換アラート（信号機）
@@ -128,7 +128,7 @@ export function EntryCard({
           <div className="absolute right-4 bottom-4 w-24 h-8 opacity-20 pointer-events-none"> {/* Adjusted position and size */}
               <svg viewBox="0 0 100 40" className="w-full h-full">
               <path
-                d={`M ${logs.slice(0, 5).reverse().map((l, i) => `${(i * 25)},${40 - (parseFloat(l.weight) / 50 * 30)}`).join(' L ')}`}
+                d={`M ${logs.slice(0, 5).reverse().map((l, i) => `${(i * 25)},${40 - (l.weight / 50 * 30)}`).join(' L ')}`}
                 fill="none"
                 stroke="var(--primary)"
                 strokeWidth="3"
