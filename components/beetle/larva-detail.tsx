@@ -12,7 +12,7 @@ import {
 } from "recharts";
 
 import { buildGenerationLabel } from "@/components/entry-fields";
-import { daysBetween, formatDate } from "@/lib/utils";
+import { daysBetween, formatDate, today } from "@/lib/utils";
 import { useBeetleStore } from "@/store/use-beetle-store";
 import type { LarvaBeetle } from "@/types/beetle";
 import { LarvaLogForm } from "./larva-log-form";
@@ -56,12 +56,16 @@ export function LarvaDetail({
           <div className="text-xl font-bold text-[#2D5A27]">{entry.logs[0]?.weight || "-"}g</div>
         </div>
         <div className="bg-gray-50 p-4 rounded-2xl">
-          <div className="text-xs text-gray-500">羽化予定日</div>
-          <div className="font-bold text-gray-800 truncate">{formatDate(entry.actualEmergenceDate)}</div>
+          <div className="text-xs text-gray-500">羽化日 ({entry.emergenceType})</div>
+          <div className="font-bold text-gray-800 truncate">{entry.actualEmergenceDate ? formatDate(entry.actualEmergenceDate) : "未定"}</div>
         </div>
         <div className="bg-gray-50 p-4 rounded-2xl">
-          <div className="text-xs text-gray-500">羽化まで</div>
-          <div className="font-bold text-gray-800 truncate">{daysToEmergence ? `${daysToEmergence}日` : "-"}</div>
+          <div className="text-xs text-gray-500">総育成年数</div>
+          <div className="font-bold text-gray-800 truncate">
+            {entry.actualEmergenceDate 
+              ? `${daysBetween(entry.createdAt, entry.actualEmergenceDate)}日` 
+              : `現在 ${daysBetween(entry.createdAt, today())}日目`}
+          </div>
         </div>
       </div>
       <LarvaLogForm
@@ -83,6 +87,7 @@ export function LarvaDetail({
                 contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
               />
               <Line type="monotone" dataKey="weight" stroke="#2D5A27" strokeWidth={3} name="体重(g)" dot={{ r: 3, fill: "#2D5A27", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
+              <Line type="monotone" dataKey="temperature" stroke="#E67E22" strokeWidth={2} name="温度(℃)" dot={{ r: 2, fill: "#E67E22" }} strokeDasharray="5 5" />
             </LineChart>
           </ResponsiveContainer>
         </div>

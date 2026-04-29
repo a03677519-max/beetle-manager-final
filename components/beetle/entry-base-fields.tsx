@@ -28,18 +28,20 @@ export function EntryBaseFields({
 }) {
   return (
     <>
-      <Field label="和名">
-        <input
-          value={japaneseName}
-          onChange={(event) => onChange({ japaneseName: event.target.value })}
-        />
-      </Field>
-      <Field label="学名">
-        <input
-          value={scientificName}
-          onChange={(event) => onChange({ scientificName: event.target.value })}
-        />
-      </Field>
+      <div className="grid grid-cols-2 gap-3 mb-1">
+        <Field label="和名">
+          <input
+            value={japaneseName}
+            onChange={(event) => onChange({ japaneseName: event.target.value })}
+          />
+        </Field>
+        <Field label="学名">
+          <input
+            value={scientificName}
+            onChange={(event) => onChange({ scientificName: event.target.value })}
+          />
+        </Field>
+      </div>
       <Field label="産地">
         <input
           value={locality}

@@ -23,6 +23,14 @@ export function AdultDetail({ entry }: { entry: AdultBeetle }) {
         <div className="text-xs text-gray-500">羽化日</div>
         <div className="font-bold text-gray-800 truncate">{formatDate(entry.emergenceDate)}</div>
       </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">後食日</div>
+        <div className="font-bold text-gray-800 truncate">{formatDate(entry.feedingDate)}</div>
+      </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">死亡日</div>
+        <div className="font-bold text-gray-800 truncate">{formatDate(entry.deathDate)}</div>
+      </div>
     </div>
   );
 }

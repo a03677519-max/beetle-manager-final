@@ -43,29 +43,40 @@ export function SpawnSetForm({
         allEntries={allEntries}
         onChange={(patch) => setValues({ ...values, ...patch })}
       />
-      <Field label="セット日">
+
+      <div className="space-y-4 py-4 border-t border-gray-100 mt-4">
         <DateRollField
-          label=""
+          label="羽化日"
+          value={values.emergenceDate}
+          onChange={(value) => setValues({ ...values, emergenceDate: value })}
+        />
+        <DateRollField
+          label="後食日"
+          value={values.feedingDate}
+          onChange={(value) => setValues({ ...values, feedingDate: value })}
+        />
+        <DateRollField
+          label="セット日"
           value={values.setDate}
           onChange={(value) => setValues({ ...values, setDate: value })}
         />
-      </Field>
-      <Field label="使用マット">
-        <input
-          value={values.substrate}
-          onChange={(event) =>
-            setValues({ ...values, substrate: event.target.value })
-          }
-        />
-      </Field>
-      <Field label="容器サイズ">
-        <input
-          value={values.containerSize}
-          onChange={(event) =>
-            setValues({ ...values, containerSize: event.target.value })
-          }
-        />
-      </Field>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mt-2">
+        <Field label="使用マット">
+          <input
+            value={values.substrate}
+            onChange={(event) => setValues({ ...values, substrate: event.target.value })}
+          />
+        </Field>
+        <Field label="容器サイズ">
+          <input
+            value={values.containerSize}
+            onChange={(event) => setValues({ ...values, containerSize: event.target.value })}
+          />
+        </Field>
+      </div>
+
       <PressureField
         value={values.pressure}
         onChange={(value) => setValues({ ...values, pressure: value })}

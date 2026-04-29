@@ -8,6 +8,14 @@ export function SpawnSetDetail({ entry }: { entry: SpawnSet }) {
   return (
     <div className="grid grid-cols-2 gap-3">
       <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">羽化日</div>
+        <div className="font-bold text-gray-800 truncate">{formatDate(entry.emergenceDate)}</div>
+      </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">後食日</div>
+        <div className="font-bold text-gray-800 truncate">{formatDate(entry.feedingDate)}</div>
+      </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
         <div className="text-xs text-gray-500">セット日</div>
         <div className="font-bold text-gray-800 truncate">{formatDate(entry.setDate)}</div>
       </div>
@@ -30,6 +38,14 @@ export function SpawnSetDetail({ entry }: { entry: SpawnSet }) {
       <div className="bg-gray-50 p-4 rounded-2xl">
         <div className="text-xs text-gray-500">水分量</div>
         <div className="font-bold text-gray-800 truncate">{entry.moisture}</div>
+      </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">温度</div>
+        <div className="font-bold text-gray-800 truncate">{entry.temperature}℃</div>
+      </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">同居</div>
+        <div className="font-bold text-gray-800 truncate">{entry.cohabitation}</div>
       </div>
     </div>
   );

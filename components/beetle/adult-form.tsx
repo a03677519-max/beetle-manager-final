@@ -32,21 +32,25 @@ export function AdultForm({
         allEntries={useBeetleStore.getState().entries}
         onChange={(patch) => setValues({ ...values, ...patch })}
       />
-      <DateRollField
-        label="羽化日"
-        value={values.emergenceDate}
-        onChange={(value) => setValues({ ...values, emergenceDate: value })}
-      />
-      <DateRollField
-        label="後食日"
-        value={values.feedingDate}
-        onChange={(value) => setValues({ ...values, feedingDate: value })}
-      />
-      <DateRollField
-        label="死亡日"
-        value={values.deathDate}
-        onChange={(value) => setValues({ ...values, deathDate: value })}
-      />
+      
+      <div className="space-y-4 py-4 border-t border-gray-100 mt-4">
+        <DateRollField
+          label="羽化日"
+          value={values.emergenceDate}
+          onChange={(value) => setValues({ ...values, emergenceDate: value })}
+        />
+        <DateRollField
+          label="後食日"
+          value={values.feedingDate}
+          onChange={(value) => setValues({ ...values, feedingDate: value })}
+        />
+        <DateRollField
+          label="死亡日"
+          value={values.deathDate}
+          onChange={(value) => setValues({ ...values, deathDate: value })}
+        />
+      </div>
+
       <Field label="幼虫時データ">
         <textarea
           value={values.larvaMemo}
