@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CountRollField, EmergenceTypeField } from "@/components/entry-fields";
-import type { LarvaFormValues } from "@/types/beetle";
+import type { BeetleEntry, LarvaFormValues } from "@/types/beetle";
 import { EntryBaseFields } from "./entry-base-fields";
 import { DateRollField } from "../entry-fields";
 
@@ -15,7 +15,7 @@ export function LarvaForm({
   initialValues: LarvaFormValues;
   onSubmit: (value: LarvaFormValues, count: number) => void;
   onCancel: () => void;
-  allEntries: BeetleEntry[];
+  allEntries: any[];
 }) {
   const [values, setValues] = useState(initialValues);
   const [count, setCount] = useState(1);
