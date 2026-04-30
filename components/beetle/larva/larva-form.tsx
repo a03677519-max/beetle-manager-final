@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { CountRollField, Field, DateRollField, BottomSheetInput } from "@/components/entry-fields";
 import type { BeetleEntry, LarvaFormValues, LarvaLog, LogStage, Gender } from "@/types/beetle";
 import { EntryBaseFields } from "@/components/beetle/shared/entry-base-fields";
-import { today } from "@/lib/utils";
+import { today, daysBetween } from "@/lib/utils";
 
 /**
  * 幼虫登録・編集用フォーム
@@ -30,36 +30,35 @@ export function LarvaForm({
     setValues(initialValues);
   }, [initialValues]);
 
+  useEffect(() => {
+    if (!initialValues.id && (!values.logs || values.logs.length === 0)) {
+      addRecord();
+    }
+  }, [initialValues.id]);
+
   // 飼育ログの追加処理
   const addRecord = () => {
+    const latestLog = values.logs?.[0];
     const newRecord: LarvaLog = {
       id: "temp-id",
       date: today(),
-      stage: "L1",
+      stage: latestLog?.stage || "L1",
       weight: 0,
-      substrate: "",
-      pressure: 3,
-      moisture: 3,
-      bottleSize: "",
-      gender: "不明",
-      temperature: "",
+      substrate: latestLog?.substrate || "",
+      pressure: latestLog?.pressure || 3,
+      moisture: latestLog?.moisture || 3,
+      bottleSize: latestLog?.bottleSize || "",
+      gender: latestLog?.gender || "不明",
+      temperature: latestLog?.temperature || "",
     };
     setValues({ ...values, logs: [newRecord, ...(values.logs || [])] });
   };
 
   // 孵化日から羽化までの日数を計算
   const daysUntilEmergence = useMemo(() => {
-    // LarvaBeetleにはhatchDateがないため、ここは要修正かもだが、現状維持
     const hatchDate = values.hatchDate;
     if (!hatchDate || !values.actualEmergenceDate) return null;
-    try {
-      const start = new Date(hatchDate);
-      const end = new Date(values.actualEmergenceDate);
-      const diff = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-      return diff >= 0 ? diff : null;
-    } catch {
-      return null;
-    }
+    return daysBetween(hatchDate, values.actualEmergenceDate);
   }, [values.actualEmergenceDate, values.hatchDate]);
 
   // 入力されたデータから体重と温度の推移を計算（簡易グラフ用データ）

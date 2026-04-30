@@ -363,12 +363,14 @@ export function BottomSheetInput({
   onChange,
   placeholder,
   type = "text",
+  suggestions,
 }: {
   label: string;
   value: string | number;
   onChange: (val: string) => void;
   placeholder?: string;
   type?: "text" | "textarea";
+  suggestions?: string[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
@@ -378,6 +380,13 @@ export function BottomSheetInput({
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  const filteredSuggestions = useMemo(() => {
+    if (!suggestions) return [];
+    const search = String(value).toLowerCase();
+    if (!search) return suggestions.slice(0, 15);
+    return suggestions.filter(s => s.toLowerCase().includes(search)).slice(0, 15);
+  }, [suggestions, value]);
 
   return (
     <div className="field">
@@ -436,6 +445,24 @@ export function BottomSheetInput({
                     placeholder={placeholder}
                     className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-2 text-[16px] focus:bg-white focus:border-[#2D5A27] outline-none transition-all"
                   />
+                )}
+
+                {filteredSuggestions.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-gray-50">
+                    <p className="text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest">辞書・履歴</p>
+                    <div className="flex flex-wrap gap-2">
+                      {filteredSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-bold text-gray-600 active:bg-[#2D5A27] active:text-white transition-all"
+                          onClick={() => onChange(suggestion)}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 )}
                 <div className="h-[env(safe-area-inset-bottom,16px)]" />
               </motion.div>

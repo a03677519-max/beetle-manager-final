@@ -14,10 +14,12 @@ import { today } from "@/lib/utils";
 import type { LarvaLog, LogStage, Gender } from "@/types/beetle";
 
 export function LarvaLogForm({
+  lastLog,
   onSubmit,
   onFetchTemperature,
   isFetchingTemperature,
 }: {
+  lastLog?: LarvaLog;
   onSubmit: (value: Omit<LarvaLog, "id">) => void;
   onFetchTemperature: (setter: (value: string) => void) => void;
   isFetchingTemperature: boolean;
@@ -34,14 +36,14 @@ export function LarvaLogForm({
     temperature: string;
   }>({
     date: today(),
-    substrate: "",
-    pressure: 3,
-    moisture: 3,
-    bottleSize: "",
-    stage: "L1",
+    substrate: lastLog?.substrate || "",
+    pressure: lastLog?.pressure || 3,
+    moisture: lastLog?.moisture || 3,
+    bottleSize: lastLog?.bottleSize || "",
+    stage: lastLog?.stage || "L1",
     weight: "", // 初期値を空文字にして 0 が残らないように修正
-    gender: "不明",
-    temperature: "", // 初期値を空文字にして 0 が残らないように修正
+    gender: lastLog?.gender || "不明",
+    temperature: lastLog?.temperature || "", // 初期値を空文字にして 0 が残らないように修正
   });
 
   return (
@@ -51,15 +53,9 @@ export function LarvaLogForm({
         event.preventDefault();
         onSubmit({ ...values, weight: Number(values.weight) });
         setValues({
+          ...values,
           date: today(),
-          substrate: "",
-          pressure: 3,
-          moisture: 3,
-          bottleSize: "",
-          stage: "L1",
           weight: "",
-          gender: "不明",
-          temperature: "",
         });
       }}
     >

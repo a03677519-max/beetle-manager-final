@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Search } from "lucide-react";
+import { Search, Clipboard, Camera, Loader2 } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Modal } from "./ui/modal";
 import { useSwitchBot } from "@/components/use-switchbot";
@@ -10,6 +10,7 @@ import {
   formatGeneration,
   today,
 } from "@/lib/utils";
+import { pushDataToGitHub } from "@/lib/github";
 import {
   emptyAdultForm,
   emptyLarvaForm,
@@ -48,13 +49,18 @@ export function BeetleManager() {
   const deleteEntry = useBeetleStore((state) => state.deleteEntry);
   const importData = useBeetleStore((state) => state.importData);
   const switchBot = useBeetleStore((state) => state.switchBot);
+  const gitHub = useBeetleStore((state) => state.gitHub);
   const { fetchTemperature, isFetching } = useSwitchBot();
 
   const [selectedEntry, setSelectedEntry] = useState<BeetleEntry | null>(null);
   const [activeTab, setActiveTab] = useState("ホーム");
   const [query, setQuery] = useState("");
   const [createType, setCreateType] = useState<EntryType>("幼虫");
+  const [pastedData, setPastedData] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isOcrProcessing, setIsOcrProcessing] = useState(false);
+  const [isAutoFillEnabled, setIsAutoFillEnabled] = useState(false);
   const [taskSortType, setTaskSortType] = useState<"urgency" | "type">("urgency");
   const [skippedTaskIds, setSkippedTaskIds] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
@@ -140,7 +146,7 @@ export function BeetleManager() {
       moisture: latestLog?.moisture ?? 3,
       bottleSize: latestLog?.bottleSize ?? "",
       stage: latestLog?.stage ?? "L1",
-      weight: latestLog?.weight ?? "",
+      weight: latestLog?.weight ?? 0,
       gender: latestLog?.gender ?? "不明",
       temperature: latestLog?.temperature ?? "",
     });
@@ -196,6 +202,238 @@ export function BeetleManager() {
     link.click();
     URL.revokeObjectURL(url);
   };
+
+  const handleGitHubSync = async () => {
+    if (!gitHub.token || !gitHub.repo) {
+      window.alert("GitHub設定（トークンとリポジトリ名）が未完了です。");
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const payload = { version: 2, exportedAt: new Date().toISOString(), entries };
+      const success = await pushDataToGitHub(gitHub, payload);
+      if (success) {
+        window.alert("GitHubへのデータ同期が完了しました。");
+      } else {
+        throw new Error("Sync failed");
+      }
+    } catch {
+      window.alert("GitHubへの同期に失敗しました。設定を確認してください。");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const getInitialValues = (type: EntryType, emptyForm: any) => {
+    if (!isAutoFillEnabled) return emptyForm;
+    const last = [...entries].reverse().find((e) => e.type === type);
+    if (!last) return emptyForm;
+
+    const base = {
+      ...emptyForm,
+      japaneseName: last.japaneseName,
+      scientificName: last.scientificName,
+      locality: last.locality,
+      generation: { ...last.generation },
+      linkedEntryId: last.linkedEntryId,
+    };
+
+    if (type === "成虫") {
+      const l = last as any;
+      return { ...base, gender: l.gender, emergenceType: l.emergenceType };
+    }
+    if (type === "幼虫") {
+      const l = last as any;
+      const lastLog = l.logs?.[0];
+      return {
+        ...base,
+        logs: lastLog ? [{
+          ...lastLog,
+          id: "temp-id",
+          date: today(),
+          weight: 0, // LarvaLogの定義に合わせて数値型を維持
+        }] : base.logs
+      };
+    }
+    if (type === "産卵セット") {
+      const l = last as any;
+      return {
+        ...base,
+        substrate: l.substrate,
+        containerSize: l.containerSize,
+        pressure: l.pressure,
+        moisture: l.moisture,
+        temperature: l.temperature,
+        cohabitation: l.cohabitation,
+      };
+    }
+    return base;
+  };
+
+  const parsePastedText = (text: string) => {
+    // 日付の揺らぎ（2024.01.01 や 2024 01 01、誤字など）を補正する
+    const fixOcrDate = (d: string) => {
+      if (!d) return "";
+      // OCRでよくある誤認識（O→0, I/l→1）を置換し、数字以外の区切りをハイフンに統一
+      const clean = d.replace(/[Oo]/g, "0").replace(/[I|il]/g, "1").replace(/[^0-9]/g, "-").replace(/-+/g, "-");
+      const match = clean.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (match) {
+        return `${match[1]}-${match[2].padStart(2, "0")}-${match[3].padStart(2, "0")}`;
+      }
+      return "";
+    };
+
+    const lines = text.split('\n');
+    const patch: any = { type: "幼虫", logs: [] };
+    lines.forEach((line, i) => {
+      const l = line.trim();
+        if (!l && i !== 4) return; // 5行目(index 4)は空行なので無視しない
+
+        if (i === 0) patch.japaneseName = l.replace(/^(和名|和各)\s*/, ""); // 和名または和各を認識
+        if (i === 1) patch.scientificName = l.replace(/^学名\s*/, ""); // 学名 (例: 学各などの誤認識があれば /^(学名|学各)\s*/ のように追加)
+        if (i === 2) patch.locality = l.replace(/^産地\s*/, ""); // 産地
+        if (i === 3) {
+          const parts = l.replace(/^累代\s*/, "").split(/\s+/); // 累代
+          // 累代ラベルの解析
+          const genStr = parts[0] || "";
+          let primary: any = "-";
+          let count = "";
+          if (genStr.startsWith("CB")) { primary = "CB"; count = genStr.replace("CB", ""); }
+          else if (genStr.startsWith("WF")) { primary = "WF"; count = genStr.replace("WF", ""); }
+          else if (genStr.startsWith("F")) { primary = "F"; count = genStr.replace("F", ""); }
+          else if (genStr === "WD") { primary = "WD"; count = ""; }
+          patch.generation = { primary, secondary: "-", count };
+          
+          if (parts[1]) patch.managementName = parts[1];
+          if (parts[2]) patch.hatchDate = fixOcrDate(parts[2]);
+        }
+
+        // 6-9行目: 飼育ログ
+        if (i >= 5 && i <= 8 && l !== "") {
+          const logMatch = l.match(/^(\d{4}[^\d]\d{1,2}[^\d]\d{1,2})\s+(.*?)\s+水(\d+)圧(\d+)\s+(.*?)\s+(\S+)\s+(\S+)$/);
+          if (logMatch) {
+            patch.logs.push({
+              id: Math.random().toString(36).substr(2, 9),
+              date: fixOcrDate(logMatch[1]),
+              substrate: logMatch[2],
+              moisture: parseInt(logMatch[3]),
+              pressure: parseInt(logMatch[4]),
+              bottleSize: logMatch[5],
+              stage: logMatch[6],
+              gender: logMatch[7],
+              weight: 0,
+              temperature: ""
+            });
+          }
+        }
+
+        // 10行目: 羽化・掘り出し / 後食
+        if (i === 9) {
+          const eDateMatch = l.match(/^(\d{4}[^\d]\d{1,2}[^\d]\d{1,2})\s+(羽化|掘り出し)/);
+          if (eDateMatch) {
+            patch.actualEmergenceDate = fixOcrDate(eDateMatch[1]);
+            patch.emergenceType = eDateMatch[2];
+            patch.type = "幼虫";
+          }
+          const fDateMatch = l.match(/(\d{4}[^\d]\d{1,2}[^\d]\d{1,2})\s+後食/);
+          if (fDateMatch) {
+            patch.feedingDate = fixOcrDate(fDateMatch[1]);
+            patch.type = "成虫";
+            patch.emergenceDate = patch.actualEmergenceDate || "";
+          }
+        }
+      });
+    return patch;
+  };
+
+  const handlePasteAndFill = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const patch = parsePastedText(text);
+      setPastedData(patch);
+      if (patch.type) setCreateType(patch.type);
+      window.alert("クリップボードからデータを反映しました");
+    } catch (err) {
+      window.alert("ペーストに失敗しました。クリップボードへのアクセスを許可してください。");
+    }
+  };
+
+  const preprocessImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject("Canvas context not available");
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // 平均輝度を計算して、背景が暗い場合に反転が必要か判断
+        let totalBrightness = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          totalBrightness += (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
+        }
+        const avgBrightness = totalBrightness / (data.length / 4);
+        const shouldInvert = avgBrightness < 120; // 閾値より暗ければ反転フラグを立てる
+
+        const contrast = 2.0; // コントラスト強調係数
+        const intercept = 128 * (1 - contrast);
+
+        for (let i = 0; i < data.length; i += 4) {
+          // グレースケール化
+          const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          
+          // コントラスト調整
+          let v = contrast * gray + intercept;
+          v = Math.min(255, Math.max(0, v));
+
+          // 白黒反転（ライトオンダークのラベル対策）
+          if (shouldInvert) v = 255 - v;
+
+          data[i] = data[i + 1] = data[i + 2] = v;
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+        resolve(canvas.toDataURL("image/jpeg", 0.9));
+        URL.revokeObjectURL(img.src);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleCameraOCR = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsOcrProcessing(true);
+    try {
+      // 画像の前処理を実行してOCR用画像を生成
+      const processedImageUrl = await preprocessImage(file);
+
+      // Tesseract.jsを動的インポート
+      const { default: Tesseract } = await import('tesseract.js');
+      const { data: { text } } = await Tesseract.recognize(processedImageUrl, 'jpn+eng');
+      
+      const patch = parsePastedText(text);
+      setPastedData(patch);
+      if (patch.type) setCreateType(patch.type);
+      window.alert("画像から文字を読み取り、データを反映しました");
+    } catch (err) {
+      console.error(err);
+      window.alert("文字の読み取りに失敗しました。tesseract.jsがインストールされているか確認してください。");
+    } finally {
+      setIsOcrProcessing(false);
+      if (event.target) event.target.value = "";
+    }
+  };
+
   return (
     <div className="app-container font-cute bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] min-h-screen pb-[calc(140px+env(safe-area-inset-bottom,32px))] leading-[1.7]">
       <header className="px-6 pt-8 pb-4 flex justify-between items-end">
@@ -262,11 +500,48 @@ export function BeetleManager() {
         onClose={() => {
           setIsCreating(false);
           startEditing(null);
+          setPastedData(null);
         }}
         title={editingEntry ? "編集" : "新規登録"}
       >
         <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md -mx-6 px-6 pt-2 pb-4 border-b border-gray-100 mb-6">
-          <div className="text-[10px] font-black text-[#8B5A2B] mb-3 block tracking-widest uppercase">Select Type</div>
+          <div className="flex flex-col gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handlePasteAndFill}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#2D5A27] active:scale-95 transition-all"
+              >
+                <Clipboard size={12} />
+                貼付
+              </button>
+              <label 
+                className={`flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#2D5A27] active:scale-95 transition-all cursor-pointer ${isOcrProcessing ? 'opacity-50 pointer-events-none' : ''}`}
+              >
+                {isOcrProcessing ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
+                カメラで読み取り
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  capture="environment" 
+                  hidden 
+                  onChange={handleCameraOCR} 
+                  disabled={isOcrProcessing} 
+                />
+              </label>
+            </div>
+            <div className="text-[10px] font-black text-[#8B5A2B] block tracking-widest uppercase">Select Type</div>
+            {!editingEntry && (
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <span className={`text-[10px] font-bold transition-colors ${isAutoFillEnabled ? 'text-[#2D5A27]' : 'text-gray-400'} uppercase tracking-tighter`}>前回入力を自動反映</span>
+                <div 
+                  onClick={() => setIsAutoFillEnabled(!isAutoFillEnabled)}
+                  className={`w-8 h-4 rounded-full transition-colors relative border ${isAutoFillEnabled ? 'bg-[#2D5A27] border-[#2D5A27]' : 'bg-gray-100 border-gray-200'}`}
+                >
+                  <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all shadow-sm ${isAutoFillEnabled ? 'left-[18px]' : 'left-0.5'}`} />
+                </div>
+              </label>
+            )}
+          </div>
           <div className="flex bg-gray-50 shadow-inner rounded-xl p-1 gap-1">
           {ENTRY_TYPES.map((type) => (
             <button
@@ -280,6 +555,7 @@ export function BeetleManager() {
               onClick={() => {
                 setCreateType(type);
                 if (!editingEntry) return;
+                setPastedData(null);
                 startEditing(null);
                 setIsCreating(true);
               }}
@@ -292,7 +568,7 @@ export function BeetleManager() {
 
         {isCreating && !editingEntry && createType === "成虫" ? (
           <AdultForm
-            initialValues={emptyAdultForm}
+            initialValues={pastedData && pastedData.type === "成虫" ? { ...emptyAdultForm, ...pastedData } : getInitialValues("成虫", emptyAdultForm)}
             onSubmit={(value) => {
               addAdult(value);
               setIsCreating(false);
@@ -302,7 +578,7 @@ export function BeetleManager() {
         ) : null}
         {isCreating && !editingEntry && createType === "幼虫" ? (
           <LarvaForm
-            initialValues={emptyLarvaForm}
+            initialValues={pastedData && pastedData.type === "幼虫" ? { ...emptyLarvaForm, ...pastedData } : getInitialValues("幼虫", emptyLarvaForm)}
             allEntries={entries}
             onSubmit={(values) => {
               const count = 1;
@@ -317,7 +593,7 @@ export function BeetleManager() {
         ) : null}
         {isCreating && !editingEntry && createType === "産卵セット" ? (
           <SpawnSetForm
-            initialValues={emptySpawnSetForm}
+            initialValues={getInitialValues("産卵セット", emptySpawnSetForm)}
             allEntries={entries}
             onSubmit={(value) => {
               addSpawnSet(value);
@@ -394,6 +670,8 @@ export function BeetleManager() {
             handleImport={handleImport}
             isPersisted={isPersisted}
             requestPersistence={requestPersistence}
+            handleSync={handleGitHubSync}
+            isSyncing={isSyncing}
           />
         ) : activeTab === "タスク" ? (
           <TaskView

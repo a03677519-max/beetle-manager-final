@@ -25,25 +25,37 @@ export function EntryDetail({
   const deleteEntry = useBeetleStore((state) => state.deleteEntry);
 
   const copyToClipboard = () => {
-    let text = `【個体データ】\n`;
-    text += `種類: ${entry.japaneseName}\n`;
-    text += `学名: ${entry.scientificName}\n`;
-    text += `管理名: ${entry.managementName || "-"}\n`;
-    text += `産地: ${entry.locality || "-"}\n`;
-    text += `累代: ${buildGenerationLabel(entry.generation)}\n`;
+    const e = entry as any;
+    const fmtDate = (d: string) => (d || "").replace(/-/g, "/");
     
-    if (entry.type === "成虫") {
-      text += `性別: ${entry.gender}\n`;
-      text += `羽化日: ${entry.emergenceDate || "-"}\n`;
-    } else if (entry.type === "幼虫") {
-      text += `状態: 幼虫\n`;
-      if (entry.logs && entry.logs.length > 0) {
-        const latest = entry.logs[0];
-        text += `最新計測: ${latest.date} / ${latest.weight}g / ${latest.stage}\n`;
+    // 1-4行目
+    let text = `和名 ${e.japaneseName}\n`;
+    text += `学名 ${e.scientificName}\n`;
+    text += `産地 ${e.locality || ""}\n`;
+    text += `累代 ${buildGenerationLabel(e.generation)} ${e.managementName || ""} ${fmtDate(e.hatchDate)}\n`;
+    
+    // 5行目：空行
+    text += `\n`;
+    
+    // 6-9行目：飼育ログ（最大4件）
+    const logs = (e.type === "幼虫" ? e.logs : []).slice(0, 4);
+    for (let i = 0; i < 4; i++) {
+      if (logs[i]) {
+        const log = logs[i];
+        text += `${fmtDate(log.date)} ${log.substrate || ""} 水${log.moisture || 0}圧${log.pressure || 0} ${log.bottleSize || ""} ${log.stage || ""} ${log.gender || ""}\n`;
+      } else {
+        text += `\n`;
       }
-    } else if (entry.type === "産卵セット") {
-      text += `セット日: ${entry.setDate || "-"}\n`;
     }
+    
+    // 10行目：羽化・後食
+    const eDate = e.actualEmergenceDate || e.emergenceDate || "";
+    const fDate = e.feedingDate || "";
+    const eType = e.emergenceType || "羽化";
+    
+    const emergencePart = eDate ? `${fmtDate(eDate)} ${eType}` : "　　　　　　　羽化";
+    const feedingPart = fDate ? `${fmtDate(fDate)} 後食` : "　　　　　　　後食";
+    text += `${emergencePart} ${feedingPart}`;
     
     navigator.clipboard.writeText(text).then(() => {
       alert("データをコピーしました");

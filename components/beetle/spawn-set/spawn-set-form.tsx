@@ -6,7 +6,6 @@ import {
   DateRollField,
   BottomSheetInput,
   MoistureField,
-  PressureField,
   SwitchBotTemperatureField,
 } from "@/components/entry-fields";
 import type { BeetleEntry, SpawnSetFormValues } from "@/types/beetle";
@@ -72,9 +71,11 @@ export function SpawnSetForm({
             onChange={(val) => setValues({ ...values, containerSize: val })}
           />
         </div>
-        <PressureField
+        <BottomSheetInput
+          label="詰圧"
           value={values.pressure}
-          onChange={(value) => setValues({ ...values, pressure: value })}
+          placeholder="例: 硬め / 3"
+          onChange={(val) => setValues({ ...values, pressure: val })}
         />
         <MoistureField
           value={values.moisture}
