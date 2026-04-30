@@ -8,7 +8,6 @@ import { daysBetween } from "@/lib/utils";
 
 interface AnalysisViewProps {
   entries: BeetleEntry[];
-  setSelectedEntry: (entry: BeetleEntry | null) => void;
   setSelectedType: (type: EntryType | "すべて") => void;
   setActiveTab: (tab: string) => void;
   handleExport: () => void;
@@ -31,9 +30,9 @@ interface GroupStats {
   lifespans: number[];
 }
 
-export function AnalysisView({ entries, setSelectedEntry, setSelectedType, setActiveTab, handleExport, handleImport, isPersisted, requestPersistence }: AnalysisViewProps) {
+export function AnalysisView({ entries, setSelectedType, setActiveTab, handleExport, handleImport, isPersisted, requestPersistence }: AnalysisViewProps) {
   const [expandedNames, setExpandedNames] = useState<string[]>([]);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<{ label: string; stats: any[] } | null>(null);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<{ label: string; stats: number[] } | null>(null);
 
   const groupedStats = useMemo(() => {
     const groups: Record<string, GroupStats> = {};
@@ -106,12 +105,33 @@ export function AnalysisView({ entries, setSelectedEntry, setSelectedType, setAc
           </button>
           <AnimatePresence>
             {expandedNames.includes(stat.scientificName) && (
-              <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="px-5 pb-5 grid grid-cols-2 gap-3 border-t border-gray-50/50 pt-4">
-                <AnalysisItem label="サイズ (max/min)" value={stat.maxWeight !== null && stat.minWeight !== null ? `${stat.maxWeight}g / ${stat.minWeight}g` : "-"} onClick={() => setSelectedAnalysis({ label: "サイズ", stats: stat.weights })} isLink />
+              <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="px-5 pb-5 flex flex-col gap-4 border-t border-gray-50/50 pt-4">
+                <div className="bg-white/40 border border-white/60 p-4 rounded-2xl">
+                  <div className="text-[12px] font-black text-gray-400 uppercase mb-3 tracking-widest text-center">サイズ記録 (MIN / MAX)</div>
+                  <div className="flex items-center justify-around">
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-gray-400 mb-1">MIN</p>
+                      <p className="text-xl font-black text-gray-800">{stat.minWeight !== null ? `${stat.minWeight}g` : "-"}</p>
+                    </div>
+                    <div className="h-8 w-[1px] bg-gray-200" />
+                    <div className="text-center">
+                      <p className="text-[10px] font-bold text-gray-400 mb-1">MAX</p>
+                      <p className="text-2xl font-black text-[var(--primary)]">{stat.maxWeight !== null ? `${stat.maxWeight}g` : "-"}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedAnalysis({ label: "体重計測履歴", stats: stat.weights })}
+                    className="w-full mt-4 py-2.5 text-[12px] font-bold text-[var(--primary)] bg-white/80 border border-white rounded-xl shadow-sm active:scale-95 transition-all"
+                  >
+                    履歴を詳しく見る
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                 <AnalysisItem label="産卵方法" value={stat.spawnMethods.length > 0 ? stat.spawnMethods[0] : "-"} onClick={() => { setSelectedType("産卵セット"); setActiveTab("産卵セット"); }} isLink />
-                <AnalysisItem label="休眠期間" value={stat.dormancyDurations.length > 0 ? `${Math.round(stat.dormancyDurations.reduce((a, b) => a + b, 0) / stat.dormancyDurations.length)}日` : "-"} onClick={() => setSelectedAnalysis({ label: "休眠期間", stats: stat.dormancyDurations })} isLink />
-                <AnalysisItem label="平均寿命" value={stat.lifespans.length > 0 ? `${Math.round(stat.lifespans.reduce((a, b) => a + b, 0) / stat.lifespans.length)}日` : "-"} onClick={() => setSelectedAnalysis({ label: "寿命", stats: stat.lifespans })} isLink />
+                <AnalysisItem label="平均休眠期間" value={stat.dormancyDurations.length > 0 ? `${Math.round(stat.dormancyDurations.reduce((a, b) => a + b, 0) / stat.dormancyDurations.length)}日` : "-"} onClick={() => setSelectedAnalysis({ label: "休眠期間データ", stats: stat.dormancyDurations })} isLink />
+                <AnalysisItem label="平均寿命" value={stat.lifespans.length > 0 ? `${Math.round(stat.lifespans.reduce((a, b) => a + b, 0) / stat.lifespans.length)}日` : "-"} onClick={() => setSelectedAnalysis({ label: "生存期間データ", stats: stat.lifespans })} isLink />
                 <AnalysisItem label="平均羽化期間" value={stat.avgEmergence ? `${stat.avgEmergence}日` : "-"} />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -122,13 +142,27 @@ export function AnalysisView({ entries, setSelectedEntry, setSelectedType, setAc
       <AnimatePresence>
         {selectedAnalysis && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedAnalysis(null)} />
-             <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl relative z-10">
-               <button onClick={() => setSelectedAnalysis(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
-               <h3 className="font-bold text-lg mb-4">{selectedAnalysis.label}の分析</h3>
-               <div className="h-40 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 mb-4 text-xs">グラフ（実装予定）</div>
-               <a href="/analysis/data-table" className="block w-full text-center bg-[var(--primary)] text-white py-3 rounded-2xl font-bold text-sm mb-2">詳細データを確認</a>
-               <button onClick={() => setSelectedAnalysis(null)} className="w-full py-3 text-center text-sm text-gray-500 font-bold border border-gray-200 rounded-2xl">閉じる</button>
+             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAnalysis(null)} />
+             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white/95 backdrop-blur-xl p-8 rounded-[40px] w-full max-w-sm shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative z-10 border border-white/20">
+               <button onClick={() => setSelectedAnalysis(null)} className="absolute top-6 right-6 p-2 bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
+               <h3 className="font-black text-2xl mb-8 text-[#212529] tracking-tight">{selectedAnalysis.label}</h3>
+               
+               <div className="max-h-[50dvh] overflow-y-auto space-y-3 mb-10 pr-2 custom-scrollbar">
+                 {selectedAnalysis.stats.length > 0 ? (
+                   selectedAnalysis.stats.map((val: number, i: number) => (
+                     <div key={i} className="flex justify-between items-center p-5 bg-gray-50/50 backdrop-blur-sm rounded-2xl font-black border border-gray-100 shadow-sm transition-all hover:bg-white">
+                        <span className="text-gray-400 text-[10px] uppercase tracking-widest">Entry #{i + 1}</span>
+                        <span className="text-[var(--primary)] text-xl leading-none">{val}<span className="text-xs ml-0.5 font-bold">{selectedAnalysis.label.includes("体重") ? "g" : "日"}</span></span>
+                     </div>
+                   ))
+                 ) : (
+                   <p className="text-center text-gray-400 py-10">データがありません</p>
+                 )}
+               </div>
+
+               <button onClick={() => setSelectedAnalysis(null)} className="w-full py-5 text-center text-base text-white bg-[#2D5A27] font-black rounded-3xl shadow-[0_10px_20px_rgba(45,90,39,0.3)] active:scale-95 transition-all">
+                 確認しました
+               </button>
              </motion.div>
           </div>
         )}
@@ -153,9 +187,9 @@ export function AnalysisView({ entries, setSelectedEntry, setSelectedType, setAc
 
 function AnalysisItem({ label, value, onClick, isLink }: { label: string; value: string; onClick?: () => void; isLink?: boolean }) {
   return (
-    <div onClick={onClick} className={`p-3 rounded-2xl bg-white/40 border border-white/60 ${onClick ? "cursor-pointer active:bg-white/60" : ""}`}>
-      <div className="text-[9px] font-bold text-gray-400 uppercase mb-1">{label}</div>
-      <div className={`text-sm font-black ${isLink ? "text-[var(--primary)] underline decoration-dotted" : "text-gray-800"}`}>{value}</div>
+    <div onClick={onClick} className={`p-4 rounded-2xl bg-white/40 border border-white/60 flex flex-col justify-center ${onClick ? "cursor-pointer active:bg-white/60 transition-colors" : ""}`}>
+      <div className="text-[12px] font-bold text-gray-400 uppercase mb-2 tracking-wider">{label}</div>
+      <div className={`text-[17px] font-black leading-tight ${isLink ? "text-[var(--primary)] underline decoration-dotted underline-offset-4" : "text-gray-800"}`}>{value}</div>
     </div>
   );
 }

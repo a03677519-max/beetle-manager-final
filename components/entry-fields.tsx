@@ -40,7 +40,7 @@ export function Field({
 }) {
   return (
     <label className="field">
-      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1.5 block tracking-wider uppercase">{label}</span>
+      <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block tracking-wider uppercase">{label}</span>
       {children}
     </label>
   );
@@ -421,7 +421,7 @@ export function BottomSheetInput({
                 </div>
                 {type === "textarea" ? (
                   <textarea
-                    ref={inputRef as any}
+                    ref={inputRef as React.RefObject<HTMLTextAreaElement>}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}
@@ -430,7 +430,7 @@ export function BottomSheetInput({
                   />
                 ) : (
                   <input
-                    ref={inputRef as any}
+                    ref={inputRef as React.RefObject<HTMLInputElement>}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder}

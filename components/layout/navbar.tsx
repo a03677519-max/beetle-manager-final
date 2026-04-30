@@ -17,7 +17,7 @@ export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: {
   ];
 
   return (
-    <nav className="fixed bottom-2 left-2 right-2 bg-white/90 backdrop-blur-md border border-[#DEE2E6] rounded-2xl h-[64px] flex justify-around items-center z-40 shadow-xl">
+    <nav className="fixed bottom-2 left-2 right-2 bg-white/70 backdrop-blur-lg border border-white/40 rounded-[28px] h-[72px] flex justify-around items-center z-40 shadow-2xl">
       {tabs.slice(0, 3).map((tab) => (
         <button
           key={tab.name}
@@ -28,7 +28,7 @@ export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: {
           className={`flex flex-col items-center p-2 rounded-lg ${activeTab === tab.name ? "text-[var(--primary)]" : "text-gray-500"}`}
         >
           <tab.icon size={22} />
-          <span className="text-[10px]">{tab.name}</span>
+          <span className="text-[11px] font-medium mt-0.5">{tab.name}</span>
         </button>
       ))}
       
@@ -49,7 +49,7 @@ export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: {
           className={`flex flex-col items-center p-2 rounded-lg ${activeTab === tab.name ? "text-[var(--primary)]" : "text-gray-500"}`}
         >
           <tab.icon size={22} />
-          <span className="text-[10px]">{tab.name}</span>
+          <span className="text-[11px] font-medium mt-0.5">{tab.name}</span>
         </button>
       ))}
     </nav>

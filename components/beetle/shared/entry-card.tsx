@@ -68,7 +68,7 @@ export function EntryCard({
 
   return (
     <article
-      className="flex bg-white rounded-[20px] p-4 shadow-[0_8px_20px_-4px_rgba(0,0,0,0.06)] cursor-pointer active:scale-[0.98] active:opacity-90 transition-all duration-200 select-none touch-manipulation relative overflow-hidden mb-4 border border-gray-100"
+      className="flex bg-white/70 backdrop-blur-md rounded-[24px] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.04)] cursor-pointer active:scale-[0.98] active:opacity-90 transition-all duration-200 select-none touch-manipulation relative overflow-hidden mb-4 border border-white/40"
       onClick={() => onOpen(entry)}
     >
       {entry.photos[0] && (
@@ -81,20 +81,20 @@ export function EntryCard({
         <div className="flex justify-between items-start mb-1">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <h3 className="text-[17px] font-black text-[#212529] tracking-tight truncate">{entry.japaneseName}</h3>
+              <h3 className="text-[19px] font-black text-[#212529] tracking-tight truncate">{entry.japaneseName}</h3>
               {entry.type === "成虫" && (
                 <span className={`text-sm font-bold ${entry.gender === "オス" ? "text-blue-500" : entry.gender === "メス" ? "text-pink-500" : "text-gray-400"}`}>
                   {entry.gender === "オス" ? "♂" : entry.gender === "メス" ? "♀" : ""}
                 </span>
               )}
             </div>
-            <p className="text-[13px] italic text-[#8B5A2B] opacity-80 truncate">{entry.scientificName}</p>
+            <p className="text-[14px] italic text-[#8B5A2B] opacity-80 truncate">{entry.scientificName}</p>
           </div>
           <StatusBadge stage={stage} className="ml-2" />
         </div>
         
         <div className="flex justify-between items-end mt-3">
-          <dl className="text-[12px] text-[#6C757D] space-y-0.5">
+          <dl className="text-[13px] text-[#6C757D] space-y-1">
             <div>
               <span className="text-muted">産地:</span> {entry.locality || "-"}
             </div>

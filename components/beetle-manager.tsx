@@ -197,46 +197,46 @@ export function BeetleManager() {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="app-container bg-[#F8F9FA] min-h-screen pb-[calc(140px+env(safe-area-inset-bottom,32px))]">
+    <div className="app-container font-cute bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] min-h-screen pb-[calc(140px+env(safe-area-inset-bottom,32px))] leading-[1.7]">
       <header className="px-6 pt-8 pb-4 flex justify-between items-end">
         <div>
-          <p className="text-[12px] font-bold text-[#8B5A2B] uppercase tracking-widest mb-1">Breeding Log</p>
-          <h1 className="text-2xl font-black text-[#212529]">マイブリード</h1>
+          <p className="text-[14px] font-bold text-[#8B5A2B] uppercase tracking-widest mb-1.5">Breeding Log</p>
+          <h1 className="text-3xl font-black text-[#212529] tracking-tight">マイブリード</h1>
         </div>
       </header>
 
       {/* 統計ダッシュボード */}
       <section className="px-6 mb-6 grid grid-cols-3 gap-3">
-        <div className="bg-[#F1F3F5] p-3 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">成虫</p>
-          <p className="text-xl font-black text-[#212529]">{stats.adults}<span className="text-[10px] ml-0.5 font-bold">頭</span></p>
+        <div className="bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-white/60 shadow-sm">
+          <p className="text-[12px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">成虫</p>
+          <p className="text-3xl font-black text-[#212529]">{stats.adults}<span className="text-[12px] ml-0.5 font-bold">頭</span></p>
         </div>
-        <div className="bg-[#F1F3F5] p-3 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">幼虫</p>
-          <p className="text-xl font-black text-[#212529]">{stats.larvae}<span className="text-[10px] ml-0.5 font-bold">頭</span></p>
+        <div className="bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-white/60 shadow-sm">
+          <p className="text-[12px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">幼虫</p>
+          <p className="text-3xl font-black text-[#212529]">{stats.larvae}<span className="text-[12px] ml-0.5 font-bold">頭</span></p>
         </div>
-        <div className="bg-[#F1F3F5] p-3 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">セット</p>
-          <p className="text-xl font-black text-[#212529]">{stats.spawnSets}<span className="text-[10px] ml-0.5 font-bold">件</span></p>
+        <div className="bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-white/60 shadow-sm">
+          <p className="text-[12px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">セット</p>
+          <p className="text-3xl font-black text-[#212529]">{stats.spawnSets}<span className="text-[12px] ml-0.5 font-bold">件</span></p>
         </div>
       </section>
 
-      <section className="px-6 mb-4 sticky top-0 z-30 bg-[#F8F9FA]/80 backdrop-blur-md py-2">
-        <label className="flex items-center bg-white rounded-2xl px-4 py-3 shadow-sm border border-[#DEE2E6]/50 focus-within:border-[#2D5A27] transition-all">
+      <section className="px-6 mb-8 sticky top-0 z-30 bg-white/20 backdrop-blur-md py-2">
+        <label className="flex items-center bg-white/70 backdrop-blur-md rounded-2xl px-5 py-4 shadow-sm border border-white/40 focus-within:border-[#2D5A27] transition-all">
           <Search size={18} className="text-[#6C757D] mr-3" />
           <input
             type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="個体名・学名・産地で検索"
-            className="flex-1 text-[16px] text-[#212529] outline-none bg-transparent"
+            className="flex-1 text-[18px] text-[#212529] outline-none bg-transparent"
           />
         </label>
-        <div className="flex gap-2 mt-3 overflow-x-auto no-scrollbar pb-1">
+        <div className="flex gap-2.5 mt-4 overflow-x-auto no-scrollbar pb-1">
           <button
             type="button"
-            className={`px-4 py-1.5 rounded-full text-[13px] font-bold transition-all whitespace-nowrap ${
-              selectedType === "すべて" ? "bg-[#2D5A27] text-white shadow-md" : "bg-white text-[#6C757D] border border-[#DEE2E6]"
+            className={`px-5 py-2 rounded-full text-[14px] font-bold transition-all whitespace-nowrap ${
+              selectedType === "すべて" ? "bg-[#2D5A27] text-white shadow-md" : "bg-white/40 backdrop-blur-sm text-[#6C757D] border border-white/40"
             }`}
             onClick={() => setSelectedType("すべて")}
           >
@@ -246,8 +246,8 @@ export function BeetleManager() {
             <button
               key={type}
               type="button"
-              className={`px-4 py-1.5 rounded-full text-[13px] font-bold transition-all whitespace-nowrap ${
-                selectedType === type ? "bg-[#2D5A27] text-white shadow-md" : "bg-white text-[#6C757D] border border-[#DEE2E6]"
+              className={`px-5 py-2 rounded-full text-[14px] font-bold transition-all whitespace-nowrap ${
+                selectedType === type ? "bg-[#2D5A27] text-white shadow-md" : "bg-white/40 backdrop-blur-sm text-[#6C757D] border border-white/40"
               }`}
               onClick={() => setSelectedType(type)}
             >

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { X, Edit2, Copy } from "lucide-react";
+import { X, Edit2, Copy, Trash2 } from "lucide-react";
 import type { BeetleEntry } from "@/types/beetle";
 import { AdultDetail } from "@/components/beetle/adult/adult-detail";
 import { LarvaDetail } from "@/components/beetle/larva/larva-detail";
@@ -22,6 +22,7 @@ export function EntryDetail({
   isFetchingTemperature: boolean;
 }) {
   const startEditing = useBeetleStore((state) => state.startEditing);
+  const deleteEntry = useBeetleStore((state) => state.deleteEntry);
 
   const copyToClipboard = () => {
     let text = `【個体データ】\n`;
@@ -49,6 +50,13 @@ export function EntryDetail({
     }).catch(() => {
       alert("コピーに失敗しました");
     });
+  };
+
+  const handleDelete = () => {
+    if (window.confirm("この個体データを削除してもよろしいですか？")) {
+      deleteEntry(entry.id);
+      onClose();
+    }
   };
 
   return (
@@ -80,6 +88,14 @@ export function EntryDetail({
               title="テキストをコピー"
             >
               <Copy size={18} />
+            </button>
+            <button 
+              type="button" 
+              className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-red-500 transition-colors" 
+              onClick={handleDelete}
+              title="削除"
+            >
+              <Trash2 size={18} />
             </button>
             <button 
               type="button" 

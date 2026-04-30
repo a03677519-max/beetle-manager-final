@@ -67,7 +67,7 @@ export const daysBetween = (start: string, end: string) => {
   return Math.ceil((endDate.getTime() - startDate.getTime()) / 86400000);
 };
 
-export function debounce<T extends (...args: any[]) => void>(
+export function debounce<T extends (...args: unknown[]) => void>(
   callback: T,
   wait: number
 ) {

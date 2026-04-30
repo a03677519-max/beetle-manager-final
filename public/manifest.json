@@ -1,18 +1,28 @@
 {
-  "name": "昆虫管理アプリ",
-  "short_name": "昆虫管理",
-  "description": "個体登録、ステージ管理、履歴ログ、写真管理ができる昆虫管理PWA",
+  "name": "Beetle Manager",
+  "short_name": "管理アプリ",
+  "description": "カブトムシ・クワガタの飼育を楽しく管理するPWA",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#f3f7f4",
-  "theme_color": "#2f8f57",
+  "background_color": "#F8F9FA",
+  "theme_color": "#2D5A27",
   "icons": [
     {
-      "src": "/icons.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo512.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }

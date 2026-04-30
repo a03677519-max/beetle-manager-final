@@ -5,7 +5,6 @@ import {
   CohabitationField,
   DateRollField,
   BottomSheetInput,
-  Field,
   MoistureField,
   PressureField,
   SwitchBotTemperatureField,
@@ -22,14 +21,13 @@ export function SpawnSetForm({
   allEntries,
 }: {
   initialValues: SpawnSetFormValues;
-  onSubmit: (value: SpawnSetFormValues, count: number) => void;
+  onSubmit: (value: SpawnSetFormValues) => void;
   onCancel: () => void;
   onFetchTemperature: (setter: (value: string) => void) => void;
   isFetchingTemperature: boolean;
   allEntries: BeetleEntry[];
 }) {
   const [values, setValues] = useState<SpawnSetFormValues>(initialValues);
-  const [count, setCount] = useState(1);
   const formRef = useRef<HTMLFormElement>(null);
 
   // 外部からの初期値変更を同期
@@ -43,7 +41,7 @@ export function SpawnSetForm({
       className="space-y-2"
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit(values, count);
+        onSubmit(values);
       }}
     >
       <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2">
