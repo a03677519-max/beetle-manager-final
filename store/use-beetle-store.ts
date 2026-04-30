@@ -12,6 +12,7 @@ import type {
   LarvaLog,
   SpawnSetFormValues,
   SwitchBotSettings,
+  GitHubSettings,
 } from "@/types/beetle";
 import { COHABITATION_OPTIONS } from "@/types/beetle";
 import { normalizeEntries } from "./beetle-store-utils";
@@ -21,9 +22,11 @@ type BeetleState = {
   selectedType: EntryType | "すべて";
   editingId: string | null;
   switchBot: SwitchBotSettings;
+  gitHub: GitHubSettings;
   setSelectedType: (stage: EntryType | "すべて") => void;
   startEditing: (id: string | null) => void;
   updateSwitchBot: (input: Partial<SwitchBotSettings>) => void;
+  updateGitHub: (input: Partial<GitHubSettings>) => void;
   addAdult: (input: AdultFormValues) => void;
   updateAdult: (id: string, input: AdultFormValues) => void;
   addLarva: (input: LarvaFormValues) => void;
@@ -95,10 +98,13 @@ export const useBeetleStore = create<BeetleState>()(
       selectedType: "すべて",
       editingId: null,
       switchBot: { token: "", secret: "", deviceId: "", deviceName: "" },
+      gitHub: { token: "", owner: "", repo: "", path: "data.json", branch: "main" },
       setSelectedType: (selectedType) => set({ selectedType }),
       startEditing: (editingId) => set({ editingId }),
       updateSwitchBot: (input) =>
         set((state) => ({ switchBot: { ...state.switchBot, ...input } })),
+      updateGitHub: (input) =>
+        set((state) => ({ gitHub: { ...state.gitHub, ...input } })),
       addAdult: (input) =>
         set((state) => ({
           entries: [{ id: createId(), ...input, photos: [], createdAt: today(), updatedAt: today() }, ...state.entries],
@@ -203,6 +209,7 @@ export const useBeetleStore = create<BeetleState>()(
         entries: state.entries,
         selectedType: state.selectedType,
         switchBot: state.switchBot,
+        gitHub: state.gitHub,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<BeetleState> & { beetles?: unknown };
@@ -212,6 +219,7 @@ export const useBeetleStore = create<BeetleState>()(
           entries: normalizeEntries(persisted.entries ?? persisted.beetles),
           selectedType: persisted.selectedType ?? currentState.selectedType,
           switchBot: persisted.switchBot ?? currentState.switchBot,
+          gitHub: persisted.gitHub ?? currentState.gitHub,
         };
       },
     },

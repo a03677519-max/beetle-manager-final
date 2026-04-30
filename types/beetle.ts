@@ -98,3 +98,11 @@ export type SwitchBotSettings = {
   deviceId: string;
   deviceName: string;
 };
+
+export type GitHubSettings = {
+  token: string;
+  owner: string;
+  repo: string;
+  path: string;
+  branch: string;
+};
