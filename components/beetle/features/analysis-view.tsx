@@ -8,6 +8,7 @@ import { daysBetween } from "@/lib/utils";
 
 interface AnalysisViewProps {
   entries: BeetleEntry[];
+  setSelectedEntry: (entry: BeetleEntry | null) => void;
   setSelectedType: (type: EntryType | "すべて") => void;
   setActiveTab: (tab: string) => void;
   handleExport: () => void;
@@ -30,7 +31,7 @@ interface GroupStats {
   lifespans: number[];
 }
 
-export function AnalysisView({ entries, setSelectedType, setActiveTab, handleExport, handleImport, isPersisted, requestPersistence }: AnalysisViewProps) {
+export function AnalysisView({ entries, setSelectedEntry, setSelectedType, setActiveTab, handleExport, handleImport, isPersisted, requestPersistence }: AnalysisViewProps) {
   const [expandedNames, setExpandedNames] = useState<string[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<{ label: string; stats: number[] } | null>(null);
 
