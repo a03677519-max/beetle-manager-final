@@ -49,7 +49,7 @@ export type LarvaLog = {
   stage: LogStage;
   weight: number;
   gender: Gender;
-  temperature: number;
+  temperature: string;
 };
 
 export type AdultBeetle = BaseBeetle & {

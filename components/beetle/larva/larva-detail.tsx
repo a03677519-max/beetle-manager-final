@@ -1,6 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
+import { Download } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -30,11 +31,38 @@ export function LarvaDetail({
   const chartData = [...entry.logs]
     .slice()
     .reverse()
-    .map((log) => ({
-      date: log.date,
-      weight: Number(log.weight || 0),
-      temperature: Number(log.temperature || 0),
-    }));
+    .map((log) => {
+      const tempStr = String(log.temperature || "").trim();
+      let tempVal = 0;
+      // 21〜23 や 21-23 の形式を解析して平均（中間値）をグラフ用データにする
+      if (tempStr.includes("〜") || tempStr.includes("-")) {
+        const parts = tempStr.split(/[〜-]/).map(p => parseFloat(p.replace(/[^0-9.]/g, ""))).filter(p => !isNaN(p));
+        if (parts.length > 0) {
+          tempVal = parts.reduce((a, b) => a + b, 0) / parts.length;
+        }
+      } else {
+        tempVal = parseFloat(tempStr.replace(/[^0-9.]/g, "")) || 0;
+      }
+      return {
+        date: log.date,
+        weight: Number(log.weight || 0),
+        temperature: tempVal,
+      };
+    });
+
+  const exportToCSV = () => {
+    const headers = ["日付", "体重(g)", "温度(℃)", "ステージ", "性別", "マット", "詰圧", "水分", "ボトル"];
+    const rows = entry.logs.map(log => [
+      log.date, log.weight, log.temperature, log.stage, log.gender, log.substrate, log.pressure, log.moisture, log.bottleSize
+    ]);
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `breeding_log_${entry.japaneseName}.csv`);
+    link.click();
+  };
 
   return (
     <>
@@ -89,6 +117,15 @@ export function LarvaDetail({
             </AreaChart>
           </ResponsiveContainer>
         </div>
+        <div className="mt-4 flex justify-center">
+          <button 
+            onClick={exportToCSV}
+            className="flex items-center gap-2 text-[10px] font-bold text-[#2D5A27] bg-[#2D5A27]/5 px-4 py-2 rounded-full hover:bg-[#2D5A27]/10 transition-colors"
+          >
+            <Download size={14} />
+            データをCSV形式でダウンロード
+          </button>
+        </div>
       </section>
 
       <section className="mt-6 bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
@@ -108,7 +145,7 @@ export function LarvaDetail({
                         <span className="text-xs text-gray-400 font-medium">{formatDate(log.date)}</span>
                       </div>
                       <div className="font-black text-[#212529] text-lg">
-                        {log.weight}g <span className="text-[10px] text-gray-400 font-normal">/ {log.temperature}℃</span>
+                        {log.weight}g <span className="text-[10px] text-gray-400 font-normal">/ {log.temperature || "-"}℃</span>
                       </div>
                       <div className="text-[10px] text-gray-400 font-bold mt-1">性別: {log.gender}</div>
                     </div>

@@ -35,7 +35,7 @@ export function AdultForm({
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    const sectionIds = ["basic-info", "management", "timeline", "extra-notes"];
+    const sectionIds = ["management", "basic-info", "timeline", "extra-notes"];
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -58,30 +58,6 @@ export function AdultForm({
     };
   }, []);
 
-  // フォームの外側をタップ/クリックした時にキャンセル処理を実行
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node;
-      if (!target || !(target instanceof Element)) return;
-
-      const isOutsideForm = formRef.current && !formRef.current.contains(target);
-      // ポータル要素または「無視属性」を持つ要素（タブ切り替えボタン等）の場合は閉じない
-      const isIgnored = target.closest?.('[data-portal="true"]') || target.closest?.('[data-ignore-click-outside="true"]');
-
-      if (isOutsideForm && !isIgnored) {
-        onCancel();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-    };
-  }, [onCancel]);
-
   return (
     <form
       ref={formRef}
@@ -94,8 +70,8 @@ export function AdultForm({
       {/* Quick Nav */}
       <nav className="sticky top-[90px] z-30 py-2 -mx-4 px-4 bg-[#F8F9FA]/80 backdrop-blur-md flex gap-2 overflow-x-auto no-scrollbar border-b border-white/20 mb-1">
         {[
-          { id: "basic-info", label: "基本情報" },
           { id: "management", label: "管理名" },
+          { id: "basic-info", label: "基本情報" },
           { id: "timeline", label: "活動記録" },
           { id: "extra-notes", label: "メモ" },
         ].map((item) => (
@@ -113,16 +89,6 @@ export function AdultForm({
         ))}
       </nav>
 
-      <section id="basic-info" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
-        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Basic Info</div>
-        <EntryBaseFields
-          {...values}
-          linkedEntryId={values.linkedEntryId}
-          allEntries={useBeetleStore.getState().entries}
-          onChange={(patch) => setValues({ ...values, ...patch })}
-        />
-      </section>
-
       <section id="management" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
         <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Management</div>
         <Field label="管理名 (No/名前)">
@@ -133,6 +99,16 @@ export function AdultForm({
             onChange={(e) => setValues({ ...values, managementName: e.target.value })}
           />
         </Field>
+      </section>
+
+      <section id="basic-info" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
+        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Basic Info</div>
+        <EntryBaseFields
+          {...values}
+          linkedEntryId={values.linkedEntryId}
+          allEntries={useBeetleStore.getState().entries}
+          onChange={(patch) => setValues({ ...values, ...patch })}
+        />
       </section>
 
       <section id="timeline" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">

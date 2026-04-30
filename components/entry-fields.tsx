@@ -292,11 +292,10 @@ export function SwitchBotTemperatureField({
       <span className="text-[12px] font-bold text-[#8B5A2B] mb-1 block uppercase tracking-wider">温度 (℃)</span>
       <div className="relative">
         <input 
-          inputMode="decimal"
-          className="w-full h-[40px] px-4 rounded-xl border border-[#DEE2E6] focus:border-[#2D5A27] focus:ring-1 focus:ring-[#2D5A27] outline-none text-[15px]"
+          className="w-full h-[40px] px-4 rounded-xl border border-[#DEE2E6] focus:border-[#2D5A27] focus:ring-1 focus:ring-[#2D5A27] outline-none text-[15px] placeholder:text-gray-300"
           value={value} 
           onChange={(event) => onChange(event.target.value)} 
-          placeholder="23.5" 
+          placeholder="例: 22.5 や 21〜23" 
         />
         <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2D5A27] p-2" onClick={onFetch}>
           <Thermometer size={18} className={isFetching ? "spin" : undefined} />

@@ -197,7 +197,7 @@ export function BeetleManager() {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="app-container bg-[#F8F9FA] min-h-screen pb-[120px]">
+    <div className="app-container bg-[#F8F9FA] min-h-screen pb-[calc(120px+env(safe-area-inset-bottom,24px))]">
       <header className="px-6 pt-8 pb-4 flex justify-between items-end">
         <div>
           <p className="text-[12px] font-bold text-[#8B5A2B] uppercase tracking-widest mb-1">Breeding Log</p>
@@ -415,8 +415,7 @@ export function BeetleManager() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onTabChange={(tab) => {
-          if (tab === "ホーム") setSelectedType("すべて");
-          else if (ENTRY_TYPES.includes(tab as EntryType)) setSelectedType(tab as EntryType);
+          if (ENTRY_TYPES.includes(tab as EntryType)) setSelectedType(tab as EntryType);
         }}
         onAdd={() => setIsCreating(true)}
       />

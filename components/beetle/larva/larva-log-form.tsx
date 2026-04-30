@@ -29,9 +29,9 @@ export function LarvaLogForm({
     moisture: number;
     bottleSize: string;
     stage: LogStage;
-    weight: number;
+    weight: string;
     gender: Gender;
-    temperature: number;
+    temperature: string;
   }>({
     date: today(),
     substrate: "",
@@ -39,9 +39,9 @@ export function LarvaLogForm({
     moisture: 3,
     bottleSize: "",
     stage: "L1",
-    weight: 0,
+    weight: "", // 初期値を空文字にして 0 が残らないように修正
     gender: "不明",
-    temperature: 0,
+    temperature: "", // 初期値を空文字にして 0 が残らないように修正
   });
 
   return (
@@ -49,7 +49,7 @@ export function LarvaLogForm({
       className="card form-grid"
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit(values);
+        onSubmit({ ...values, weight: Number(values.weight) });
         setValues({
           date: today(),
           substrate: "",
@@ -57,36 +57,36 @@ export function LarvaLogForm({
           moisture: 3,
           bottleSize: "",
           stage: "L1",
-          weight: 0,
+          weight: "",
           gender: "不明",
-          temperature: 0,
+          temperature: "",
         });
       }}
     >
       <div className="section-title">飼育ログ</div>
       <DateRollField label="日付" value={values.date} onChange={(value) => setValues({ ...values, date: value })} />
-      <Field label="使用マット">
-        <input value={values.substrate} onChange={(event) => setValues({ ...values, substrate: event.target.value })} />
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="使用マット">
+          <input value={values.substrate} onChange={(event) => setValues({ ...values, substrate: event.target.value })} />
+        </Field>
+        <Field label="ボトルサイズ">
+          <input value={values.bottleSize} onChange={(event) => setValues({ ...values, bottleSize: event.target.value })} />
+        </Field>
+      </div>
       <PressureField value={values.pressure} onChange={(value) => setValues({ ...values, pressure: value })} />
       <MoistureField value={values.moisture} onChange={(value) => setValues({ ...values, moisture: value })} />
-      <Field label="ボトルサイズ">
-        <input value={values.bottleSize} onChange={(event) => setValues({ ...values, bottleSize: event.target.value })} />
-      </Field>
       <LarvaStageField value={values.stage} onChange={(value) => setValues({ ...values, stage: value })} />
       <Field label="体重">
         <input 
-          type="number"
-          step="0.1"
           value={values.weight} 
-          onChange={(event) => setValues({ ...values, weight: parseFloat(event.target.value) || 0 })} 
+          onChange={(event) => setValues({ ...values, weight: event.target.value })} 
         />
       </Field>
       <GenderField value={values.gender} onChange={(value) => setValues({ ...values, gender: value })} />
       <SwitchBotTemperatureField
-        value={String(values.temperature)}
-        onChange={(value) => setValues({ ...values, temperature: parseFloat(value) || 0 })}
-        onFetch={() => onFetchTemperature((value) => setValues((current) => ({ ...current, temperature: parseFloat(value) || 0 })))}
+        value={values.temperature}
+        onChange={(value) => setValues({ ...values, temperature: value })}
+        onFetch={() => onFetchTemperature((value) => setValues((current) => ({ ...current, temperature: value })))}
         isFetching={isFetchingTemperature}
       />
       <button type="submit" className="button">

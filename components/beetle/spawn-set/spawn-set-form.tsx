@@ -47,7 +47,7 @@ export function SpawnSetForm({
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    const sectionIds = ["set-identity", "management", "environment"];
+    const sectionIds = ["set-identity", "environment"];
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -56,7 +56,7 @@ export function SpawnSetForm({
           }
         });
       },
-      { rootMargin: "-140px 0px -70% 0px", threshold: 0 }
+      { rootMargin: "-100px 0px -70% 0px", threshold: 0 }
     );
 
     sectionIds.forEach((id) => {
@@ -69,30 +69,6 @@ export function SpawnSetForm({
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);
-
-  // フォームの外側をタップ/クリックした時にキャンセル処理を実行
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node;
-      if (!target || !(target instanceof Element)) return;
-
-      const isOutsideForm = formRef.current && !formRef.current.contains(target);
-      // ポータル要素または「無視属性」を持つ要素の判定
-      const isIgnored = target.closest?.('[data-portal="true"]') || target.closest?.('[data-ignore-click-outside="true"]');
-
-      if (isOutsideForm && !isIgnored) {
-        onCancel();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-    };
-  }, [onCancel]);
 
   return (
     <form
@@ -107,7 +83,6 @@ export function SpawnSetForm({
       <nav className="sticky top-[90px] z-30 py-2 -mx-4 px-4 bg-[#F8F9FA]/80 backdrop-blur-md flex gap-2 overflow-x-auto no-scrollbar border-b border-white/20 mb-1">
         {[
           { id: "set-identity", label: "基本" },
-          { id: "management", label: "期間" },
           { id: "environment", label: "環境" },
         ].map((item) => (
           <a
@@ -126,39 +101,16 @@ export function SpawnSetForm({
 
       <section id="set-identity" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
         <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Set Identity</div>
-        <EntryBaseFields
-          {...values}
-          allEntries={allEntries}
-          onChange={(patch) => setValues({ ...values, ...patch })}
-        />
-      </section>
-
-      <section id="management" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
-        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Management</div>
-        <Field label="管理名 (No/名前)">
-          <input
-            value={values.managementName || ""}
-            placeholder="例: S-24-01"
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 focus:border-[#2D5A27] focus:ring-2 focus:ring-[#2D5A27]/20 outline-none transition-all"
-            onChange={(e) => setValues({ ...values, managementName: e.target.value })}
-          />
-        </Field>
-        <DateRollField
-          label="羽化日"
-          value={values.emergenceDate}
-          onChange={(value) => setValues({ ...values, emergenceDate: value })}
-        />
-        <DateRollField
-          label="後食日"
-          value={values.feedingDate}
-          onChange={(value) => setValues({ ...values, feedingDate: value })}
-        />
         <DateRollField
           label="セット日"
           value={values.setDate}
           onChange={(value) => setValues({ ...values, setDate: value })}
         />
-        <CountRollField value={count} onChange={setCount} />
+        <EntryBaseFields
+          {...values}
+          allEntries={allEntries}
+          onChange={(patch) => setValues({ ...values, ...patch })}
+        />
       </section>
 
       <section id="environment" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">

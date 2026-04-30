@@ -1,12 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Edit2 } from "lucide-react";
 import type { BeetleEntry } from "@/types/beetle";
 import { AdultDetail } from "@/components/beetle/adult/adult-detail";
 import { LarvaDetail } from "@/components/beetle/larva/larva-detail";
 import { SpawnSetDetail } from "@/components/beetle/spawn-set/spawn-set-detail";
 import { PhotoSection } from "@/components/beetle/shared/photo-section";
+import { useBeetleStore } from "@/store/use-beetle-store";
 
 export function EntryDetail({
   entry,
@@ -19,6 +20,8 @@ export function EntryDetail({
   onFetchTemperature: (setter: (value: string) => void) => void;
   isFetchingTemperature: boolean;
 }) {
+  const startEditing = useBeetleStore((state) => state.startEditing);
+
   return (
     <motion.div className="fixed inset-0 z-50 flex flex-col justify-end pointer-events-none">
       <motion.div 
@@ -40,9 +43,18 @@ export function EntryDetail({
             <h2 className="text-[18px] font-bold text-[#212529]">{entry.japaneseName}</h2>
             <p className="text-[12px] font-serif italic text-gray-400">{entry.scientificName}</p>
           </div>
-          <button type="button" className="p-2 bg-gray-100 rounded-full text-gray-500 hover:text-gray-800" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              type="button" 
+              className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-[#2D5A27] transition-colors" 
+              onClick={() => { onClose(); startEditing(entry.id); }}
+            >
+              <Edit2 size={18} />
+            </button>
+            <button type="button" className="p-2 bg-gray-100 rounded-full text-gray-500 hover:text-gray-800" onClick={onClose}>
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <PhotoSection entry={entry} />
@@ -59,7 +71,7 @@ export function EntryDetail({
           {entry.type === "産卵セット" ? <SpawnSetDetail entry={entry} /> : null}
         </div>
 
-        <div className="fixed bottom-0 left-0 w-full p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] bg-white/90 backdrop-blur-md border-t z-20">
+        <div className="fixed bottom-0 left-0 w-full p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,20px))] bg-white/90 backdrop-blur-md border-t z-20">
           <button className="w-full bg-[#2D5A27] text-white font-bold h-[52px] rounded-2xl shadow-lg active:scale-[0.98] transition-all">
             作業を記録
           </button>

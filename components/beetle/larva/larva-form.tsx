@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { CountRollField, Field, DateRollField } from "@/components/entry-fields";
+import { CountRollField, Field, DateRollField, PressureField, MoistureField } from "@/components/entry-fields";
 import type { BeetleEntry, LarvaFormValues, LarvaLog, LogStage, Gender } from "@/types/beetle";
 import { EntryBaseFields } from "@/components/beetle/shared/entry-base-fields";
 import { today } from "@/lib/utils";
@@ -40,7 +40,7 @@ export function LarvaForm({
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
 
-    const sectionIds = ["basic-info", "management", "status", "breeding-log"];
+    const sectionIds = ["management", "basic-info", "status", "breeding-log"];
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -63,30 +63,6 @@ export function LarvaForm({
     };
   }, []);
 
-  // フォームの外側をタップ/クリックした時にキャンセル処理を実行
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node;
-      if (!target || !(target instanceof Element)) return;
-
-      const isOutsideForm = formRef.current && !formRef.current.contains(target);
-      // ポータル要素または「無視属性」を持つ要素の判定
-      const isIgnored = target.closest?.('[data-portal="true"]') || target.closest?.('[data-ignore-click-outside="true"]');
-
-      if (isOutsideForm && !isIgnored) {
-        onCancel();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("touchstart", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("touchstart", handleClickOutside);
-    };
-  }, [onCancel]);
-
   // 飼育ログの追加処理
   const addRecord = () => {
     const newRecord: LarvaLog = {
@@ -99,7 +75,7 @@ export function LarvaForm({
       moisture: 3,
       bottleSize: "",
       gender: "不明",
-      temperature: 25,
+      temperature: "",
     };
     setValues({ ...values, logs: [newRecord, ...(values.logs || [])] });
   };
@@ -123,11 +99,19 @@ export function LarvaForm({
   const logStats = useMemo(() => {
     const logs = values.logs || [];
     if (logs.length === 0) return null;
-    const weights = logs.map(r => r.weight).filter(w => w > 0);
-    const temps = logs.map(r => r.temperature).filter(t => t > 0);
+    const weights = logs.map(r => parseFloat(String(r.weight)) || 0).filter(w => w > 0);
+    const temps = logs.map(r => {
+      const s = String(r.temperature || "").trim();
+      if (s.includes("〜") || s.includes("-")) {
+        const parts = s.split(/[〜-]/).map(p => parseFloat(p.replace(/[^0-9.]/g, ""))).filter(p => !isNaN(p));
+        return parts.length > 0 ? parts.reduce((a, b) => a + b, 0) / parts.length : 0;
+      }
+      return parseFloat(s.replace(/[^0-9.]/g, "")) || 0;
+    }).filter(t => t > 0);
+
     return {
       maxWeight: weights.length > 0 ? Math.max(...weights) : 0,
-      avgTemp: temps.length > 0 ? (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1) : 0
+      avgTemp: temps.length > 0 ? (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1) : "0"
     };
   }, [values.logs]);
 
@@ -144,7 +128,6 @@ export function LarvaForm({
       <nav className="sticky top-[90px] z-30 py-2 -mx-4 px-4 bg-[#F8F9FA]/80 backdrop-blur-md flex gap-2 overflow-x-auto no-scrollbar border-b border-white/20 mb-1">
         {[
           { id: "basic-info", label: "基本" },
-          { id: "management", label: "管理" },
           { id: "status", label: "状況" },
           { id: "breeding-log", label: "ログ" },
         ].map((item) => (
@@ -162,15 +145,6 @@ export function LarvaForm({
         ))}
       </nav>
 
-      <section id="basic-info" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
-        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Basic Info</div>
-        <EntryBaseFields
-          {...values}
-          allEntries={allEntries}
-          onChange={(patch) => setValues({ ...values, ...patch })}
-        />
-      </section>
-
       <section id="management" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
         <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Management</div>
         <Field label="管理名 (No/名前)">
@@ -181,12 +155,20 @@ export function LarvaForm({
             onChange={(e) => setValues({ ...values, managementName: e.target.value })}
           />
         </Field>
+      </section>
+
+      <section id="basic-info" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
+        <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-2 border-l-4 border-[#2D5A27] pl-3">Basic Info</div>
         <DateRollField
           label="孵化 / セット投入日"
           value={values.hatchDate || values.createdAt || ""}
           onChange={(value) => setValues({ ...values, hatchDate: value })}
         />
-        <CountRollField value={count} onChange={setCount} />
+        <EntryBaseFields
+          {...values}
+          allEntries={allEntries}
+          onChange={(patch) => setValues({ ...values, ...patch })}
+        />
       </section>
 
       <section id="status" className="scroll-mt-[150px] bg-white rounded-3xl p-4 border border-gray-100 shadow-sm space-y-3">
@@ -310,13 +292,12 @@ export function LarvaForm({
                 />
                 <Field label="体重 (g)">
                   <input
-                    type="number"
-                    step="0.1"
                     value={record.weight}
+                    placeholder="例: 24.5"
                     className="w-full bg-white/80 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold focus:border-[#2D5A27] focus:ring-2 focus:ring-[#2D5A27]/20 outline-none"
                     onChange={(e) => {
                       const newLogs = [...(values.logs || [])];
-                      newLogs[index] = { ...record, weight: parseFloat(e.target.value) || 0 };
+                      newLogs[index] = { ...record, weight: Number(e.target.value) };
                       setValues({ ...values, logs: newLogs });
                     }}
                   />
@@ -362,11 +343,27 @@ export function LarvaForm({
                 </Field>
               </div>
 
-              <div className="space-y-3 pt-2 border-t border-gray-50">
+              <div className="space-y-4 pt-4 border-t border-gray-50">
+                <PressureField
+                  value={record.pressure}
+                  onChange={(val) => {
+                    const newLogs = [...(values.logs || [])];
+                    newLogs[index] = { ...record, pressure: val };
+                    setValues({ ...values, logs: newLogs });
+                  }}
+                />
+                <MoistureField
+                  value={record.moisture}
+                  onChange={(val) => {
+                    const newLogs = [...(values.logs || [])];
+                    newLogs[index] = { ...record, moisture: val };
+                    setValues({ ...values, logs: newLogs });
+                  }}
+                />
                 <div className="grid grid-cols-2 gap-4">
-                  <Field label="マット / ボトルサイズ">
+                  <Field label="使用マット">
                     <input
-                      placeholder="例: クヌギ / 800cc"
+                      placeholder="例: クヌギマット"
                       className="w-full bg-transparent border-b border-gray-200 py-1 text-xs focus:border-[#2D5A27] outline-none"
                       value={record.substrate}
                       onChange={(e) => {
@@ -376,15 +373,29 @@ export function LarvaForm({
                       }}
                     />
                   </Field>
-                  <Field label="温度 (℃)">
+                  <Field label="ボトルサイズ">
                     <input
-                      type="number"
-                      step="0.5"
+                      placeholder="例: 800cc"
+                      className="w-full bg-transparent border-b border-gray-200 py-1 text-xs focus:border-[#2D5A27] outline-none"
+                      value={record.bottleSize}
+                      onChange={(e) => {
+                        const newLogs = [...(values.logs || [])];
+                        newLogs[index] = { ...record, bottleSize: e.target.value };
+                        setValues({ ...values, logs: newLogs });
+                      }}
+                    />
+                  </Field>
+                </div>
+                <div className="grid grid-cols-1">
+                  <Field label="管理温度 (℃)">
+                    <input
+                      type="text"
+                      placeholder="例: 22 や 21〜23 (平均で集計されます)"
                       className="w-full bg-transparent border-b border-gray-200 py-1 text-xs focus:border-[#2D5A27] outline-none"
                       value={record.temperature}
                       onChange={(e) => {
                         const newLogs = [...(values.logs || [])];
-                        newLogs[index] = { ...record, temperature: parseFloat(e.target.value) || 0 };
+                        newLogs[index] = { ...record, temperature: e.target.value };
                         setValues({ ...values, logs: newLogs });
                       }}
                     />
