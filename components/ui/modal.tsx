@@ -9,7 +9,7 @@ export function Modal({ isOpen, onClose, title, children }: { isOpen: boolean, o
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="bg-white/90 backdrop-blur-lg rounded-t-3xl p-6 shadow-2xl border border-white/50 w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain">
+      <div className="bg-white/90 backdrop-blur-lg rounded-t-3xl p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom,24px))] shadow-2xl border border-white/50 w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">{title}</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-800">閉じる</button>

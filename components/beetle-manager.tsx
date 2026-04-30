@@ -197,7 +197,7 @@ export function BeetleManager() {
     URL.revokeObjectURL(url);
   };
   return (
-    <div className="app-container bg-[#F8F9FA] min-h-screen pb-[calc(120px+env(safe-area-inset-bottom,24px))]">
+    <div className="app-container bg-[#F8F9FA] min-h-screen pb-[calc(140px+env(safe-area-inset-bottom,32px))]">
       <header className="px-6 pt-8 pb-4 flex justify-between items-end">
         <div>
           <p className="text-[12px] font-bold text-[#8B5A2B] uppercase tracking-widest mb-1">Breeding Log</p>

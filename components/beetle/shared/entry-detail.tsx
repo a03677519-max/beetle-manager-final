@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { X, Edit2 } from "lucide-react";
+import { X, Edit2, Copy } from "lucide-react";
 import type { BeetleEntry } from "@/types/beetle";
 import { AdultDetail } from "@/components/beetle/adult/adult-detail";
 import { LarvaDetail } from "@/components/beetle/larva/larva-detail";
 import { SpawnSetDetail } from "@/components/beetle/spawn-set/spawn-set-detail";
 import { PhotoSection } from "@/components/beetle/shared/photo-section";
 import { useBeetleStore } from "@/store/use-beetle-store";
+import { buildGenerationLabel } from "@/components/entry-fields";
 
 export function EntryDetail({
   entry,
@@ -21,6 +22,34 @@ export function EntryDetail({
   isFetchingTemperature: boolean;
 }) {
   const startEditing = useBeetleStore((state) => state.startEditing);
+
+  const copyToClipboard = () => {
+    let text = `【個体データ】\n`;
+    text += `種類: ${entry.japaneseName}\n`;
+    text += `学名: ${entry.scientificName}\n`;
+    text += `管理名: ${entry.managementName || "-"}\n`;
+    text += `産地: ${entry.locality || "-"}\n`;
+    text += `累代: ${buildGenerationLabel(entry.generation)}\n`;
+    
+    if (entry.type === "成虫") {
+      text += `性別: ${entry.gender}\n`;
+      text += `羽化日: ${entry.emergenceDate || "-"}\n`;
+    } else if (entry.type === "幼虫") {
+      text += `状態: 幼虫\n`;
+      if (entry.logs && entry.logs.length > 0) {
+        const latest = entry.logs[0];
+        text += `最新計測: ${latest.date} / ${latest.weight}g / ${latest.stage}\n`;
+      }
+    } else if (entry.type === "産卵セット") {
+      text += `セット日: ${entry.setDate || "-"}\n`;
+    }
+    
+    navigator.clipboard.writeText(text).then(() => {
+      alert("データをコピーしました");
+    }).catch(() => {
+      alert("コピーに失敗しました");
+    });
+  };
 
   return (
     <motion.div className="fixed inset-0 z-50 flex flex-col justify-end pointer-events-none">
@@ -44,6 +73,14 @@ export function EntryDetail({
             <p className="text-[12px] font-serif italic text-gray-400">{entry.scientificName}</p>
           </div>
           <div className="flex items-center gap-2">
+            <button 
+              type="button" 
+              className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-blue-500 transition-colors" 
+              onClick={copyToClipboard}
+              title="テキストをコピー"
+            >
+              <Copy size={18} />
+            </button>
             <button 
               type="button" 
               className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-[#2D5A27] transition-colors" 
@@ -71,7 +108,7 @@ export function EntryDetail({
           {entry.type === "産卵セット" ? <SpawnSetDetail entry={entry} /> : null}
         </div>
 
-        <div className="fixed bottom-0 left-0 w-full p-4 pb-[calc(1.5rem+env(safe-area-inset-bottom,20px))] bg-white/90 backdrop-blur-md border-t z-20">
+        <div className="fixed bottom-0 left-0 w-full p-4 pb-[calc(2rem+env(safe-area-inset-bottom,32px))] bg-white/90 backdrop-blur-md border-t z-20">
           <button className="w-full bg-[#2D5A27] text-white font-bold h-[52px] rounded-2xl shadow-lg active:scale-[0.98] transition-all">
             作業を記録
           </button>

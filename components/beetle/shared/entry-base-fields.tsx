@@ -1,9 +1,10 @@
 "use client";
 
-import { Field, GenerationRollField } from "@/components/entry-fields";
+import { Field, GenerationRollField, BottomSheetInput } from "@/components/entry-fields";
 import type { AdultFormValues, BeetleEntry } from "@/types/beetle";
 
 export function EntryBaseFields({
+  managementName,
   japaneseName,
   scientificName,
   locality,
@@ -12,6 +13,7 @@ export function EntryBaseFields({
   allEntries,
   onChange,
 }: {
+  managementName: string;
   japaneseName: string;
   scientificName: string;
   locality: string;
@@ -19,6 +21,7 @@ export function EntryBaseFields({
   linkedEntryId?: string;
   allEntries: BeetleEntry[];
   onChange: (patch: {
+    managementName?: string;
     japaneseName?: string;
     scientificName?: string;
     locality?: string;
@@ -28,29 +31,30 @@ export function EntryBaseFields({
 }) {
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 mb-1">
-        <Field label="和名">
-          <input
-            value={japaneseName}
-            onChange={(event) => onChange({ japaneseName: event.target.value })}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 focus:border-[#2D5A27] outline-none transition-all"
-          />
-        </Field>
-        <Field label="学名">
-          <input
-            value={scientificName}
-            onChange={(event) => onChange({ scientificName: event.target.value })}
-            className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 focus:border-[#2D5A27] outline-none transition-all"
-          />
-        </Field>
-      </div>
-      <Field label="産地">
-        <input
-          value={locality}
-          onChange={(event) => onChange({ locality: event.target.value })}
-          className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 focus:border-[#2D5A27] outline-none transition-all"
-        />
-      </Field>
+      <BottomSheetInput
+        label="管理名 (No/名前)"
+        value={managementName || ""}
+        placeholder="例: P-01 / L-24-01"
+        onChange={(val) => onChange({ managementName: val })}
+      />
+      <BottomSheetInput
+        label="和名"
+        value={japaneseName}
+        placeholder="和名を入力"
+        onChange={(val) => onChange({ japaneseName: val })}
+      />
+      <BottomSheetInput
+        label="学名"
+        value={scientificName}
+        placeholder="学名を入力"
+        onChange={(val) => onChange({ scientificName: val })}
+      />
+      <BottomSheetInput
+        label="産地"
+        value={locality}
+        placeholder="産地を入力"
+        onChange={(val) => onChange({ locality: val })}
+      />
       <GenerationRollField
         value={generation}
         onChange={(value) => onChange({ generation: value })}

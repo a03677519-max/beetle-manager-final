@@ -1,7 +1,9 @@
 "use client";
 
 import { Thermometer } from "lucide-react";
-import { useMemo, useRef, useEffect } from "react";
+import { useMemo, useRef, useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 
 import {
   COHABITATION_OPTIONS,
@@ -24,6 +26,11 @@ import { buildDateFromParts, createDateOptions, splitDate, today } from "@/lib/u
 
 const dateOptions = createDateOptions();
 
+function Portal({ children }: { children: React.ReactNode }) {
+  if (typeof window === "undefined") return null;
+  return createPortal(children, document.body);
+}
+
 export function Field({
   label,
   children,
@@ -33,7 +40,7 @@ export function Field({
 }) {
   return (
     <label className="field">
-      <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block tracking-wider uppercase">{label}</span>
+      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1.5 block tracking-wider uppercase">{label}</span>
       {children}
     </label>
   );
@@ -53,7 +60,7 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
   useEffect(() => {
     const index = options.indexOf(value);
     if (index !== -1 && scrollRef.current) {
-      const targetScroll = index * 32;
+      const targetScroll = index * 28;
       if (scrollRef.current.scrollTop !== targetScroll) {
         scrollRef.current.scrollTop = targetScroll;
       }
@@ -67,7 +74,7 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
     
     const container = e.currentTarget;
     timerRef.current = setTimeout(() => {
-      const index = Math.round(container.scrollTop / 32);
+      const index = Math.round(container.scrollTop / 28);
       if (options[index] !== undefined && String(options[index]) !== String(value)) {
         onChange(String(options[index]));
       }
@@ -90,10 +97,10 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
       onScroll={handleScroll}
       onTouchStart={stopPropagation}
       onTouchMove={stopPropagation}
-      className="flex-1 h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[44px]"
+      className="flex-1 h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[36px]"
     >
       {options.map((option) => (
-        <div key={option} className="h-8 flex items-center justify-center snap-center text-base font-bold text-gray-700">
+        <div key={option} className="h-7 flex items-center justify-center snap-center text-sm font-bold text-gray-700">
           {option}
         </div>
       ))}
@@ -103,13 +110,13 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
 
 function PickerContainer({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative h-[120px] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-inner flex">
+    <div className="relative h-[100px] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-inner flex">
       {/* グラデーションオーバーレイ */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white via-transparent to-white pointer-events-none z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-transparent to-white/90 pointer-events-none z-10" />
       
       {/* センターハイライト */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-        <div className="w-[96%] h-8 border-y border-[#2D5A27]/20 bg-[#2D5A27]/5 rounded-lg" />
+        <div className="w-[96%] h-7 border-y border-[#2D5A27]/20 bg-[#2D5A27]/5 rounded-lg" />
       </div>
       {children}
     </div>
@@ -151,7 +158,7 @@ export function DateRollField({
   return (
     <div className="field">
       <div className="flex justify-between items-center mb-2">
-        <span className="text-[12px] font-bold text-[var(--secondary)] tracking-wider uppercase">{label}</span>
+        <span className="text-[11px] font-bold text-[var(--secondary)] tracking-wider uppercase">{label}</span>
         <label className="flex items-center gap-2 text-xs">
           <input
             type="checkbox"
@@ -195,7 +202,7 @@ export function GenerationRollField({
 
   return (
     <div className="field">
-      <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block tracking-wider uppercase">累代</span>
+      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1.5 block tracking-wider uppercase">累代</span>
       <PickerContainer>
         <DrumrollPicker
           options={GENERATION_PRIMARY}
@@ -250,14 +257,14 @@ export function LevelButtonGroup({
 }) {
   return (
     <div className="field">
-      <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1.5 block uppercase tracking-wider">{label}</span>
       <div className="flex bg-[#F1F3F5] rounded-xl p-1 gap-1">
         {values.map((option) => (
           <button
             key={option}
             type="button"
             style={{ width: `${100 / values.length}%` }}
-            className={`py-1.5 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"}`}
+            className={`py-1 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"}`}
             onClick={() => onChange(option)}
           >
             {option}
@@ -268,12 +275,102 @@ export function LevelButtonGroup({
   );
 }
 
-export function PressureField(props: { value: number; onChange: (value: number) => void }) {
-  return <LevelButtonGroup label="詰圧" values={PRESSURE_LEVELS} value={props.value} onChange={props.onChange} />;
+export function BottomSheetInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}: {
+  label: string;
+  value: string | number;
+  onChange: (val: string) => void;
+  placeholder?: string;
+  type?: "text" | "textarea";
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  return (
+    <div className="field">
+      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1.5 block tracking-wider uppercase">{label}</span>
+      <button
+        type="button"
+        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-left text-gray-700 min-h-[34px] transition-colors active:bg-gray-50"
+        onClick={() => setIsOpen(true)}
+      >
+        {value || <span className="text-gray-300">{placeholder}</span>}
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <Portal>
+            <div className="fixed inset-0 z-[100] flex items-end justify-center pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/40 backdrop-blur-[2px] pointer-events-auto"
+                onClick={() => setIsOpen(false)}
+              />
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl space-y-4 pointer-events-auto z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[11px] font-bold text-[#8B5A2B] uppercase tracking-wider">{label}</span>
+                  <button
+                    type="button"
+                    className="bg-[#2D5A27] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    完了
+                  </button>
+                </div>
+                {type === "textarea" ? (
+                  <textarea
+                    ref={inputRef as any}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    rows={5}
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-[16px] focus:bg-white focus:border-[#2D5A27] outline-none transition-all"
+                  />
+                ) : (
+                  <input
+                    ref={inputRef as any}
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-2 text-[16px] focus:bg-white focus:border-[#2D5A27] outline-none transition-all"
+                  />
+                )}
+                <div className="h-[env(safe-area-inset-bottom,16px)]" />
+              </motion.div>
+            </div>
+          </Portal>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 export function MoistureField(props: { value: number; onChange: (value: number) => void }) {
   return <LevelButtonGroup label="水分量" values={MOISTURE_LEVELS} value={props.value} onChange={props.onChange} />;
+}
+
+export function PressureField(props: { value: number; onChange: (value: number) => void }) {
+  return <LevelButtonGroup label="詰圧" values={PRESSURE_LEVELS} value={props.value} onChange={props.onChange} />;
 }
 
 export function SwitchBotTemperatureField({
@@ -289,10 +386,10 @@ export function SwitchBotTemperatureField({
 }) {
   return (
     <div className="field">
-      <span className="text-[12px] font-bold text-[#8B5A2B] mb-1 block uppercase tracking-wider">温度 (℃)</span>
+      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1 block uppercase tracking-wider">温度 (℃)</span>
       <div className="relative">
         <input 
-          className="w-full h-[40px] px-4 rounded-xl border border-[#DEE2E6] focus:border-[#2D5A27] focus:ring-1 focus:ring-[#2D5A27] outline-none text-[15px] placeholder:text-gray-300"
+          className="w-full h-[36px] px-3 rounded-xl border border-[#DEE2E6] focus:border-[#2D5A27] focus:ring-1 focus:ring-[#2D5A27] outline-none text-sm placeholder:text-gray-300"
           value={value} 
           onChange={(event) => onChange(event.target.value)} 
           placeholder="例: 22.5 や 21〜23" 

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   DateRollField,
+  BottomSheetInput,
   Field,
   GenderField,
   LarvaStageField,
@@ -66,22 +67,28 @@ export function LarvaLogForm({
       <div className="section-title">飼育ログ</div>
       <DateRollField label="日付" value={values.date} onChange={(value) => setValues({ ...values, date: value })} />
       <div className="grid grid-cols-2 gap-3">
-        <Field label="使用マット">
-          <input value={values.substrate} onChange={(event) => setValues({ ...values, substrate: event.target.value })} />
-        </Field>
-        <Field label="ボトルサイズ">
-          <input value={values.bottleSize} onChange={(event) => setValues({ ...values, bottleSize: event.target.value })} />
-        </Field>
+        <BottomSheetInput
+          label="使用マット"
+          value={values.substrate}
+          placeholder="マット名"
+          onChange={(val) => setValues({ ...values, substrate: val })}
+        />
+        <BottomSheetInput
+          label="ボトルサイズ"
+          value={values.bottleSize}
+          placeholder="サイズ"
+          onChange={(val) => setValues({ ...values, bottleSize: val })}
+        />
       </div>
       <PressureField value={values.pressure} onChange={(value) => setValues({ ...values, pressure: value })} />
       <MoistureField value={values.moisture} onChange={(value) => setValues({ ...values, moisture: value })} />
+      <BottomSheetInput
+        label="体重"
+        value={values.weight}
+        placeholder="体重(g)"
+        onChange={(val) => setValues({ ...values, weight: val })}
+      />
       <LarvaStageField value={values.stage} onChange={(value) => setValues({ ...values, stage: value })} />
-      <Field label="体重">
-        <input 
-          value={values.weight} 
-          onChange={(event) => setValues({ ...values, weight: event.target.value })} 
-        />
-      </Field>
       <GenderField value={values.gender} onChange={(value) => setValues({ ...values, gender: value })} />
       <SwitchBotTemperatureField
         value={values.temperature}
