@@ -17,7 +17,7 @@ export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-md border-t border-[#DEE2E6] h-[calc(64px+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] flex justify-around items-center z-40 shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
+    <nav className="fixed bottom-2 left-2 right-2 bg-white/90 backdrop-blur-md border border-[#DEE2E6] rounded-2xl h-[64px] flex justify-around items-center z-40 shadow-xl">
       {tabs.slice(0, 3).map((tab) => (
         <button
           key={tab.name}
@@ -34,7 +34,7 @@ export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: {
       
       <button 
         onClick={onAdd}
-        className="w-[60px] h-[60px] bg-[var(--primary)] text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(37,99,235,0.3)] -mt-12 border-4 border-[#F8F9FA] active:scale-95 transition-all"
+        className="w-[60px] h-[60px] bg-[var(--primary)] text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(74,144,226,0.3)] -mt-12 border-4 border-[#F8F9FA] active:scale-95 transition-all"
       >
         <Plus size={24} />
       </button>

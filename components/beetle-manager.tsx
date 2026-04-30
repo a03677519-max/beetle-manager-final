@@ -389,6 +389,7 @@ export function BeetleManager() {
             entries={entries}
             setSelectedEntry={setSelectedEntry}
             setSelectedType={setSelectedType}
+            setActiveTab={setActiveTab}
             handleExport={handleExport}
             handleImport={handleImport}
             isPersisted={isPersisted}

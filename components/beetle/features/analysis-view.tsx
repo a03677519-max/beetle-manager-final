@@ -10,6 +10,7 @@ interface AnalysisViewProps {
   entries: BeetleEntry[];
   setSelectedEntry: (entry: BeetleEntry | null) => void;
   setSelectedType: (type: EntryType | "すべて") => void;
+  setActiveTab: (tab: string) => void;
   handleExport: () => void;
   handleImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
   isPersisted: boolean;
@@ -30,7 +31,7 @@ interface GroupStats {
   lifespans: number[];
 }
 
-export function AnalysisView({ entries, setSelectedEntry, setSelectedType, handleExport, handleImport, isPersisted, requestPersistence }: AnalysisViewProps) {
+export function AnalysisView({ entries, setSelectedEntry, setSelectedType, setActiveTab, handleExport, handleImport, isPersisted, requestPersistence }: AnalysisViewProps) {
   const [expandedNames, setExpandedNames] = useState<string[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<{ label: string; stats: any[] } | null>(null);
 
@@ -107,7 +108,7 @@ export function AnalysisView({ entries, setSelectedEntry, setSelectedType, handl
             {expandedNames.includes(stat.scientificName) && (
               <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="px-5 pb-5 grid grid-cols-2 gap-3 border-t border-gray-50/50 pt-4">
                 <AnalysisItem label="サイズ (max/min)" value={stat.maxWeight !== null && stat.minWeight !== null ? `${stat.maxWeight}g / ${stat.minWeight}g` : "-"} onClick={() => setSelectedAnalysis({ label: "サイズ", stats: stat.weights })} isLink />
-                <AnalysisItem label="産卵方法" value={stat.spawnMethods.length > 0 ? stat.spawnMethods[0] : "-"} onClick={() => setSelectedType("産卵セット")} isLink />
+                <AnalysisItem label="産卵方法" value={stat.spawnMethods.length > 0 ? stat.spawnMethods[0] : "-"} onClick={() => { setSelectedType("産卵セット"); setActiveTab("産卵セット"); }} isLink />
                 <AnalysisItem label="休眠期間" value={stat.dormancyDurations.length > 0 ? `${Math.round(stat.dormancyDurations.reduce((a, b) => a + b, 0) / stat.dormancyDurations.length)}日` : "-"} onClick={() => setSelectedAnalysis({ label: "休眠期間", stats: stat.dormancyDurations })} isLink />
                 <AnalysisItem label="平均寿命" value={stat.lifespans.length > 0 ? `${Math.round(stat.lifespans.reduce((a, b) => a + b, 0) / stat.lifespans.length)}日` : "-"} onClick={() => setSelectedAnalysis({ label: "寿命", stats: stat.lifespans })} isLink />
                 <AnalysisItem label="平均羽化期間" value={stat.avgEmergence ? `${stat.avgEmergence}日` : "-"} />
@@ -126,7 +127,8 @@ export function AnalysisView({ entries, setSelectedEntry, setSelectedType, handl
                <button onClick={() => setSelectedAnalysis(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
                <h3 className="font-bold text-lg mb-4">{selectedAnalysis.label}の分析</h3>
                <div className="h-40 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 mb-4 text-xs">グラフ（実装予定）</div>
-               <a href="/analysis/data-table" className="block w-full text-center bg-[var(--primary)] text-white py-3 rounded-2xl font-bold text-sm">詳細データを確認</a>
+               <a href="/analysis/data-table" className="block w-full text-center bg-[var(--primary)] text-white py-3 rounded-2xl font-bold text-sm mb-2">詳細データを確認</a>
+               <button onClick={() => setSelectedAnalysis(null)} className="w-full py-3 text-center text-sm text-gray-500 font-bold border border-gray-200 rounded-2xl">閉じる</button>
              </motion.div>
           </div>
         )}
