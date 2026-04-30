@@ -3,12 +3,13 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp, Download, Upload } from "lucide-react";
-import type { BeetleEntry, GitHubSettings } from "@/types/beetle";
+import type { BeetleEntry, GitHubSettings, EntryType } from "@/types/beetle";
 import { daysBetween } from "@/lib/utils";
 
 interface AnalysisViewProps {
   entries: BeetleEntry[];
   setSelectedEntry: (entry: BeetleEntry | null) => void;
+  setSelectedType: (type: EntryType | "すべて") => void;
   handleExport: () => void;
   handleImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
   isPersisted: boolean;
@@ -22,7 +23,6 @@ interface GroupStats {
   japaneseName: string;
   weights: number[];
   maxWeightEntry: BeetleEntry | null;
-  spawnSetCount: number;
   emergenceDurations: number[];
   feedingDurations: number[];
   temperatures: number[];
@@ -32,7 +32,7 @@ interface GroupStats {
   lifespans: number[];
 }
 
-export function AnalysisView({ entries, setSelectedEntry, handleExport, handleImport, isPersisted, requestPersistence, gitHub, updateGitHub }: AnalysisViewProps) {
+export function AnalysisView({ entries, setSelectedEntry, setSelectedType, handleExport, handleImport, isPersisted, requestPersistence, gitHub, updateGitHub }: AnalysisViewProps) {
   const [expandedNames, setExpandedNames] = useState<string[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<{ label: string; stats: any[] } | null>(null);
 
@@ -46,7 +46,6 @@ export function AnalysisView({ entries, setSelectedEntry, handleExport, handleIm
           japaneseName: entry.japaneseName || "",
           weights: [],
           maxWeightEntry: null,
-          spawnSetCount: 0,
           emergenceDurations: [],
           feedingDurations: [],
           temperatures: [],
@@ -57,7 +56,6 @@ export function AnalysisView({ entries, setSelectedEntry, handleExport, handleIm
         };
       }
       if (entry.type === "産卵セット") {
-        groups[key].spawnSetCount++;
         if (entry.temperature) groups[key].temperatures.push(Number(entry.temperature));
         if (entry.substrate) groups[key].spawnMethods.push(entry.substrate);
       }
@@ -110,12 +108,10 @@ export function AnalysisView({ entries, setSelectedEntry, handleExport, handleIm
           <AnimatePresence>
             {expandedNames.includes(stat.scientificName) && (
               <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="px-5 pb-5 grid grid-cols-2 gap-3 border-t border-gray-50/50 pt-4">
-                <AnalysisItem label="最大サイズ" value={stat.maxWeight ? `${stat.maxWeight}g` : "-"} onClick={() => setSelectedAnalysis({ label: "最大サイズ", stats: stat.weights })} isLink />
-                <AnalysisItem label="最小サイズ" value={stat.minWeight ? `${stat.minWeight}g` : "-"} onClick={() => setSelectedAnalysis({ label: "最小サイズ", stats: stat.weights })} isLink />
-                <AnalysisItem label="産卵方法" value={stat.spawnMethods.length > 0 ? stat.spawnMethods[0] : "-"} />
+                <AnalysisItem label="サイズ (max/min)" value={stat.maxWeight !== null && stat.minWeight !== null ? `${stat.maxWeight}g / ${stat.minWeight}g` : "-"} onClick={() => setSelectedAnalysis({ label: "サイズ", stats: stat.weights })} isLink />
+                <AnalysisItem label="産卵方法" value={stat.spawnMethods.length > 0 ? stat.spawnMethods[0] : "-"} onClick={() => setSelectedType("産卵セット")} isLink />
                 <AnalysisItem label="休眠期間" value={stat.dormancyDurations.length > 0 ? `${Math.round(stat.dormancyDurations.reduce((a, b) => a + b, 0) / stat.dormancyDurations.length)}日` : "-"} onClick={() => setSelectedAnalysis({ label: "休眠期間", stats: stat.dormancyDurations })} isLink />
                 <AnalysisItem label="平均寿命" value={stat.lifespans.length > 0 ? `${Math.round(stat.lifespans.reduce((a, b) => a + b, 0) / stat.lifespans.length)}日` : "-"} onClick={() => setSelectedAnalysis({ label: "寿命", stats: stat.lifespans })} isLink />
-                <AnalysisItem label="産卵セット数" value={`${stat.spawnSetCount}件`} />
                 <AnalysisItem label="平均羽化期間" value={stat.avgEmergence ? `${stat.avgEmergence}日` : "-"} />
               </motion.div>
             )}
@@ -131,7 +127,7 @@ export function AnalysisView({ entries, setSelectedEntry, handleExport, handleIm
              <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl relative z-10">
                <h3 className="font-bold text-lg mb-4">{selectedAnalysis.label}の分析</h3>
                <div className="h-40 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 mb-4 text-xs">グラフ（実装予定）</div>
-               <a href="#" className="block w-full text-center bg-[#2D5A27] text-white py-3 rounded-2xl font-bold text-sm">エクセル形式でダウンロード</a>
+               <a href="/analysis/data-table" className="block w-full text-center bg-[#2D5A27] text-white py-3 rounded-2xl font-bold text-sm">詳細データを確認</a>
              </motion.div>
           </div>
         )}

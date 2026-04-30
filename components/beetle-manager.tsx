@@ -384,6 +384,7 @@ export function BeetleManager() {
           <AnalysisView
             entries={entries}
             setSelectedEntry={setSelectedEntry}
+            setSelectedType={setSelectedType}
             handleExport={handleExport}
             handleImport={handleImport}
             isPersisted={isPersisted}
