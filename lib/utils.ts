@@ -66,3 +66,14 @@ export const daysBetween = (start: string, end: string) => {
   if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return null;
   return Math.ceil((endDate.getTime() - startDate.getTime()) / 86400000);
 };
+
+export function debounce<T extends (...args: any[]) => void>(
+  callback: T,
+  wait: number
+) {
+  let timeout: NodeJS.Timeout | null = null;
+  return (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
+    timeout = setTimeout(() => callback(...args), wait);
+  };
+}

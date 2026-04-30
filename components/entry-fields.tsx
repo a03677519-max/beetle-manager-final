@@ -275,6 +275,88 @@ export function LevelButtonGroup({
   );
 }
 
+export function BottomSheetSelect({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (val: string) => void;
+  placeholder?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="field">
+      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1.5 block tracking-wider uppercase">{label}</span>
+      <button
+        type="button"
+        className="w-full bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-left text-gray-700 min-h-[34px] transition-colors active:bg-gray-50"
+        onClick={() => setIsOpen(true)}
+      >
+        {value || <span className="text-gray-300">{placeholder}</span>}
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <Portal>
+            <div className="fixed inset-0 z-[100] flex items-end justify-center pointer-events-none">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/40 backdrop-blur-[2px] pointer-events-auto"
+                onClick={() => setIsOpen(false)}
+              />
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl space-y-4 pointer-events-auto z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[11px] font-bold text-[#8B5A2B] uppercase tracking-wider">{label}</span>
+                  <button
+                    type="button"
+                    className="bg-[#2D5A27] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    閉じる
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                  {options.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      className={`w-full text-left px-4 py-3 rounded-2xl font-bold ${
+                        value === option ? "bg-[#2D5A27] text-white" : "bg-gray-50 text-gray-700"
+                      }`}
+                      onClick={() => {
+                        onChange(option);
+                        setIsOpen(false);
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+                <div className="h-[env(safe-area-inset-bottom,16px)]" />
+              </motion.div>
+            </div>
+          </Portal>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function BottomSheetInput({
   label,
   value,

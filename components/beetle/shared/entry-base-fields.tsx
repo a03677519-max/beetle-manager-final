@@ -1,6 +1,7 @@
 "use client";
 
-import { Field, GenerationRollField, BottomSheetInput } from "@/components/entry-fields";
+import { useMemo } from "react";
+import { Field, GenerationRollField, BottomSheetInput, BottomSheetSelect } from "@/components/entry-fields";
 import type { AdultFormValues, BeetleEntry } from "@/types/beetle";
 
 export function EntryBaseFields({
@@ -29,6 +30,35 @@ export function EntryBaseFields({
     linkedEntryId?: string;
   }) => void;
 }) {
+  const japaneseNameOptions = useMemo(() => {
+    if (!scientificName) return [];
+    const options = new Set<string>();
+    allEntries.forEach((entry) => {
+      if (entry.scientificName === scientificName && entry.japaneseName) {
+        options.add(entry.japaneseName);
+      }
+    });
+    return Array.from(options);
+  }, [scientificName, allEntries]);
+
+  const japaneseToScientificMap = useMemo(() => {
+    const map = new Map<string, string>();
+    allEntries.forEach((entry) => {
+      if (entry.japaneseName && entry.scientificName) {
+        map.set(entry.japaneseName, entry.scientificName);
+      }
+    });
+    return map;
+  }, [allEntries]);
+
+  const handleJapaneseNameChange = (val: string) => {
+    const patch: { japaneseName: string; scientificName?: string } = { japaneseName: val };
+    if (!scientificName && japaneseToScientificMap.has(val)) {
+      patch.scientificName = japaneseToScientificMap.get(val);
+    }
+    onChange(patch);
+  };
+
   return (
     <>
       <BottomSheetInput
@@ -37,12 +67,21 @@ export function EntryBaseFields({
         placeholder="例: P-01 / L-24-01"
         onChange={(val) => onChange({ managementName: val })}
       />
-      <BottomSheetInput
-        label="和名"
-        value={japaneseName}
-        placeholder="和名を入力"
-        onChange={(val) => onChange({ japaneseName: val })}
-      />
+      {japaneseNameOptions.length > 0 ? (
+        <BottomSheetSelect
+          label="和名"
+          value={japaneseName}
+          options={japaneseNameOptions}
+          onChange={handleJapaneseNameChange}
+        />
+      ) : (
+        <BottomSheetInput
+          label="和名"
+          value={japaneseName}
+          placeholder="和名を入力"
+          onChange={handleJapaneseNameChange}
+        />
+      )}
       <BottomSheetInput
         label="学名"
         value={scientificName}
