@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronUp, Download, Upload } from "lucide-react";
-import type { BeetleEntry, GitHubSettings, EntryType } from "@/types/beetle";
+import { ChevronDown, ChevronUp, Download, Upload, X } from "lucide-react";
+import type { BeetleEntry, EntryType } from "@/types/beetle";
 import { daysBetween } from "@/lib/utils";
 
 interface AnalysisViewProps {
@@ -14,8 +14,6 @@ interface AnalysisViewProps {
   handleImport: (event: React.ChangeEvent<HTMLInputElement>) => void;
   isPersisted: boolean;
   requestPersistence: () => void;
-  gitHub: GitHubSettings;
-  updateGitHub: (input: Partial<GitHubSettings>) => void;
 }
 
 interface GroupStats {
@@ -32,7 +30,7 @@ interface GroupStats {
   lifespans: number[];
 }
 
-export function AnalysisView({ entries, setSelectedEntry, setSelectedType, handleExport, handleImport, isPersisted, requestPersistence, gitHub, updateGitHub }: AnalysisViewProps) {
+export function AnalysisView({ entries, setSelectedEntry, setSelectedType, handleExport, handleImport, isPersisted, requestPersistence }: AnalysisViewProps) {
   const [expandedNames, setExpandedNames] = useState<string[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<{ label: string; stats: any[] } | null>(null);
 
@@ -125,30 +123,22 @@ export function AnalysisView({ entries, setSelectedEntry, setSelectedType, handl
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedAnalysis(null)} />
              <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-white p-6 rounded-3xl w-full max-w-sm shadow-2xl relative z-10">
+               <button onClick={() => setSelectedAnalysis(null)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><X size={20} /></button>
                <h3 className="font-bold text-lg mb-4">{selectedAnalysis.label}の分析</h3>
                <div className="h-40 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 mb-4 text-xs">グラフ（実装予定）</div>
-               <a href="/analysis/data-table" className="block w-full text-center bg-[#2D5A27] text-white py-3 rounded-2xl font-bold text-sm">詳細データを確認</a>
+               <a href="/analysis/data-table" className="block w-full text-center bg-[var(--primary)] text-white py-3 rounded-2xl font-bold text-sm">詳細データを確認</a>
              </motion.div>
           </div>
         )}
       </AnimatePresence>
 
       <section className="bg-white/60 backdrop-blur-md p-6 rounded-[24px] border border-white/60 shadow-sm mt-8">
-        <h3 className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-4">GitHub Sync</h3>
-        <div className="space-y-2 mb-4">
-          <input className="w-full text-xs p-2 rounded-lg border border-gray-100" placeholder="Token" value={gitHub.token} onChange={e => updateGitHub({ token: e.target.value })} />
-          <div className="grid grid-cols-2 gap-2">
-            <input className="text-xs p-2 rounded-lg border border-gray-100" placeholder="Owner" value={gitHub.owner} onChange={e => updateGitHub({ owner: e.target.value })} />
-            <input className="text-xs p-2 rounded-lg border border-gray-100" placeholder="Repo" value={gitHub.repo} onChange={e => updateGitHub({ repo: e.target.value })} />
-          </div>
-        </div>
-
         <h3 className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-4">Storage Management</h3>
         <div className="mb-4 p-4 bg-white/40 rounded-2xl border border-white/60 flex items-center justify-between">
           <div className="text-[10px] font-bold text-gray-600">
             {isPersisted ? "✅ 永続ストレージ有効" : "⚠️ 削除される可能性があります"}
           </div>
-          {!isPersisted && <button onClick={requestPersistence} className="text-[10px] bg-[#2D5A27] text-white px-3 py-1 rounded-full font-bold">有効化</button>}
+          {!isPersisted && <button onClick={requestPersistence} className="text-[10px] bg-[var(--primary)] text-white px-3 py-1 rounded-full font-bold">有効化</button>}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <button onClick={handleExport} className="flex items-center justify-center gap-2 bg-white/80 py-3 rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all"><Download size={14} /> 書き出し</button>
@@ -163,7 +153,7 @@ function AnalysisItem({ label, value, onClick, isLink }: { label: string; value:
   return (
     <div onClick={onClick} className={`p-3 rounded-2xl bg-white/40 border border-white/60 ${onClick ? "cursor-pointer active:bg-white/60" : ""}`}>
       <div className="text-[9px] font-bold text-gray-400 uppercase mb-1">{label}</div>
-      <div className={`text-sm font-black ${isLink ? "text-[#2D5A27] underline decoration-dotted" : "text-gray-800"}`}>{value}</div>
+      <div className={`text-sm font-black ${isLink ? "text-[var(--primary)] underline decoration-dotted" : "text-gray-800"}`}>{value}</div>
     </div>
   );
 }

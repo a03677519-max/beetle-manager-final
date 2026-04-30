@@ -48,8 +48,6 @@ export function BeetleManager() {
   const deleteEntry = useBeetleStore((state) => state.deleteEntry);
   const importData = useBeetleStore((state) => state.importData);
   const switchBot = useBeetleStore((state) => state.switchBot);
-  const gitHub = useBeetleStore((state) => state.gitHub);
-  const updateGitHub = useBeetleStore((state) => state.updateGitHub);
   const { fetchTemperature, isFetching } = useSwitchBot();
 
   const [selectedEntry, setSelectedEntry] = useState<BeetleEntry | null>(null);
@@ -377,6 +375,12 @@ export function BeetleManager() {
                 key={entry.id}
                 entry={entry}
                 onOpen={setSelectedEntry}
+                onDelete={(e, id) => {
+                  e.stopPropagation();
+                  if (window.confirm("本当に削除しますか？")) {
+                    deleteEntry(id);
+                  }
+                }}
               />
             ))
           )
@@ -389,8 +393,6 @@ export function BeetleManager() {
             handleImport={handleImport}
             isPersisted={isPersisted}
             requestPersistence={requestPersistence}
-            gitHub={gitHub}
-            updateGitHub={updateGitHub}
           />
         ) : activeTab === "タスク" ? (
           <TaskView

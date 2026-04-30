@@ -8,7 +8,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: "#2D5A27",
+        primary: "#2563EB",
         text: {
           DEFAULT: "#212529",
           secondary: "#495057",

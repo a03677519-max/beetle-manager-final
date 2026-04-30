@@ -34,7 +34,7 @@ export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: {
       
       <button 
         onClick={onAdd}
-        className="w-[60px] h-[60px] bg-[#2D5A27] text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(45,90,39,0.3)] -mt-12 border-4 border-[#F8F9FA] active:scale-95 transition-all"
+        className="w-[60px] h-[60px] bg-[var(--primary)] text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(37,99,235,0.3)] -mt-12 border-4 border-[#F8F9FA] active:scale-95 transition-all"
       >
         <Plus size={24} />
       </button>

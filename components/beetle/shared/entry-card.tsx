@@ -6,14 +6,17 @@ import { buildGenerationLabel } from "@/components/entry-fields";
 import type { BeetleEntry } from "@/types/beetle";
 import { daysBetween, today } from "@/lib/utils";
 import Image from "next/image";
+import { Trash2 } from "lucide-react";
 
 export function EntryCard({
   entry,
   onOpen,
+  onDelete,
   viewMode = "list",
 }: {
   entry: BeetleEntry;
   onOpen: (entry: BeetleEntry) => void;
+  onDelete?: (e: React.MouseEvent, id: string) => void;
   viewMode?: "list" | "grid";
 }) {
   const logs = entry.type === "幼虫" ? entry.logs : [];
@@ -34,19 +37,17 @@ export function EntryCard({
   if (viewMode === "grid") {
     return (
       <article 
-        className="flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden active:scale-[0.97] transition-all"
+        className="flex flex-col bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden active:scale-[0.97] transition-all relative"
         onClick={() => onOpen(entry)}
       >
-        <div className="relative aspect-square w-full">
-          {entry.photos[0] ? (
+        {entry.photos[0] && (
+          <div className="relative aspect-square w-full">
             <Image src={entry.photos[0]} alt={entry.japaneseName} fill className="object-cover" unoptimized />
-          ) : (
-            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-300">No Image</div>
-          )}
-          <div className="absolute top-2 right-2">
-            <StatusBadge stage={stage} />
+            <div className="absolute top-2 right-2">
+              <StatusBadge stage={stage} />
+            </div>
           </div>
-        </div>
+        )}
         <div className="p-3">
           <h3 className="font-bold text-gray-800 text-sm truncate">{entry.japaneseName}</h3>
           {latestWeight && (
@@ -56,6 +57,11 @@ export function EntryCard({
             </div>
           )}
         </div>
+        {onDelete && (
+          <button onClick={(e) => { e.stopPropagation(); onDelete(e, entry.id); }} className="absolute bottom-2 right-2 p-1.5 bg-black/50 text-white rounded-full">
+            <Trash2 size={14} />
+          </button>
+        )}
       </article>
     );
   }
@@ -65,33 +71,29 @@ export function EntryCard({
       className="flex bg-white rounded-[20px] p-4 shadow-[0_8px_20px_-4px_rgba(0,0,0,0.06)] cursor-pointer active:scale-[0.98] active:opacity-90 transition-all duration-200 select-none touch-manipulation relative overflow-hidden mb-4 border border-gray-100"
       onClick={() => onOpen(entry)}
     >
-      {entry.photos[0] ? (
+      {entry.photos[0] && (
         <div className="relative w-20 h-20 flex-shrink-0 rounded-2xl overflow-hidden mr-4 shadow-sm">
           <Image src={entry.photos[0]} alt={entry.japaneseName} fill className="object-cover" unoptimized />
         </div>
-      ) : (
-        <div className="relative w-20 h-20 flex-shrink-0 rounded-2xl overflow-hidden mr-4 bg-gray-100 flex items-center justify-center text-gray-300 text-[10px] font-bold uppercase tracking-tighter border border-gray-50">
-          No Image
-        </div>
       )}
       
-      <div className="flex-1 min-w-0"> {/* Added min-w-0 to prevent overflow */}
-        <div className="flex justify-between items-start mb-1"> {/* Adjusted margin */}
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start mb-1">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <h3 className="text-[17px] font-black text-[#212529] tracking-tight truncate">{entry.japaneseName}</h3> {/* Added truncate */}
+              <h3 className="text-[17px] font-black text-[#212529] tracking-tight truncate">{entry.japaneseName}</h3>
               {entry.type === "成虫" && (
                 <span className={`text-sm font-bold ${entry.gender === "オス" ? "text-blue-500" : entry.gender === "メス" ? "text-pink-500" : "text-gray-400"}`}>
                   {entry.gender === "オス" ? "♂" : entry.gender === "メス" ? "♀" : ""}
                 </span>
               )}
             </div>
-            <p className="text-[13px] italic text-[#8B5A2B] opacity-80 truncate">{entry.scientificName}</p> {/* Added truncate */}
+            <p className="text-[13px] italic text-[#8B5A2B] opacity-80 truncate">{entry.scientificName}</p>
           </div>
-          <StatusBadge stage={stage} className="ml-2" /> {/* Added margin-left */}
+          <StatusBadge stage={stage} className="ml-2" />
         </div>
         
-        <div className="flex justify-between items-end mt-3"> {/* Adjusted margin */}
+        <div className="flex justify-between items-end mt-3">
           <dl className="text-[12px] text-[#6C757D] space-y-0.5">
             <div>
               <span className="text-muted">産地:</span> {entry.locality || "-"}
@@ -107,7 +109,7 @@ export function EntryCard({
           {latestWeight && (
             <div className="text-right w-1/2">
               <div className="flex flex-col items-end justify-end">
-              <div className="text-[26px] font-black text-[#2D5A27] leading-none tracking-tighter">
+              <div className="text-[26px] font-black text-[var(--primary)] leading-none tracking-tighter">
                   {latestWeight}<span className="text-[14px] ml-0.5 font-bold">g</span>
                 </div>
                 <div className="mt-1.5 h-[14px]">
@@ -123,9 +125,15 @@ export function EntryCard({
           )}
         </div>
 
-        {/* スパイクライン（背景に溶け込む簡易グラフ） */}
+        {onDelete && (
+          <button onClick={(e) => { e.stopPropagation(); onDelete(e, entry.id); }} className="absolute bottom-4 right-4 text-gray-400 hover:text-red-500">
+            <Trash2 size={18} />
+          </button>
+        )}
+
+        {/* スパイクライン */}
         {logs.length > 1 && (
-          <div className="absolute right-4 bottom-4 w-24 h-8 opacity-20 pointer-events-none"> {/* Adjusted position and size */}
+          <div className="absolute right-4 bottom-4 w-24 h-8 opacity-20 pointer-events-none">
               <svg viewBox="0 0 100 40" className="w-full h-full">
               <path
                 d={`M ${logs.slice(0, 5).reverse().map((l, i) => `${(i * 25)},${40 - (l.weight / 50 * 30)}`).join(' L ')}`}
