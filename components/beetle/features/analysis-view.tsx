@@ -67,6 +67,24 @@ export function AnalysisView({
   const [viewGender, setViewGender] = useState<Gender>("オス");
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  // 前回の展開数を保持して、新規に展開された時のみスクロールするようにする
+  const prevExpandedCount = useRef(0);
+
+  useEffect(() => {
+    if (expandedNames.length > prevExpandedCount.current) {
+      const lastOpened = expandedNames[expandedNames.length - 1];
+      const element = itemRefs.current[lastOpened];
+      if (element) {
+        // アニメーションによるレイアウト変更を考慮して遅延実行
+        const timer = setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 300);
+        return () => clearTimeout(timer);
+      }
+    }
+    prevExpandedCount.current = expandedNames.length;
+  }, [expandedNames]);
+
   // 管理名で自然順ソートするユーティリティ
   const sortRecords = (records: AnalysisRecord[]) => {
     return [...records].sort((a, b) => a.mName.localeCompare(b.mName, "ja", { numeric: true }));
@@ -110,8 +128,7 @@ export function AnalysisView({
           if (log.temperature) groups[key].temperatures.push(Number(log.temperature));
         });
         if (entry.actualEmergenceDate) {
-          // 型エラーを回避するため any キャストまたは適切なプロパティチェック
-          const hatchDate = (entry as any).hatchDate || entry.createdAt;
+          const hatchDate = entry.hatchDate || entry.createdAt;
           const days = daysBetween(hatchDate, entry.actualEmergenceDate);
           if (days !== null) groups[key].larvaRecords.push({ val: days, mName, gender: currentGender, entryId: entry.id });
         }
@@ -140,7 +157,11 @@ export function AnalysisView({
   return (
     <div className="space-y-4">
       {groupedStats.map((stat) => (
-        <div key={stat.scientificName} className="bg-white/70 backdrop-blur-sm rounded-3xl border border-white/60 shadow-sm overflow-hidden">
+        <div 
+          key={stat.scientificName} 
+          ref={(el) => { itemRefs.current[stat.scientificName] = el; }}
+          className="bg-white/70 backdrop-blur-sm rounded-3xl border border-white/60 shadow-sm overflow-hidden"
+        >
           <button onClick={() => setExpandedNames(prev => prev.includes(stat.scientificName) ? prev.filter(n => n !== stat.scientificName) : [...prev, stat.scientificName])} className="w-full px-5 py-4 flex justify-between items-center">
             <div className="text-left">
               <div className="font-bold text-[#212529]">{stat.japaneseName}</div>

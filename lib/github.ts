@@ -1,9 +1,8 @@
 export async function pushDataToGitHub(
-  config: { token: string; owner: string; repo: string },
+  config: { token: string; owner: string; repo: string; path: string; branch: string },
   data: any
 ) {
-  const { token, owner, repo } = config;
-  const path = "data.json"; // 飼育データの保存先ファイル名
+  const { token, owner, repo, path, branch } = config;
   const message = `Sync data: ${new Date().toISOString()}`;
   
   // UTF-8 文字列を Base64 に安全に変換
@@ -41,6 +40,7 @@ export async function pushDataToGitHub(
         message,
         content,
         sha,
+        branch,
       }),
     });
 
