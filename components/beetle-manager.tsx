@@ -746,7 +746,7 @@ export function BeetleManager() {
       <section className="px-6">
         {activeTab !== "分析" && activeTab !== "タスク" && activeTab !== "設定" ? (
           filteredEntries.length === 0 ? (
-            <EmptyState /> {/* Keep EmptyState */}
+            <EmptyState />
           ) : (
             filteredEntries.map((entry) => (
               <EntryCard
