@@ -218,7 +218,7 @@ export function AnalysisView({
                        data={sortRecords(selectedAnalysis.records).filter(r => r.gender === viewGender).map(r => ({ name: r.mName, val: r.val, entryId: r.entryId }))} 
                        fill={viewGender === "オス" ? "#3498DB" : viewGender === "メス" ? "#E74C3C" : "#94A3B8"} 
                        style={{ cursor: "pointer" }}
-                       onClick={(d) => { if (d?.entryId) { setSelectedEntry(entries.find(e => e.id === d.entryId) || null); setSelectedAnalysis(null); } }}
+                       onClick={(d: any) => { if (d?.entryId) { setSelectedEntry(entries.find(e => e.id === d.entryId) || null); setSelectedAnalysis(null); } }}
                      />
                    </ScatterChart>
                  </ResponsiveContainer>
