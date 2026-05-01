@@ -156,13 +156,15 @@ export function BeetleManager() {
 
     addAdult({
       type: "成虫",
+      managementName: entry.managementName,
       gender: "不明",
       japaneseName: entry.japaneseName,
       scientificName: entry.scientificName,
       locality: entry.locality,
       generation: entry.generation,
+      linkedEntryId: entry.linkedEntryId,
       emergenceDate: entry.actualEmergenceDate || today(),
-      emergenceType: "羽化",
+      emergenceType: entry.emergenceType || "羽化",
       feedingDate: "",
       deathDate: "",
       larvaMemo: entry.logs.length > 0 ? `幼虫時ログ: ${entry.logs.length}件。最終体重: ${entry.logs[0].weight}g` : "幼虫データより移行",
