@@ -9,8 +9,8 @@ import { useSwitchBot } from "@/components/use-switchbot";
 import {
   formatGeneration,
   today,
-} from "@/lib/utils";
-import { pushDataToGitHub } from "@/lib/github";
+} from "../lib/utils";
+import { pushDataToGitHub } from "../lib/github";
 import {
   emptyAdultForm,
   emptyLarvaForm,

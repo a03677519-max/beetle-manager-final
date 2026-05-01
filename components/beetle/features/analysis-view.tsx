@@ -228,7 +228,7 @@ export function AnalysisView({
                       <span className="text-gray-400 text-[10px] truncate max-w-[120px]">{rec.mName}</span>
                       <span className="text-[var(--primary)] text-xl leading-none">{rec.val}<span className="text-xs ml-0.5 font-bold">{selectedAnalysis.label.includes("体重") ? "g" : "日"}</span></span>
                    </div>
-                 ))}
+                 ))
                  ) : (
                    <p className="text-center text-gray-400 py-10">データがありません</p>
                  )}
