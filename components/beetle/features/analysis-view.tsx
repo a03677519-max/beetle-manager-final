@@ -30,11 +30,27 @@ interface AnalysisViewProps {
   isSyncing?: boolean;
 }
 
-interface AnalysisRecord {
+interface AnalysisRecord { // For bar/list charts (single value)
   val: number;
   mName: string;
   gender: Gender;
   entryId: string;
+}
+
+interface ScatterPlotData { // For scatter plots (two values)
+  x: number;
+  y: number;
+  mName: string;
+  gender: Gender;
+  entryId: string;
+}
+
+interface AnalysisModalData {
+  label: string;
+  records?: AnalysisRecord[]; // For bar/list charts
+  scatterData?: ScatterPlotData[]; // For scatter plots
+  xLabel?: string;
+  yLabel?: string;
 }
 
 interface GroupStats {
@@ -47,6 +63,24 @@ interface GroupStats {
   larvaRecords: AnalysisRecord[];
   dormancyRecords: AnalysisRecord[];
   lifespanRecords: AnalysisRecord[];
+  adultSizeRecords: AnalysisRecord[];
+  spawnEggRecords: AnalysisRecord[];
+  spawnLarvaRecords: AnalysisRecord[];
+  maxWeight: number | null;
+  minWeight: number | null;
+  avgLarva: number | null;
+  avgDormancy: number | null;
+  avgLifespan: number | null;
+  avgSize: string | null;
+  avgEggs: string | null;
+  adultSizeVsMaxLarvaWeightRecords: {
+    adultSize: number;
+    maxLarvaWeight: number;
+    mName: string;
+    gender: Gender;
+    entryId: string; // Adult entry ID
+  }[];
+  avgLarvaCount: string | null;
 }
 
 export function AnalysisView({ 
@@ -62,7 +96,7 @@ export function AnalysisView({
   isSyncing
 }: AnalysisViewProps) {
   const [expandedNames, setExpandedNames] = useState<string[]>([]);
-  const [selectedAnalysis, setSelectedAnalysis] = useState<{ label: string; records: AnalysisRecord[] } | null>(null);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<AnalysisModalData | null>(null);
   const [selectedSpawnTable, setSelectedSpawnTable] = useState<GroupStats | null>(null);
   const [viewGender, setViewGender] = useState<Gender>("オス");
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -110,12 +144,23 @@ export function AnalysisView({
           spawnSetEntries: [],
           larvaRecords: [],
           dormancyRecords: [],
-          lifespanRecords: []
+          lifespanRecords: [],
+          adultSizeRecords: [],
+          spawnEggRecords: [],
+          spawnLarvaRecords: [],
+          adultSizeVsMaxLarvaWeightRecords: [],
+          avgLarvaCount: null,
         };
       }
       if (entry.type === "産卵セット") {
         if (entry.temperature) groups[key].temperatures.push(Number(entry.temperature));
         groups[key].spawnSetEntries.push(entry);
+        if (entry.eggCount !== undefined) {
+          groups[key].spawnEggRecords.push({ val: entry.eggCount, mName, gender: "不明", entryId: entry.id });
+        }
+        if (entry.larvaCount !== undefined) {
+          groups[key].spawnLarvaRecords.push({ val: entry.larvaCount, mName, gender: "不明", entryId: entry.id });
+        }
       }
       if (entry.type === "幼虫") {
         entry.logs.forEach(log => {
@@ -143,6 +188,29 @@ export function AnalysisView({
           const days = daysBetween(entry.emergenceDate, entry.deathDate);
           if (days !== null && days > 0) groups[key].lifespanRecords.push({ val: days, mName, gender: entry.gender, entryId: entry.id });
         }
+        if (entry.size) {
+          const s = parseFloat(entry.size);
+          if (!isNaN(s)) {
+            groups[key].adultSizeRecords.push({ val: s, mName, gender: entry.gender, entryId: entry.id });
+
+            // Find linked larval entry for max weight
+            if (entry.linkedEntryId) {
+              const linkedLarva = entries.find(e => e.id === entry.linkedEntryId && e.type === "幼虫") as LarvaBeetle | undefined;
+              if (linkedLarva && linkedLarva.logs.length > 0) {
+                const maxLarvaWeight = Math.max(...linkedLarva.logs.map(log => log.weight).filter(w => w > 0));
+                if (!isNaN(maxLarvaWeight) && maxLarvaWeight > 0) {
+                  groups[key].adultSizeVsMaxLarvaWeightRecords.push({
+                    adultSize: s,
+                    maxLarvaWeight: maxLarvaWeight,
+                    mName: mName,
+                    gender: entry.gender,
+                    entryId: entry.id,
+                  });
+                }
+              }
+            }
+          }
+        }
       }
     });
     return Object.values(groups).map((group) => ({
@@ -152,6 +220,9 @@ export function AnalysisView({
       avgLarva: group.larvaRecords.length ? Math.round(group.larvaRecords.reduce((a, b) => a + b.val, 0) / group.larvaRecords.length) : null,
       avgDormancy: group.dormancyRecords.length ? Math.round(group.dormancyRecords.reduce((a, b) => a + b.val, 0) / group.dormancyRecords.length) : null,
       avgLifespan: group.lifespanRecords.length ? Math.round(group.lifespanRecords.reduce((a, b) => a + b.val, 0) / group.lifespanRecords.length) : null,
+      avgSize: group.adultSizeRecords.length ? (group.adultSizeRecords.reduce((a, b) => a + b.val, 0) / group.adultSizeRecords.length).toFixed(1) : null,
+      avgEggs: group.spawnEggRecords.length ? (group.spawnEggRecords.reduce((a, b) => a + b.val, 0) / group.spawnEggRecords.length).toFixed(1) : null,
+      avgLarvaCount: group.spawnLarvaRecords.length ? (group.spawnLarvaRecords.reduce((a, b) => a + b.val, 0) / group.spawnLarvaRecords.length).toFixed(1) : null,
     }));
   }, [entries]);
 
@@ -195,9 +266,24 @@ export function AnalysisView({
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                 <AnalysisItem label="産卵方法" value={stat.spawnSetEntries.length > 0 ? `${stat.spawnSetEntries.length}件の記録` : "-"} onClick={() => setSelectedSpawnTable(stat as any)} isLink />
+                <AnalysisItem label="成虫サイズ分布" value={stat.avgSize ? `${stat.avgSize}mm` : "-"} onClick={() => setSelectedAnalysis({ label: "成虫サイズ分布", records: stat.adultSizeRecords })} isLink />
+                <AnalysisItem label="平均割出卵数" value={stat.avgEggs ? `${stat.avgEggs}個` : "-"} onClick={() => setSelectedAnalysis({ label: "割出卵数データ", records: stat.spawnEggRecords })} isLink />
+                <AnalysisItem label="平均割出幼虫数" value={stat.avgLarvaCount ? `${stat.avgLarvaCount}頭` : "-"} onClick={() => setSelectedAnalysis({ label: "割出幼虫数データ", records: stat.spawnLarvaRecords })} isLink />
                 <AnalysisItem label="平均休眠期間" value={stat.avgDormancy ? `${stat.avgDormancy}日` : "-"} onClick={() => setSelectedAnalysis({ label: "休眠期間データ", records: stat.dormancyRecords })} isLink />
                 <AnalysisItem label="平均寿命" value={stat.avgLifespan ? `${stat.avgLifespan}日` : "-"} onClick={() => setSelectedAnalysis({ label: "生存期間データ", records: stat.lifespanRecords })} isLink />
                 <AnalysisItem label="平均幼虫期間" value={stat.avgLarva ? `${stat.avgLarva}日` : "-"} onClick={() => setSelectedAnalysis({ label: "幼虫期間データ", records: stat.larvaRecords })} isLink />
+                <AnalysisItem label="成虫サイズ vs 最大幼虫体重" value={stat.adultSizeVsMaxLarvaWeightRecords.length > 0 ? `${stat.adultSizeVsMaxLarvaWeightRecords.length}件のデータ` : "-"} onClick={() => setSelectedAnalysis({
+                  label: "成虫サイズ vs 最大幼虫体重",
+                  scatterData: stat.adultSizeVsMaxLarvaWeightRecords.map(r => ({
+                    x: r.maxLarvaWeight,
+                    y: r.adultSize,
+                    mName: r.mName,
+                    gender: r.gender,
+                    entryId: r.entryId,
+                  })),
+                  xLabel: "最大幼虫体重 (g)",
+                  yLabel: "成虫サイズ (mm)",
+                })} isLink />
                 </div>
               </motion.div>
             )}
@@ -220,46 +306,109 @@ export function AnalysisView({
                  ))} {/* text-[var(--primary)] will be handled by global CSS variable or direct replacement */}
                </div>
                
-               <div className="h-48 mb-6 bg-gray-50/50 rounded-3xl p-4">
-                 <ResponsiveContainer width="100%" height="100%">
-                   <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: -20 }}>
-                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                     <XAxis type="category" dataKey="name" fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
-                     <YAxis type="number" dataKey="val" fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
-                     <ZAxis type="number" range={[100, 100]} />
-                     <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
-                         if (active && payload && payload.length) {
-                           return <div className="bg-white/90 p-2 rounded-lg text-[10px] font-bold shadow-xl">
-                             <p>{payload[0].payload.name}</p>
-                             <p className="text-[#FF9800] text-sm font-black">
-                               {payload[0].value}{selectedAnalysis.label.includes("体重") ? "g" : "日"}
-                             </p>
-                           </div>;
-                         }
-                         return null;
-                       }} />
-                     <Scatter 
-                       data={sortRecords(selectedAnalysis.records).filter(r => r.gender === viewGender).map(r => ({ name: r.mName, val: r.val, entryId: r.entryId }))} 
-                       fill={viewGender === "オス" ? "#E67E22" : viewGender === "メス" ? "#EC407A" : "#D35400"} 
-                       style={{ cursor: "pointer" }}
-                       onClick={(d: any) => { if (d?.entryId) { setSelectedEntry(entries.find(e => e.id === d.entryId) || null); setSelectedAnalysis(null); } }}
-                     />
-                   </ScatterChart>
-                 </ResponsiveContainer>
-               </div>
-
-               <div className="max-h-[30dvh] overflow-y-auto space-y-3 mb-10 pr-2 custom-scrollbar">
-                 {selectedAnalysis.records.filter(r => r.gender === viewGender).length > 0 ? (
-                   sortRecords(selectedAnalysis.records).filter(r => r.gender === viewGender).map((rec, i) => (
-                   <div key={i} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-2xl font-black border border-gray-100">
-                      <span className="text-gray-400 text-[10px] truncate max-w-[120px]">{rec.mName}</span> {/* Keep gray for subtle text */}
-                      <span className="text-[#FF9800] text-xl leading-none">{rec.val}<span className="text-xs ml-0.5 font-bold">{selectedAnalysis.label.includes("体重") ? "g" : "日"}</span></span>
+               {selectedAnalysis.scatterData ? (
+                 <>
+                   <div className="h-48 mb-6 bg-gray-50/50 rounded-3xl p-4">
+                     <ResponsiveContainer width="100%" height="100%">
+                       <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: -20 }}>
+                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                         <XAxis type="number" dataKey="x" name={selectedAnalysis.xLabel} unit={selectedAnalysis.xLabel?.includes("g") ? "g" : ""} fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
+                         <YAxis type="number" dataKey="y" name={selectedAnalysis.yLabel} unit={selectedAnalysis.yLabel?.includes("mm") ? "mm" : ""} fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
+                         <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
+                           if (active && payload && payload.length) {
+                             const data = payload[0].payload;
+                             return (
+                               <div className="bg-white/90 p-2 rounded-lg text-[10px] font-bold shadow-xl">
+                                 <p>{data.mName}</p>
+                                 <p className="text-[#FF9800] text-sm font-black">
+                                   {selectedAnalysis.xLabel}: {data.x}{selectedAnalysis.xLabel?.includes("g") ? "g" : ""}
+                                 </p>
+                                 <p className="text-[#FF9800] text-sm font-black">
+                                   {selectedAnalysis.yLabel}: {data.y}{selectedAnalysis.yLabel?.includes("mm") ? "mm" : ""}
+                                 </p>
+                               </div>
+                             );
+                           }
+                           return null;
+                         }} />
+                         <Scatter
+                           data={selectedAnalysis.scatterData.filter(d => viewGender === "不明" || d.gender === viewGender)}
+                           fill={viewGender === "オス" ? "#E67E22" : viewGender === "メス" ? "#EC407A" : "#D35400"}
+                           style={{ cursor: "pointer" }}
+                           onClick={(d: any) => { if (d?.entryId) { setSelectedEntry(entries.find(e => e.id === d.entryId) || null); setSelectedAnalysis(null); } }}
+                         />
+                       </ScatterChart>
+                     </ResponsiveContainer>
                    </div>
-                 ))
-                 ) : (
-                   <p className="text-center text-gray-400 py-10">データがありません</p>
-                 )}
-               </div>
+                   <div className="max-h-[30dvh] overflow-y-auto space-y-3 mb-10 pr-2 custom-scrollbar">
+                     {selectedAnalysis.scatterData.filter(d => viewGender === "不明" || d.gender === viewGender).length > 0 ? (
+                       selectedAnalysis.scatterData.filter(d => viewGender === "不明" || d.gender === viewGender).map((rec, i) => (
+                         <div key={i} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-2xl font-black border border-gray-100">
+                           <span className="text-gray-400 text-[10px] truncate max-w-[120px]">{rec.mName}</span>
+                           <span className="text-[#FF9800] text-xl leading-none">
+                             {selectedAnalysis.xLabel}: {rec.x}{selectedAnalysis.xLabel?.includes("g") ? "g" : ""},
+                             {selectedAnalysis.yLabel}: {rec.y}{selectedAnalysis.yLabel?.includes("mm") ? "mm" : ""}
+                           </span>
+                         </div>
+                       ))
+                     ) : (
+                       <p className="text-center text-gray-400 py-10">データがありません</p>
+                     )}
+                   </div>
+                 </>
+               ) : (
+                 <>
+                   <div className="h-48 mb-6 bg-gray-50/50 rounded-3xl p-4">
+                     <ResponsiveContainer width="100%" height="100%">
+                       <ScatterChart margin={{ top: 10, right: 10, bottom: 20, left: -20 }}>
+                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                         <XAxis type="category" dataKey="name" fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
+                         <YAxis type="number" dataKey="val" fontSize={10} axisLine={false} tickLine={false} tick={{fill: '#9ca3af'}} />
+                         <ZAxis type="number" range={[100, 100]} />
+                         <Tooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
+                             if (active && payload && payload.length) {
+                               const unit = selectedAnalysis.label.includes("体重") ? "g" :
+                                            selectedAnalysis.label.includes("期間") || selectedAnalysis.label.includes("寿命") ? "日" :
+                                            selectedAnalysis.label.includes("サイズ") ? "mm" :
+                                            selectedAnalysis.label.includes("卵") ? "個" : "頭";
+                               return <div className="bg-white/90 p-2 rounded-lg text-[10px] font-bold shadow-xl">
+                                 <p>{payload[0].payload.name}</p>
+                                 <p className="text-[#FF9800] text-sm font-black">
+                                   {payload[0].value}{unit}
+                                 </p>
+                               </div>;
+                             }
+                             return null;
+                           }} />
+                         <Scatter
+                           data={selectedAnalysis.records?.filter(r => r.gender === viewGender).map(r => ({ name: r.mName, val: r.val, entryId: r.entryId }))}
+                           fill={viewGender === "オス" ? "#E67E22" : viewGender === "メス" ? "#EC407A" : "#D35400"}
+                           style={{ cursor: "pointer" }}
+                           onClick={(d: any) => { if (d?.entryId) { setSelectedEntry(entries.find(e => e.id === d.entryId) || null); setSelectedAnalysis(null); } }}
+                         />
+                       </ScatterChart>
+                     </ResponsiveContainer>
+                   </div>
+
+                   <div className="max-h-[30dvh] overflow-y-auto space-y-3 mb-10 pr-2 custom-scrollbar">
+                     {selectedAnalysis.records?.filter(r => r.gender === viewGender).length > 0 ? (
+                       sortRecords(selectedAnalysis.records).filter(r => r.gender === viewGender).map((rec, i) => (
+                       <div key={i} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-2xl font-black border border-gray-100">
+                          <span className="text-gray-400 text-[10px] truncate max-w-[120px]">{rec.mName}</span> {/* Keep gray for subtle text */}
+                          <span className="text-[#FF9800] text-xl leading-none">{rec.val}<span className="text-xs ml-0.5 font-bold">
+                            {selectedAnalysis.label.includes("体重") ? "g" :
+                             selectedAnalysis.label.includes("期間") || selectedAnalysis.label.includes("寿命") ? "日" :
+                             selectedAnalysis.label.includes("サイズ") ? "mm" :
+                             selectedAnalysis.label.includes("卵") ? "個" : "頭"}
+                          </span></span>
+                       </div>
+                     ))
+                     ) : (
+                       <p className="text-center text-gray-400 py-10">データがありません</p>
+                     )}
+                   </div>
+                 </>
+               )}
 
                <button onClick={() => setSelectedAnalysis(null)} className="w-full py-5 text-center text-base text-white bg-[#FF9800] font-black rounded-3xl shadow-[0_10px_20px_rgba(255,152,0,0.2)] active:scale-95 transition-all">
                  確認しました

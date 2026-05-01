@@ -100,14 +100,6 @@ export function BeetleManager() {
   const [isOcrProcessing, setIsOcrProcessing] = useState(false);
   const [isAutoFillEnabled, setIsAutoFillEnabled] = useState(false);
   
-  const [expandedSpecies, setExpandedSpecies] = useState<string[]>([]);
-
-  const toggleSpecies = (sciName: string) => {
-    setExpandedSpecies(prev => 
-      prev.includes(sciName) ? prev.filter(s => s !== sciName) : [...prev, sciName]
-    );
-  };
-
   // 一括操作用のステート
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -129,34 +121,55 @@ export function BeetleManager() {
     { id: 'date', label: '日付' },
   ];
 
+  // 管理名のユニークな名前を生成するユーティリティ
+  const generateUniqueMName = (base: string, currentEntries: BeetleEntry[]) => {
+    if (!base) return "";
+    let candidate = base;
+    let suffix = 1;
+
+    const match = base.match(/^(.*?)-(\d+)$/);
+    let namePart = base;
+    if (match) {
+      namePart = match[1];
+      suffix = parseInt(match[2]);
+      candidate = `${namePart}-${String(suffix).padStart(2, "0")}`;
+    }
+
+    while (currentEntries.some(e => e.managementName === candidate)) {
+      suffix++;
+      candidate = `${namePart}-${String(suffix).padStart(2, "0")}`;
+    }
+    return candidate;
+  };
+
   const filteredEntries = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    const list = entries.filter((entry) => {
-      const matchesType = selectedType === "すべて" || entry.type === selectedType;
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        [entry.japaneseName, entry.scientificName, entry.locality, formatGeneration(entry.generation), entry.managementName]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedQuery);
-      return matchesType && matchesQuery;
-    });
-
-    const getSortVal = (e: BeetleEntry, key: string) => {
-      if (key === "date") return (e as any).hatchDate || (e as any).setDate || (e as any).actualEmergenceDate || (e as any).emergenceDate || e.createdAt || "";
-      if (key === "managementName") return e.managementName || e.japaneseName;
-      return (e as any)[key] || "";
-    };
-
-    return [...list].sort((a, b) => {
-      let p = getSortVal(a, sortConfig.primary).localeCompare(getSortVal(b, sortConfig.primary), "ja", { numeric: true });
-      if (p !== 0) {
-        return sortConfig.primaryDirection === "asc" ? p : -p;
-      }
-      let s = getSortVal(a, sortConfig.secondary).localeCompare(getSortVal(b, sortConfig.secondary), "ja", { numeric: true });
-      return sortConfig.secondaryDirection === "asc" ? s : -s;
-    });
-  }, [entries, query, selectedType, sortConfig]);
+     const list = entries.filter((entry) => {
+       const matchesType = selectedType === "すべて" || entry.type === selectedType;
+       const matchesQuery =
+         normalizedQuery.length === 0 ||
+         [entry.japaneseName, entry.scientificName, entry.locality, formatGeneration(entry.generation), entry.managementName]
+           .join(" ")
+           .toLowerCase()
+           .includes(normalizedQuery);
+       return matchesType && matchesQuery;
+     });
+ 
+     const getSortVal = (e: BeetleEntry, key: string) => {
+       if (key === "date") return (e as any).hatchDate || (e as any).setDate || (e as any).actualEmergenceDate || (e as any).emergenceDate || e.createdAt || "";
+       if (key === "managementName") return e.managementName || e.japaneseName;
+       return (e as any)[key] || "";
+     };
+ 
+     return [...list].sort((a, b) => {
+       let p = getSortVal(a, sortConfig.primary).localeCompare(getSortVal(b, sortConfig.primary), "ja", { numeric: true });
+       if (p !== 0) {
+         return sortConfig.primaryDirection === "asc" ? p : -p;
+       }
+       let s = getSortVal(a, sortConfig.secondary).localeCompare(getSortVal(b, sortConfig.secondary), "ja", { numeric: true });
+       return sortConfig.secondaryDirection === "asc" ? s : -s;
+     });
+   }, [entries, query, selectedType, sortConfig]);
 
   const groupedEntries = useMemo(() => {
     const groups: Record<string, BeetleEntry[]> = {};
@@ -167,6 +180,14 @@ export function BeetleManager() {
     });
     return groups;
   }, [filteredEntries]);
+
+  const [expandedSpecies, setExpandedSpecies] = useState<string[]>([]);
+
+  const toggleSpecies = (sciName: string) => {
+    setExpandedSpecies(prev => 
+      prev.includes(sciName) ? prev.filter(s => s !== sciName) : [...prev, sciName]
+    );
+  };
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds(prev => 
@@ -213,6 +234,12 @@ export function BeetleManager() {
     setSelectedIds([]);
   };
 
+  const [taskSortType, setTaskSortType] = useState<"urgency" | "type">("urgency");
+  const [skippedTaskIds, setSkippedTaskIds] = useState<string[]>([]);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isPersisted, setIsPersisted] = useState(false);
+
+
   const handleSelectAll = () => {
     setSelectedIds(filteredEntries.map(e => e.id));
   };
@@ -220,11 +247,6 @@ export function BeetleManager() {
   const handleDeselectAll = () => {
     setSelectedIds([]);
   };
-
-  const [taskSortType, setTaskSortType] = useState<"urgency" | "type">("urgency");
-  const [skippedTaskIds, setSkippedTaskIds] = useState<string[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
-  const [isPersisted, setIsPersisted] = useState(false);
 
   // マウント時に localStorage からデータを読み込む
   useEffect(() => {
@@ -515,55 +537,6 @@ export function BeetleManager() {
     }
   };
 
-  const preprocessImage = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject("Canvas context not available");
-
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-
-        // 平均輝度を計算して、背景が暗い場合に反転が必要か判断
-        let totalBrightness = 0;
-        for (let i = 0; i < data.length; i += 4) {
-          totalBrightness += (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
-        }
-        const avgBrightness = totalBrightness / (data.length / 4);
-        const shouldInvert = avgBrightness < 120; // 閾値より暗ければ反転フラグを立てる
-
-        const contrast = 2.0; // コントラスト強調係数
-        const intercept = 128 * (1 - contrast);
-
-        for (let i = 0; i < data.length; i += 4) {
-          // グレースケール化
-          const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-          
-          // コントラスト調整
-          let v = contrast * gray + intercept;
-          v = Math.min(255, Math.max(0, v));
-
-          // 白黒反転（ライトオンダークのラベル対策）
-          if (shouldInvert) v = 255 - v;
-
-          data[i] = data[i + 1] = data[i + 2] = v;
-        }
-
-        ctx.putImageData(imageData, 0, 0);
-        resolve(canvas.toDataURL("image/jpeg", 0.9));
-        URL.revokeObjectURL(img.src);
-      };
-      img.onerror = reject;
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
   const handleCameraOCR = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -685,24 +658,24 @@ export function BeetleManager() {
         <div className="grid grid-cols-3 gap-3 mb-6">
           <button 
             onClick={() => { setActiveTab("成虫"); setSelectedType("成虫"); }}
-            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "成虫" && selectedType === "成虫" ? "bg-[#FF9800] border-[#FF9800] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#4A3F35]"}`}
+            className={`p-2 rounded-2xl border transition-all text-left ${activeTab === "成虫" && selectedType === "成虫" ? "bg-[#FF9800] border-[#FF9800] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#4A3F35]"}`}
           >
-            <p className="text-[10px] font-bold opacity-70 uppercase mb-1">成虫</p>
-            <p className="text-2xl font-black">{stats.adults}<span className="text-[10px] ml-0.5">頭</span></p>
+            <p className="text-[9px] font-bold opacity-70 uppercase mb-0.5">成虫</p>
+            <p className="text-xl font-black">{stats.adults}<span className="text-[9px] ml-0.5">頭</span></p>
           </button>
           <button 
             onClick={() => { setActiveTab("幼虫"); setSelectedType("幼虫"); }}
-            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "幼虫" && selectedType === "幼虫" ? "bg-[#FF9800] border-[#FF9800] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#4A3F35]"}`}
+            className={`p-2 rounded-2xl border transition-all text-left ${activeTab === "幼虫" && selectedType === "幼虫" ? "bg-[#FF9800] border-[#FF9800] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#4A3F35]"}`}
           >
-            <p className="text-[10px] font-bold opacity-70 uppercase mb-1">幼虫</p>
-            <p className="text-2xl font-black">{stats.larvae}<span className="text-[10px] ml-0.5">頭</span></p>
+            <p className="text-[9px] font-bold opacity-70 uppercase mb-0.5">幼虫</p>
+            <p className="text-xl font-black">{stats.larvae}<span className="text-[9px] ml-0.5">頭</span></p>
           </button>
           <button 
             onClick={() => { setActiveTab("産卵セット"); setSelectedType("産卵セット"); }}
-            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "産卵セット" && selectedType === "産卵セット" ? "bg-[#FF9800] border-[#FF9800] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#4A3F35]"}`}
+            className={`p-2 rounded-2xl border transition-all text-left ${activeTab === "産卵セット" && selectedType === "産卵セット" ? "bg-[#FF9800] border-[#FF9800] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#4A3F35]"}`}
           >
-            <p className="text-[10px] font-bold opacity-70 uppercase mb-1">セット</p>
-            <p className="text-2xl font-black">{stats.spawnSets}<span className="text-[10px] ml-0.5">件</span></p>
+            <p className="text-[9px] font-bold opacity-70 uppercase mb-0.5">セット</p>
+            <p className="text-xl font-black">{stats.spawnSets}<span className="text-[9px] ml-0.5">件</span></p>
           </button>
         </div>
 
@@ -718,13 +691,6 @@ export function BeetleManager() {
         </label>
 
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
-          <button
-            type="button"
-            className={`px-4 py-1.5 rounded-full text-[12px] font-bold transition-all whitespace-nowrap ${selectedType === "すべて" ? "bg-[#FF9800] text-white shadow-md" : "bg-white/40 text-[#6C757D] border border-white/40"}`}
-            onClick={() => { setActiveTab("成虫"); setSelectedType("すべて"); }} // Keep onClick
-          >
-            すべて表示
-          </button>
           {ENTRY_TYPES.map((type) => (
             <button
               key={type}
@@ -750,7 +716,7 @@ export function BeetleManager() {
                   alt="Crop Target" 
                   className="max-w-full max-h-full object-contain"
                 />
-                {/* 簡易的なドラッグ不可の範囲表示（実際はライブラリ導入推奨だが、ここではUIのみ） */}
+                {/* 簡易的なドラッグ不可の範囲表示 */}
                 <div 
                   className="absolute border-2 border-[var(--primary)] shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] pointer-events-none"
                   style={{
@@ -867,10 +833,12 @@ export function BeetleManager() {
             initialValues={pastedData && pastedData.type === "幼虫" ? { ...emptyLarvaForm, ...pastedData } : getInitialValues("幼虫", emptyLarvaForm)}
             allEntries={entries}
             onSubmit={(values, count) => {
+            let currentEntries = [...entries];
               for (let index = 0; index < count; index += 1) {
-                const suffix = count > 1 ? `-${String(index + 1).padStart(2, "0")}` : "";
-                const mName = values.managementName || "";
-                addLarva({ ...values, managementName: mName ? `${mName}${suffix}` : suffix.replace("-", "") });
+              const mName = generateUniqueMName(values.managementName || "", currentEntries);
+              addLarva({ ...values, managementName: mName });
+              // 次のループの判定用に管理名だけ仮追加した配列を作る
+              currentEntries.push({ managementName: mName } as any);
               }
               setIsCreating(false);
             }}
@@ -905,8 +873,18 @@ export function BeetleManager() {
           <LarvaForm
             initialValues={editingEntry}
             allEntries={entries}
-            onSubmit={(value) => {
+            onSubmit={(value, count) => {
               updateLarva(editingEntry.id, value);
+              // 追加分がある場合
+              if (count > 1) {
+                let currentEntries = [...entries];
+                for (let i = 1; i < count; i++) {
+                  const mName = generateUniqueMName(value.managementName || "", currentEntries);
+                  const { id, photos, createdAt, updatedAt, ...rest } = value;
+                  addLarva({ ...rest as any, managementName: mName, photos: [] });
+                  currentEntries.push({ managementName: mName } as any);
+                }
+              }
               startEditing(null);
             }}
             onCancel={() => startEditing(null)}

@@ -114,6 +114,11 @@ export function EntryCard({
               {entry.managementName && <span className="text-[10px] font-black bg-gray-100 px-2 py-0.5 rounded text-gray-500">{entry.managementName}</span>}
             </div>
             <p className="text-[13px] italic text-[#D7CCC8] opacity-80 leading-tight">{entry.scientificName}</p>
+            {entry.memo && (
+              <p className="text-[11px] text-gray-400 mt-1 line-clamp-1 italic">
+                {entry.memo}
+              </p>
+            )}
           </div>
           <StatusBadge stage={stage} className="ml-2" />
         </div>
@@ -127,7 +132,7 @@ export function EntryCard({
                   <span className="shrink-0">{logs[0].bottleSize}</span>
                 </div>
                 <div className="text-[9px] text-gray-400 font-normal">
-                  水:{logs[0].moisture} 圧:{logs[0].pressure} ステージ:{logs[0].stage}
+                  水:{logs[0].moisture} 圧:{logs[0].pressure} 温:{logs[0].temperature || "-"}℃ ステージ:{logs[0].stage}
                 </div>
               </div>
             )}
@@ -137,6 +142,11 @@ export function EntryCard({
             <div>
               <span className="text-muted">累代:</span> {buildGenerationLabel(entry.generation)}
             </div>
+            {entry.type === "幼虫" && entry.hatchDate && (
+              <div>
+                <span className="text-muted">孵化日:</span> {entry.hatchDate.replace(/-/g, "/")}
+              </div>
+            )}
             <div className={`text-[11px] font-bold mt-1 ${dateColor}`}>
               {nextDate ? (
                 <>予定: {nextDate.replace(/-/g, "/")} {daysToNext! <= 0 ? "(超過)" : `(あと${daysToNext}日)`}</>

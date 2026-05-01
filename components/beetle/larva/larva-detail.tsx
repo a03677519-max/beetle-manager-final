@@ -17,6 +17,7 @@ import { useBeetleStore } from "@/store/use-beetle-store";
 import type { LarvaBeetle } from "@/types/beetle";
 import { LarvaLogForm } from "./larva-log-form";
 import { Modal } from "@/components/ui/modal";
+import { buildGenerationLabel } from "@/components/entry-fields";
 
 export function LarvaDetail({
   entry,
@@ -69,6 +70,22 @@ export function LarvaDetail({
   return (
     <>
       <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-gray-50 p-4 rounded-2xl">
+          <div className="text-xs text-gray-500">産地</div>
+          <div className="font-bold text-gray-800 truncate">{entry.locality || "-"}</div>
+        </div>
+        <div className="bg-gray-50 p-4 rounded-2xl">
+          <div className="text-xs text-gray-500">累代</div>
+          <div className="font-bold text-gray-800 truncate">{buildGenerationLabel(entry.generation)}</div>
+        </div>
+        <div className="bg-gray-50 p-4 rounded-2xl">
+          <div className="text-xs text-gray-500">孵化日</div>
+          <div className="font-bold text-gray-800 truncate">{entry.hatchDate ? formatDate(entry.hatchDate) : "-"}</div>
+        </div>
+        <div className="bg-gray-50 p-4 rounded-2xl">
+          <div className="text-xs text-gray-500">羽化日 ({entry.emergenceType})</div>
+          <div className="font-bold text-gray-800 truncate">{entry.actualEmergenceDate ? formatDate(entry.actualEmergenceDate) : "未定"}</div>
+        </div>
         <div className="bg-[#F1F3F5] p-4 rounded-2xl border border-gray-100">
           <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest">総ログ数</div>
           <div className="text-xl font-bold text-[#212529]">{entry.logs.length}件</div>
@@ -76,10 +93,6 @@ export function LarvaDetail({
         <div className="bg-[#F1F3F5] p-4 rounded-2xl border border-gray-100">
           <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest">最新体重</div>
           <div className="text-xl font-bold text-[#EF6C00]">{entry.logs[0]?.weight || "-"}g</div>
-        </div>
-        <div className="bg-gray-50 p-4 rounded-2xl">
-          <div className="text-xs text-gray-500">羽化日 ({entry.emergenceType})</div>
-          <div className="font-bold text-gray-800 truncate">{entry.actualEmergenceDate ? formatDate(entry.actualEmergenceDate) : "未定"}</div>
         </div>
         <div className="bg-gray-50 p-4 rounded-2xl">
           <div className="text-xs text-gray-500">育成日数</div>
@@ -90,6 +103,12 @@ export function LarvaDetail({
               : `現在 ${daysBetween(entry.hatchDate || entry.createdAt, today())}日目`}
           </div>
         </div>
+        {entry.memo && (
+          <div className="bg-gray-50 p-4 rounded-2xl col-span-2">
+            <div className="text-xs text-gray-500">メモ</div>
+            <div className="text-sm text-gray-800 whitespace-pre-wrap mt-1">{entry.memo}</div>
+          </div>
+        )}
       </div>
       <LarvaLogForm
         lastLog={entry.logs[0]}

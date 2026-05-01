@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { DateRollField, Field, BottomSheetInput } from "@/components/entry-fields";
+import { DateRollField, Field, BottomSheetInput, GenderField } from "@/components/entry-fields";
 import type { AdultFormValues } from "@/types/beetle";
 import { EntryBaseFields } from "@/components/beetle/shared/entry-base-fields";
 import { useBeetleStore } from "@/store/use-beetle-store";
+import { Clipboard } from "lucide-react";
 
 export function AdultForm({
   initialValues,
@@ -25,6 +26,15 @@ export function AdultForm({
     setValues(initialValues);
   }, [initialValues]);
 
+  const handleLarvaDataPaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setValues({ ...values, larvaMemo: text });
+    } catch (err) {
+      alert("クリップボードの読み取りに失敗しました。");
+    }
+  };
+
   return (
     <form
       ref={formRef}
@@ -41,6 +51,25 @@ export function AdultForm({
           linkedEntryId={values.linkedEntryId}
           allEntries={useBeetleStore.getState().entries}
           onChange={(patch) => setValues({ ...values, ...patch })}
+        />
+
+        <div className="grid grid-cols-2 gap-3">
+          <GenderField
+            value={values.gender}
+            onChange={(val) => setValues({ ...values, gender: val })}
+          />
+          <BottomSheetInput
+            label="サイズ (mm)"
+            value={values.size || ""}
+            placeholder="例: 75.5"
+            onChange={(val) => setValues({ ...values, size: val })}
+          />
+        </div>
+        <BottomSheetInput
+          label="状態"
+          value={values.status || ""}
+          placeholder="例: 未後食 / 完品"
+          onChange={(val) => setValues({ ...values, status: val })}
         />
 
         <DateRollField
@@ -85,12 +114,32 @@ export function AdultForm({
           onChange={(value) => setValues({ ...values, deathDate: value })}
         />
 
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-[11px] font-bold text-[#A67C52] tracking-wider uppercase">幼虫時データ</span>
+            <button
+              type="button"
+              onClick={handleLarvaDataPaste}
+              className="flex items-center gap-1 text-[10px] font-black text-[#FF9800] bg-[#FF9800]/5 px-2 py-1 rounded-lg"
+            >
+              <Clipboard size={12} /> クリップボードから貼付
+            </button>
+          </div>
+          <textarea
+            value={values.larvaMemo}
+            onChange={(e) => setValues({ ...values, larvaMemo: e.target.value })}
+            placeholder="幼虫時の詳細な履歴など"
+            rows={4}
+            className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-sm focus:bg-white focus:border-[#FF9800] outline-none transition-all"
+          />
+        </div>
+
         <BottomSheetInput
-          label="幼虫時データ"
-          value={values.larvaMemo}
+          label="メモ / 備考"
+          value={values.memo || ""}
           type="textarea"
-          placeholder="幼虫時の育成記録など"
-          onChange={(val) => setValues({ ...values, larvaMemo: val })}
+          placeholder="管理上のメモなど"
+          onChange={(val) => setValues({ ...values, memo: val })}
         />
       </div>
 

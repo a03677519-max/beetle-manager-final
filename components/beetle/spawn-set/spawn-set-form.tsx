@@ -51,11 +51,18 @@ export function SpawnSetForm({
           onChange={(patch) => setValues({ ...values, ...patch })}
         />
 
-        <DateRollField
-          label="セット日"
-          value={values.setDate}
-          onChange={(value) => setValues({ ...values, setDate: value })}
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <DateRollField
+            label="開始日"
+            value={values.setDate}
+            onChange={(value) => setValues({ ...values, setDate: value })}
+          />
+          <DateRollField
+            label="終了日 (割出日)"
+            value={values.setEndDate || ""}
+            onChange={(value) => setValues({ ...values, setEndDate: value })}
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <BottomSheetInput
@@ -94,6 +101,29 @@ export function SpawnSetForm({
       <CohabitationField
         value={values.cohabitation}
         onChange={(value) => setValues({ ...values, cohabitation: value })}
+      />
+
+      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-50">
+        <BottomSheetInput
+          label="割出卵数"
+          value={values.eggCount || ""}
+          placeholder="例: 15"
+          onChange={(val) => setValues({ ...values, eggCount: parseInt(val) || 0 })}
+        />
+        <BottomSheetInput
+          label="割出幼虫数"
+          value={values.larvaCount || ""}
+          placeholder="例: 10"
+          onChange={(val) => setValues({ ...values, larvaCount: parseInt(val) || 0 })}
+        />
+      </div>
+
+      <BottomSheetInput
+        label="メモ / 備考"
+        value={values.memo || ""}
+        type="textarea"
+        placeholder="セットの様子や親個体の状態など"
+        onChange={(val) => setValues({ ...values, memo: val })}
       />
       </div>
 

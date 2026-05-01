@@ -32,6 +32,10 @@ export function LarvaForm({
 
   useEffect(() => {
     setValues(initialValues);
+    // 再編集時（idがある場合）、hatchDateが入っていれば「孵化日」、なければ「セット期間」を初期選択にする
+    if (initialValues.id) {
+      setDateType(initialValues.hatchDate ? "hatch" : "set");
+    }
   }, [initialValues]);
 
   useEffect(() => {
@@ -175,9 +179,7 @@ export function LarvaForm({
             onChange={(val) => setValues({ ...values, memo: val })}
           />
 
-          {!initialValues.id && (
-            <div className="scale-90 origin-left"><CountRollField value={count} onChange={setCount} /></div>
-          )}
+          <div className="scale-90 origin-left"><CountRollField value={count} onChange={setCount} /></div>
         </div>
 
         <div className="pt-2 border-t border-gray-50">

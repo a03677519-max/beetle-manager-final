@@ -61,6 +61,8 @@ export type AdultBeetle = BaseBeetle & {
   deathDate: string;
   larvaMemo: string;
   gender: Gender;
+  size?: string;
+  status?: string;
 };
 
 export type LarvaBeetle = BaseBeetle & {
@@ -78,12 +80,15 @@ export type SpawnSet = BaseBeetle & {
   emergenceDate: string;
   feedingDate: string;
   setDate: string;
+  setEndDate?: string;
   substrate: string;
   containerSize: string;
   pressure: string;
   moisture: number;
   temperature: string;
   cohabitation: CohabitationOption;
+  eggCount?: number;
+  larvaCount?: number;
 };
 
 export type BeetleEntry = AdultBeetle | LarvaBeetle | SpawnSet;
