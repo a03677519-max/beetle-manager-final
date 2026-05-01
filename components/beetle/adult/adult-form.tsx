@@ -54,7 +54,7 @@ export function AdultForm({
               type="button"
               className={`flex-1 px-4 py-1.5 rounded-xl border font-bold text-sm transition-all duration-200 select-none ${
                 values.emergenceType === "羽化"
-                  ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md shadow-[#2D5A27]/20 scale-[1.02]"
+                  ? "bg-[#7B5D3F] text-white border-[#7B5D3F] shadow-md shadow-[#7B5D3F]/20 scale-[1.02]"
                   : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white/80 active:scale-95"
               }`}
               onClick={() => setValues({ ...values, emergenceType: "羽化" })}
@@ -65,7 +65,7 @@ export function AdultForm({
               type="button"
               className={`flex-1 px-4 py-1.5 rounded-xl border font-bold text-sm transition-all duration-200 select-none ${
                 values.emergenceType === "掘り出し"
-                  ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md shadow-[#2D5A27]/20 scale-[1.02]"
+                  ? "bg-[#7B5D3F] text-white border-[#7B5D3F] shadow-md shadow-[#7B5D3F]/20 scale-[1.02]"
                   : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white/80 active:scale-95"
               }`}
               onClick={() => setValues({ ...values, emergenceType: "掘り出し" })}
@@ -105,7 +105,7 @@ export function AdultForm({
         </button>
         <button 
           type="submit" 
-          className="flex-[2] h-10 rounded-2xl font-bold text-white bg-[#2D5A27] shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all select-none"
+          className="flex-[2] h-10 rounded-2xl font-bold text-white bg-[#7B5D3F] shadow-lg shadow-[#7B5D3F]/30 hover:brightness-110 active:scale-95 transition-all select-none"
         >
           保存する
         </button>

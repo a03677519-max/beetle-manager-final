@@ -92,7 +92,7 @@ export function LarvaLogForm({
         }
       }}
     >
-      <div className="text-[11px] font-black text-[#A1887F] uppercase tracking-widest border-l-4 border-[#8BC34A] pl-3 mb-2">
+      <div className="text-[11px] font-black text-[#A1887F] uppercase tracking-widest border-l-4 border-[#FF9800] pl-3 mb-2">
         {initialLogValues ? "ログの詳細確認・編集" : "飼育ログを追加"}
       </div>
       <DateRollField label="日付" value={values.date} onChange={(value) => setValues({ ...values, date: value })} />
@@ -132,7 +132,7 @@ export function LarvaLogForm({
         <LarvaStageField value={values.stage} onChange={(value) => setValues({ ...values, stage: value })} />
         <GenderField value={values.gender} onChange={(value) => setValues({ ...values, gender: value })} />
       </div>
-      <div className={initialLogValues ? "flex gap-3 pt-2" : "fixed bottom-0 left-0 w-full p-4 pb-[calc(2rem+env(safe-area-inset-bottom,32px))] bg-white/90 backdrop-blur-md border-t z-50"}>
+      <div className={initialLogValues ? "flex gap-3 pt-2" : "fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md p-4 pb-[calc(2rem+env(safe-area-inset-bottom,32px))] bg-white/90 backdrop-blur-md border-t z-50"}>
         {initialLogValues && onCancel && (
           <button 
             type="button" 
@@ -142,7 +142,7 @@ export function LarvaLogForm({
             キャンセル
           </button>
         )}
-        <button type="submit" className={`w-full py-3 bg-[#8BC34A] text-white rounded-2xl font-bold shadow-lg shadow-[#8BC34A]/20 active:scale-95 transition-all ${!initialLogValues ? "h-[52px]" : ""}`}>
+        <button type="submit" className={`w-full py-3 bg-[#FF9800] text-white rounded-2xl font-bold shadow-lg shadow-[#FF9800]/20 active:scale-[0.98] transition-all ${!initialLogValues ? "h-[52px]" : ""}`}>
           {initialLogValues ? "更新する" : "作業を記録"}
         </button>
       </div>

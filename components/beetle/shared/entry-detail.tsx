@@ -88,11 +88,11 @@ export function EntryDetail({
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="bg-white rounded-t-3xl p-6 shadow-2xl h-[90dvh] overflow-y-auto z-10 w-full max-w-md mx-auto overscroll-contain pointer-events-auto"
+        className="bg-white rounded-t-3xl shadow-2xl h-[90dvh] z-10 w-full max-w-md mx-auto overscroll-contain pointer-events-auto flex flex-col overflow-hidden"
       >
-        <div className="flex justify-between items-center mb-6 sticky top-0 bg-white/90 backdrop-blur-sm z-10 h-[48px] border-b border-gray-50">
+        <div className="flex justify-between items-center p-6 sticky top-0 bg-white/90 backdrop-blur-sm z-10 h-[72px] border-b border-gray-50 shrink-0">
           <div className="text-left">
-            <h2 className="text-[18px] font-bold text-[#333D33]">{entry.japaneseName}</h2>
+            <h2 className="text-[18px] font-bold text-[#4A3F35]">{entry.japaneseName}</h2>
             <p className="text-[12px] font-serif italic text-gray-400">{entry.scientificName}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ export function EntryDetail({
             </button>
             <button 
               type="button" 
-              className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-[#8BC34A] transition-colors" 
+              className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-[#FF9800] transition-colors" 
               onClick={() => { onClose(); startEditing(entry.id); }}
             >
               <Edit2 size={18} />
@@ -125,30 +125,30 @@ export function EntryDetail({
           </div>
         </div>
 
-        <PhotoSection entry={entry} />
+        <div className="flex-1 overflow-y-auto p-6">
+          <PhotoSection entry={entry} />
 
-        <div className="mt-6 mb-20">
-          {entry.type === "成虫" ? <AdultDetail entry={entry} /> : null}
-          {entry.type === "幼虫" ? (
-            <LarvaDetail
-              entry={entry}
-              onFetchTemperature={onFetchTemperature}
-              isFetchingTemperature={isFetchingTemperature}
-            />
-          ) : null}
-          {entry.type === "産卵セット" ? <SpawnSetDetail entry={entry} /> : null}
+          <div className="mt-6 mb-20">
+            {entry.type === "成虫" ? <AdultDetail entry={entry} /> : null}
+            {entry.type === "幼虫" ? (
+              <LarvaDetail
+                entry={entry}
+                onFetchTemperature={onFetchTemperature}
+                isFetchingTemperature={isFetchingTemperature}
+              />
+            ) : null}
+            {entry.type === "産卵セット" ? <SpawnSetDetail entry={entry} /> : null}
+          </div>
         </div>
 
-        {entry.type !== "幼虫" && (
-          <div className="fixed bottom-0 left-0 w-full p-4 pb-[calc(2rem+env(safe-area-inset-bottom,32px))] bg-white/90 backdrop-blur-md border-t z-20">
-            <button 
-              onClick={() => { onClose(); startEditing(entry.id); }}
-              className="w-full bg-[#8BC34A] text-white font-bold h-[52px] rounded-2xl shadow-lg active:scale-[0.98] transition-all"
-            >
-              作業を記録
-            </button>
-          </div>
-        )}
+        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom,32px))] bg-white/90 backdrop-blur-md border-t z-20 shrink-0">
+          <button 
+            onClick={() => { onClose(); startEditing(entry.id); }}
+              className="w-full bg-[#FF9800] text-white font-bold h-[52px] rounded-2xl shadow-lg active:scale-[0.98] transition-all"
+          >
+            作業を記録
+          </button>
+        </div>
       </motion.div>
     </motion.div>
   );

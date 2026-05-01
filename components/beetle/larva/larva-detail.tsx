@@ -75,7 +75,7 @@ export function LarvaDetail({
         </div>
         <div className="bg-[#F1F3F5] p-4 rounded-2xl border border-gray-100">
           <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest">最新体重</div>
-          <div className="text-xl font-bold text-[#689F38]">{entry.logs[0]?.weight || "-"}g</div>
+          <div className="text-xl font-bold text-[#EF6C00]">{entry.logs[0]?.weight || "-"}g</div>
         </div>
         <div className="bg-gray-50 p-4 rounded-2xl">
           <div className="text-xs text-gray-500">羽化日 ({entry.emergenceType})</div>
@@ -106,17 +106,17 @@ export function LarvaDetail({
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1"> {/* Keep linearGradient */}
-                  <stop offset="5%" stopColor="#689F38" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#689F38" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#EF6C00" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#EF6C00" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#DEE2E6" vertical={false} />
               <XAxis dataKey="date" stroke="#9ca3af" fontSize={10} />
               <YAxis stroke="#9ca3af" fontSize={10} axisLine={false} tickLine={false} />
               <Tooltip 
-                 contentStyle={{ borderRadius: '1.25rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', color: '#689F38' }}
+                 contentStyle={{ borderRadius: '1.25rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', color: '#EF6C00' }}
               />
-              <Area type="monotone" dataKey="weight" stroke="#689F38" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" name="体重(g)" dot={{ r: 4, fill: "#689F38", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
+              <Area type="monotone" dataKey="weight" stroke="#EF6C00" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" name="体重(g)" dot={{ r: 4, fill: "#EF6C00", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
               <Area type="monotone" dataKey="temperature" stroke="#E67E22" strokeWidth={2} fill="transparent" name="温度(℃)" dot={{ r: 2, fill: "#E67E22" }} strokeDasharray="5 5" />
             </AreaChart>
           </ResponsiveContainer>
@@ -124,7 +124,7 @@ export function LarvaDetail({
         <div className="mt-4 flex justify-center">
           <button 
             onClick={exportToCSV}
-            className="flex items-center gap-2 text-[10px] font-bold text-[#689F38] bg-[#689F38]/5 px-4 py-2 rounded-full hover:bg-[#689F38]/10 transition-colors"
+            className="flex items-center gap-2 text-[10px] font-bold text-[#EF6C00] bg-[#EF6C00]/5 px-4 py-2 rounded-full hover:bg-[#EF6C00]/10 transition-colors"
           >
             <Download size={14} />
             データをCSV形式でダウンロード
@@ -133,7 +133,7 @@ export function LarvaDetail({
       </section>
 
       <section className="mt-6 bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
-        <div className="text-[10px] font-black text-[#BCAAA4] mb-6 uppercase tracking-widest border-l-4 border-[#8BC34A] pl-3">History Log</div>
+        <div className="text-[10px] font-black text-[#BCAAA4] mb-6 uppercase tracking-widest border-l-4 border-[#FF9800] pl-3">History Log</div>
         <div className="space-y-3">
           {entry.logs.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-4">飼育ログはまだありません。</p>
@@ -141,14 +141,14 @@ export function LarvaDetail({
             <div className="relative ml-2 border-l-2 border-gray-50 pl-6 space-y-6">
               {entry.logs.map((log) => (
                 <div className="relative" key={log.id}>
-                  <div className="absolute -left-[31px] top-4 w-4 h-4 rounded-full bg-white border-4 border-[#8BC34A] shadow-sm z-10 cursor-pointer" onClick={() => setEditingLog(log)} />
+                  <div className="absolute -left-[31px] top-4 w-4 h-4 rounded-full bg-white border-4 border-[#FF9800] shadow-sm z-10 cursor-pointer" onClick={() => setEditingLog(log)} />
                   <div 
                     className="flex items-center justify-between bg-[#F8F9FA] border border-gray-50 p-4 rounded-2xl transition-active active:bg-gray-100 cursor-pointer shadow-sm"
                     onClick={() => setEditingLog(log)}
                   >
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-500 uppercase">{log.stage}</span>
+                        <span className="text-[10px] font-bold bg-[#F5F0EB] px-2 py-0.5 rounded text-gray-500 uppercase">{log.stage}</span>
                         <span className="text-xs text-gray-400 font-medium">{formatDate(log.date)}</span>
                       </div>
                       <div className="font-black text-[#212529] text-lg">
@@ -159,7 +159,7 @@ export function LarvaDetail({
                     <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
-                        className="p-2 text-gray-300 hover:text-[#8BC34A] transition-colors"
+                        className="p-2 text-gray-300 hover:text-[#FF9800] transition-colors"
                         onClick={() => setEditingLog(log)}
                       >
                         <Edit2 size={16} />

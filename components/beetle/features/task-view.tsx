@@ -24,8 +24,19 @@ export function TaskView({
     const visibleEntries = entries.filter((e) => !skippedTaskIds.includes(e.id));
     const exchangeTasks = visibleEntries
       .filter((e): e is LarvaBeetle => e.type === "幼虫")
-      .map(e => ({ entry: e, days: daysBetween(e.logs[0]?.date || e.createdAt, today()) ?? 0, type: "exchange" as const }))
-      .filter(t => t.days >= 60);
+      .map(e => {
+        const nextDate = (e as any).nextExchangeDate;
+        if (nextDate) {
+          // 予定日がある場合は、今日から何日後か（マイナスなら超過）
+          const daysToNext = daysBetween(today(), nextDate) ?? 0;
+          // 予定日が2週間以内、または過ぎているものを表示
+          return { entry: e, days: daysToNext, type: "exchange" as const, useScheduledDate: true };
+        }
+        // 予定日がない場合は従来通り経過日数で計算
+        return { entry: e, days: daysBetween(e.logs[0]?.date || e.createdAt, today()) ?? 0, type: "exchange" as const, useScheduledDate: false };
+      })
+      .filter(t => t.useScheduledDate ? t.days <= 14 : t.days >= 60);
+
     const emergenceTasks = visibleEntries
       .filter((e): e is LarvaBeetle => e.type === "幼虫" && !!e.actualEmergenceDate)
       .map(e => ({ entry: e, days: daysBetween(today(), e.actualEmergenceDate) ?? 0, type: "emergence" as const }))
@@ -50,7 +61,7 @@ export function TaskView({
         </div>
         <div className="flex bg-white/60 p-1 rounded-xl border border-white/60 backdrop-blur-sm">
           {["urgency", "type"].map((t) => (
-            <button key={t} onClick={() => setTaskSortType(t as "urgency" | "type")} className={`px-3 py-1 text-[9px] font-black rounded-lg transition-all uppercase ${taskSortType === t ? "bg-[#8BC34A] text-white" : "text-gray-400"}`}>
+            <button key={t} onClick={() => setTaskSortType(t as "urgency" | "type")} className={`px-3 py-1 text-[9px] font-black rounded-lg transition-all uppercase ${taskSortType === t ? "bg-[#FF9800] text-white" : "text-gray-400"}`}>
               {t === "urgency" ? "緊急度" : "種別"}
             </button>
           ))}
@@ -65,21 +76,30 @@ export function TaskView({
         tasks.map(({ entry, days, type }) => (
           <div key={`${entry.id}-${type}`} onClick={() => setSelectedEntry(entry)} className="bg-white/80 backdrop-blur-sm p-4 rounded-[24px] border border-white/60 shadow-sm flex items-center justify-between active:scale-[0.98] transition-all mb-3">
             <div className="flex items-center gap-3">
-              <div className={`w-1.5 h-10 rounded-full ${type === 'emergence' ? 'bg-[#3498DB]' : (days >= 90 ? 'bg-[#E74C3C]' : 'bg-[#F1C40F]')}`} />
+              <div className={`w-1.5 h-10 rounded-full ${type === 'emergence' ? 'bg-[#EC407A]' : (days >= 90 ? 'bg-[#E74C3C]' : 'bg-[#F1C40F]')}`} />
               <div>
                 <div className="font-bold text-[#333D33] text-sm">{entry.japaneseName}</div>
                 <div className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
-                  {type === 'emergence' ? (days === 0 ? "今日羽化予定" : (days > 0 ? `あと${days}日で羽化` : `${Math.abs(days)}日前に羽化`)) : `${days}日間未交換`}
+                  {type === 'emergence' 
+                    ? (days === 0 ? "今日羽化予定" : (days > 0 ? `あと${days}日で羽化` : `${Math.abs(days)}日前に羽化`)) 
+                    : (type === 'exchange' && (entry as any).nextExchangeDate 
+                        ? (days === 0 
+                            ? "今日交換予定" 
+                            : (days > 0 ? `あと${days}日で交換` : `交換予定から${Math.abs(days)}日経過`)
+                          )
+                        : `${days}日間未交換`
+                      )
+                  }
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={(e) => { e.stopPropagation(); setSkippedTaskIds([...skippedTaskIds, entry.id]); }} className="p-2 text-gray-300"><EyeOff size={14} /></button>
-              {type === "exchange" && (
-                <button onClick={(e) => handleQuickExchange(e, entry)} className="text-[10px] font-black bg-[#8BC34A] text-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">交換</button>
+              {type === "exchange" && ( // Keep condition
+                <button onClick={(e) => handleQuickExchange(e, entry)} className="text-[10px] font-black bg-[#FB8C00] text-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">交換</button>
               )}
-              {type === "emergence" && days <= 0 && (
-                <button onClick={(e) => handlePromoteToAdult(e, entry)} className="text-[10px] font-black bg-[#A1887F] text-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">成虫へ</button>
+              {type === "emergence" && days <= 0 && ( // Keep condition
+                <button onClick={(e) => handlePromoteToAdult(e, entry)} className="text-[10px] font-black bg-[#F4511E] text-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">成虫へ</button>
               )}
             </div>
           </div>

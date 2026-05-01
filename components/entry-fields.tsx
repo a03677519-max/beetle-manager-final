@@ -116,7 +116,7 @@ function PickerContainer({ children }: { children: React.ReactNode }) {
       
       {/* Center highlight */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-        <div className="w-[96%] h-7 border-y border-[#8BC34A]/20 bg-[#8BC34A]/5 rounded-lg" />
+        <div className="w-[96%] h-7 border-y border-[#FF9800]/20 bg-[#FF9800]/5 rounded-lg" />
       </div>
       {children}
     </div>
@@ -249,13 +249,13 @@ export function LevelButtonGroup({
   return (
     <div className="field">
       <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block uppercase tracking-wider">{label}</span>
-      <div className="flex bg-[#F1F3F5] rounded-xl p-1 gap-1">
+      <div className="flex bg-[#F5F0EB] rounded-xl p-1 gap-1">
         {values.map((option) => (
           <button // Keep button
             key={option}
             type="button"
             style={{ width: `${100 / values.length}%` }}
-            className={`py-1 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#5BA353] text-white shadow-sm" : "text-gray-500"}`}
+            className={`py-1 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#FF9800] text-white shadow-sm" : "text-gray-500"}`}
             onClick={() => onChange(option)}
           >
             {option}
@@ -315,7 +315,7 @@ export function BottomSheetSelect({
                   <span className="text-[11px] font-bold text-[#A67C52] uppercase tracking-wider">{label}</span>
                   <button
                     type="button"
-                    className="bg-[#8BC34A] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
+                    className="bg-[#FF9800] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
                     onClick={() => setIsOpen(false)}
                   >
                     閉じる
@@ -327,7 +327,7 @@ export function BottomSheetSelect({
                       key={option}
                       type="button"
                       className={`w-full text-left px-4 py-3 rounded-2xl font-bold ${ // Keep button
-                        value === option ? "bg-[#8BC34A] text-white" : "bg-gray-50 text-gray-700"
+                        value === option ? "bg-[#FF9800] text-white" : "bg-gray-50 text-gray-700"
                       }`}
                       onClick={() => {
                         onChange(option);
@@ -413,7 +413,7 @@ export function BottomSheetInput({
                   <span className="text-[11px] font-bold text-[#A67C52] uppercase tracking-wider">{label}</span>
                   <button
                     type="button"
-                    className="bg-[#8BC34A] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
+                    className="bg-[#FF9800] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
                     onClick={() => setIsOpen(false)}
                   >
                     完了
@@ -426,7 +426,7 @@ export function BottomSheetInput({
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder} // Keep placeholder
                     rows={5}
-                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-[16px] focus:bg-white focus:border-[#8BC34A] outline-none transition-all"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-[16px] focus:bg-white focus:border-[#FF9800] outline-none transition-all"
                   />
                 ) : (
                   <input
@@ -434,7 +434,7 @@ export function BottomSheetInput({
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     placeholder={placeholder} // Keep placeholder
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-2 text-[16px] focus:bg-white focus:border-[#8BC34A] outline-none transition-all"
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-2 text-[16px] focus:bg-white focus:border-[#FF9800] outline-none transition-all"
                   />
                 )}
 
@@ -446,7 +446,7 @@ export function BottomSheetInput({
                         <button
                           key={suggestion} // Keep key
                           type="button"
-                          className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-bold text-gray-600 active:bg-[#8BC34A] active:text-white transition-all"
+                          className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-bold text-gray-600 active:bg-[#FF9800] active:text-white transition-all"
                           onClick={() => onChange(suggestion)}
                         >
                           {suggestion}
@@ -489,12 +489,12 @@ export function SwitchBotTemperatureField({
       <span className="text-[11px] font-bold text-[#A67C52] mb-1 block uppercase tracking-wider">温度 (℃)</span>
       <div className="relative">
         <input 
-          className="w-full h-[36px] px-3 rounded-xl border border-[#DEE2E6] focus:border-[#8BC34A] focus:ring-1 focus:ring-[#8BC34A] outline-none text-sm placeholder:text-gray-300"
+          className="w-full h-[36px] px-3 rounded-xl border border-[#DEE2E6] focus:border-[#FF9800] focus:ring-1 focus:ring-[#FF9800] outline-none text-sm placeholder:text-gray-300"
           value={value} // Keep value
           onChange={(event) => onChange(event.target.value)} 
           placeholder="例: 22.5 や 21〜23" 
         />
-        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8BC34A] p-2" onClick={onFetch}>
+        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-[#FF9800] p-2" onClick={onFetch}>
           <Thermometer size={18} className={isFetching ? "spin" : undefined} />
         </button>
       </div>
@@ -512,12 +512,12 @@ export function EmergenceTypeField({
   return (
     <div className="field">
       <span className="text-[12px] font-bold text-[#A67C52] mb-2 block uppercase tracking-wider">羽化区分</span>
-      <div className="flex bg-[#F1F3F5] rounded-xl p-1 gap-1">
+      <div className="flex bg-[#F5F0EB] rounded-xl p-1 gap-1">
         {(EMERGENCE_TYPES as unknown as string[]).map((option) => (
           <button
             key={option} // Keep key
             type="button"
-            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#8BC34A] text-white shadow-sm" : "text-gray-500"}`}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#FF9800] text-white shadow-sm" : "text-gray-500"}`}
             onClick={() => onChange(option as EmergenceType)}
           >
             {option}
