@@ -84,8 +84,8 @@ export function LarvaDetail({
           <div className="font-bold text-gray-800 truncate">
             {/* hatchDate（孵化日）がある場合は優先して計算に使用 */}
             {entry.actualEmergenceDate 
-              ? `${daysBetween((entry as any).hatchDate || entry.createdAt, entry.actualEmergenceDate)}日` 
-              : `現在 ${daysBetween((entry as any).hatchDate || entry.createdAt, today())}日目`}
+              ? `${daysBetween(entry.hatchDate || entry.createdAt, entry.actualEmergenceDate)}日` 
+              : `現在 ${daysBetween(entry.hatchDate || entry.createdAt, today())}日目`}
           </div>
         </div>
       </div>

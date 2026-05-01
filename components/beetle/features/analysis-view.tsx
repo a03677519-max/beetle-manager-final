@@ -106,7 +106,7 @@ export function AnalysisView({
           if (log.temperature) groups[key].temperatures.push(Number(log.temperature));
         });
         if (entry.actualEmergenceDate) {
-          const hatchDate = (entry as any).hatchDate || entry.createdAt;
+          const hatchDate = (entry as LarvaBeetle).hatchDate || entry.createdAt;
           const days = daysBetween(hatchDate, entry.actualEmergenceDate);
           if (days !== null) groups[key].larvaRecords.push({ val: days, mName, gender: currentGender, entryId: entry.id });
         }

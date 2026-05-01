@@ -6,10 +6,7 @@ import { Search, Clipboard, Camera, Loader2 } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Modal } from "./ui/modal";
 import { useSwitchBot } from "@/components/use-switchbot";
-import {
-  formatGeneration,
-  today,
-} from "../lib/utils";
+import { formatGeneration, today } from "@/lib/utils";
 import { pushDataToGitHub } from "@/lib/github";
 import {
   emptyAdultForm,
@@ -418,7 +415,8 @@ export function BeetleManager() {
       const processedImageUrl = await preprocessImage(file);
 
       // Tesseract.jsを動的インポート
-      const { default: Tesseract } = await import('tesseract.js');
+      // @ts-ignore - モジュール未インストール時のビルドエラーを抑制
+      const Tesseract = (await import('tesseract.js')).default;
       const { data: { text } } = await Tesseract.recognize(processedImageUrl, 'jpn+eng');
       
       const patch = parsePastedText(text);
