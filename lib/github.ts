@@ -1,8 +1,8 @@
 export async function pushDataToGitHub(
-  config: { token: string; repo: string },
+  config: { token: string; owner: string; repo: string },
   data: any
 ) {
-  const { token, repo } = config;
+  const { token, owner, repo } = config;
   const path = "data.json"; // 飼育データの保存先ファイル名
   const message = `Sync data: ${new Date().toISOString()}`;
   
@@ -13,7 +13,7 @@ export async function pushDataToGitHub(
   const content = btoa(binString);
 
   try {
-    const url = `https://api.github.com/repos/${repo}/contents/${path}`;
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
     
     // 1. ファイルの現在の状態（SHA）を取得（既存ファイルの更新に必要）
     const getRes = await fetch(url, {

@@ -80,12 +80,12 @@ export function LarvaDetail({
           <div className="font-bold text-gray-800 truncate">{entry.actualEmergenceDate ? formatDate(entry.actualEmergenceDate) : "未定"}</div>
         </div>
         <div className="bg-gray-50 p-4 rounded-2xl">
-          <div className="text-xs text-gray-500">総育成年数</div>
+          <div className="text-xs text-gray-500">育成日数</div>
           <div className="font-bold text-gray-800 truncate">
             {/* hatchDate（孵化日）がある場合は優先して計算に使用 */}
             {entry.actualEmergenceDate 
-              ? `${daysBetween((entry as any).hatchDate || entry.createdAt, entry.actualEmergenceDate)}日` 
-              : `現在 ${daysBetween((entry as any).hatchDate || entry.createdAt, today())}日目`}
+              ? `${daysBetween(entry.hatchDate || entry.createdAt, entry.actualEmergenceDate)}日` 
+              : `現在 ${daysBetween(entry.hatchDate || entry.createdAt, today())}日目`}
           </div>
         </div>
       </div>

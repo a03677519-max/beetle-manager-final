@@ -72,6 +72,7 @@ export const emptyLarvaForm: LarvaFormValues = {
   plannedEmergenceDate: "",
   actualEmergenceDate: "",
   emergenceType: "羽化",
+  hatchDate: today(),
 };
 
 export const emptySpawnSetForm: SpawnSetFormValues = {
@@ -85,7 +86,7 @@ export const emptySpawnSetForm: SpawnSetFormValues = {
   setDate: "",
   substrate: "",
   containerSize: "",
-  pressure: 3,
+  pressure: "3",
   moisture: 3,
   temperature: "",
   cohabitation: COHABITATION_OPTIONS[1],
@@ -107,7 +108,7 @@ export const useBeetleStore = create<BeetleState>()(
         set((state) => ({ gitHub: { ...state.gitHub, ...input } })),
       addAdult: (input) =>
         set((state) => ({
-          entries: [{ id: createId(), ...input, photos: [], createdAt: today(), updatedAt: today() }, ...state.entries],
+          entries: [{ id: createId(), ...input, photos: input.photos || [], createdAt: today(), updatedAt: today() }, ...state.entries],
           editingId: null,
         })),
       updateAdult: (id, input) =>
@@ -119,7 +120,7 @@ export const useBeetleStore = create<BeetleState>()(
         })),
       addLarva: (input) =>
         set((state) => ({
-          entries: [{ id: createId(), ...input, photos: [], createdAt: today(), updatedAt: today() }, ...state.entries],
+          entries: [{ id: createId(), ...input, photos: input.photos || [], createdAt: today(), updatedAt: today() }, ...state.entries],
           editingId: null,
         })),
       updateLarva: (id, input) =>

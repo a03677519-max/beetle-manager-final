@@ -68,6 +68,7 @@ export type LarvaBeetle = BaseBeetle & {
   plannedEmergenceDate: string;
   actualEmergenceDate: string;
   emergenceType: EmergenceType;
+  hatchDate: string;
 };
 
 export type SpawnSet = BaseBeetle & {
@@ -77,7 +78,7 @@ export type SpawnSet = BaseBeetle & {
   setDate: string;
   substrate: string;
   containerSize: string;
-  pressure: number;
+  pressure: string;
   moisture: number;
   temperature: string;
   cohabitation: CohabitationOption;
@@ -85,12 +86,19 @@ export type SpawnSet = BaseBeetle & {
 
 export type BeetleEntry = AdultBeetle | LarvaBeetle | SpawnSet;
 
-export type AdultFormValues = Omit<AdultBeetle, "id" | "photos" | "createdAt" | "updatedAt">;
+export type AdultFormValues = Omit<AdultBeetle, "id" | "photos" | "createdAt" | "updatedAt"> & {
+  id?: string;
+  photos?: string[];
+};
 export type LarvaFormValues = Omit<LarvaBeetle, "id" | "photos" | "createdAt" | "updatedAt"> & {
+  id?: string;
+  photos?: string[];
   hatchDate?: string;
   createdAt?: string;
 };
-export type SpawnSetFormValues = Omit<SpawnSet, "id" | "photos" | "createdAt" | "updatedAt">;
+export type SpawnSetFormValues = Omit<SpawnSet, "id" | "photos" | "createdAt" | "updatedAt"> & {
+  id?: string;
+};
 
 export type SwitchBotSettings = {
   token: string;

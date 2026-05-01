@@ -120,7 +120,7 @@ export function BeetleManager() {
       // 管理名がある場合は管理名、なければ和名でソート
       const nameA = a.managementName || a.japaneseName;
       const nameB = b.managementName || b.japaneseName;
-      return nameA.localeCompare(nameB, "ja");
+      return nameA.localeCompare(nameB, "ja", { numeric: true });
     });
   }, [entries, query, selectedType]);
 
@@ -163,6 +163,7 @@ export function BeetleManager() {
       locality: entry.locality,
       generation: entry.generation,
       linkedEntryId: entry.linkedEntryId,
+      photos: entry.photos, // 写真を引き継ぐ
       emergenceDate: entry.actualEmergenceDate || today(),
       emergenceType: entry.emergenceType || "羽化",
       feedingDate: "",
@@ -207,6 +208,11 @@ export function BeetleManager() {
       window.alert("GitHub設定（トークンとリポジトリ名）が未完了です。");
       return;
     }
+
+    const confirmSync = window.confirm(
+      "現在のローカルデータをGitHubにバックアップ（上書き）します。よろしいですか？"
+    );
+    if (!confirmSync) return;
 
     setIsSyncing(true);
     try {
@@ -305,7 +311,11 @@ export function BeetleManager() {
           patch.generation = { primary, secondary: "-", count };
           
           if (parts[1]) patch.managementName = parts[1];
-          if (parts[2]) patch.hatchDate = fixOcrDate(parts[2]);
+          // parts[2]以降に日付があるか、あるいは行の末尾から日付を探す
+          const dateCandidate = parts.find(p => p.match(/\d/));
+          if (dateCandidate && patch.type === "幼虫") {
+            patch.hatchDate = fixOcrDate(dateCandidate);
+          }
         }
 
         // 6-9行目: 飼育ログ
