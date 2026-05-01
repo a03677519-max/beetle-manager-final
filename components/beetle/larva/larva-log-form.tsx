@@ -24,7 +24,7 @@ export function LarvaLogForm({
 }: {
   lastLog?: LarvaLog;
   onSubmit?: (value: Omit<LarvaLog, "id">) => void;
-  initialLogValues?: LarvaLog;
+  initialLogValues?: LarvaLog | null;
   onSave?: (value: LarvaLog) => void;
   onCancel?: () => void;
   onFetchTemperature: (setter: (value: string) => void) => void;

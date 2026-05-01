@@ -183,6 +183,7 @@ export function LarvaDetail({
           )}
         </div>
       </section>
+
       <Modal
         isOpen={!!editingLog}
         onClose={() => setEditingLog(null)}
