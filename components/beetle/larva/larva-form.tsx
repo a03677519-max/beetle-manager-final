@@ -40,6 +40,26 @@ export function LarvaForm({
     }
   }, [initialValues.id]);
 
+  // 過去のログからマット名とボトルサイズの履歴を抽出（オートコンプリート用）
+  const suggestions = useMemo(() => {
+    const sSet = new Set<string>();
+    const bSet = new Set<string>();
+
+    allEntries.forEach((entry) => {
+      if (entry.type === "幼虫") {
+        entry.logs.forEach((log) => {
+          if (log.substrate) sSet.add(log.substrate);
+          if (log.bottleSize) bSet.add(log.bottleSize);
+        });
+      }
+    });
+
+    return {
+      substrate: Array.from(sSet).sort(),
+      bottleSize: Array.from(bSet).sort(),
+    };
+  }, [allEntries]);
+
   // 飼育ログの追加処理
   const addRecord = () => {
     const latestLog = values.logs?.[0];
@@ -138,28 +158,6 @@ export function LarvaForm({
                   }
                 }}
               />
-              <div className="grid grid-cols-2 gap-4">
-                <MoistureField
-                  value={values.logs?.[0]?.moisture || 3}
-                  onChange={(val) => {
-                    const newLogs = [...(values.logs || [])];
-                    if (newLogs[0]) {
-                      newLogs[0] = { ...newLogs[0], moisture: val };
-                      setValues({ ...values, logs: newLogs });
-                    }
-                  }}
-                />
-                <PressureField
-                  value={values.logs?.[0]?.pressure || 3}
-                  onChange={(val) => {
-                    const newLogs = [...(values.logs || [])];
-                    if (newLogs[0]) {
-                      newLogs[0] = { ...newLogs[0], pressure: val };
-                      setValues({ ...values, logs: newLogs });
-                    }
-                  }}
-                />
-              </div>
             </>
           )}
 
@@ -357,9 +355,10 @@ export function LarvaForm({
               <div className="space-y-3 pt-2 border-t border-gray-50">
                 <div className="grid grid-cols-2 gap-4">
                   <BottomSheetInput
-                    label="マット / ボトルサイズ"
+                    label="マット名"
                     value={record.substrate}
-                    placeholder="例: クヌギ / 800cc"
+                    placeholder="マットの種類"
+                    suggestions={suggestions.substrate}
                     onChange={(val) => {
                       const newLogs = [...(values.logs || [])];
                       newLogs[index] = { ...record, substrate: val };
@@ -367,7 +366,37 @@ export function LarvaForm({
                     }}
                   />
                   <BottomSheetInput
-                    label="温度 (℃)"
+                    label="ボトルサイズ"
+                    value={record.bottleSize}
+                    placeholder="例: 800cc"
+                    suggestions={suggestions.bottleSize}
+                    onChange={(val) => {
+                      const newLogs = [...(values.logs || [])];
+                      newLogs[index] = { ...record, bottleSize: val };
+                      setValues({ ...values, logs: newLogs });
+                    }}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <MoistureField
+                    value={record.moisture}
+                    onChange={(val) => {
+                      const newLogs = [...(values.logs || [])];
+                      newLogs[index] = { ...record, moisture: val };
+                      setValues({ ...values, logs: newLogs });
+                    }}
+                  />
+                  <PressureField
+                    value={record.pressure}
+                    onChange={(val) => {
+                      const newLogs = [...(values.logs || [])];
+                      newLogs[index] = { ...record, pressure: val };
+                      setValues({ ...values, logs: newLogs });
+                    }}
+                  />
+                </div>
+                <BottomSheetInput
+                  label="温度 (℃)"
                     value={record.temperature}
                     placeholder="温度"
                     onChange={(val) => {
@@ -376,7 +405,6 @@ export function LarvaForm({
                       setValues({ ...values, logs: newLogs });
                     }}
                   />
-                </div>
               </div>
             </div>
           ))}

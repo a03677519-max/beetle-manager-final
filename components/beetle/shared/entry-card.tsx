@@ -104,21 +104,33 @@ export function EntryCard({
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-start mb-1">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <h3 className="text-[19px] font-black text-[#333D33] tracking-tight truncate">{entry.japaneseName}</h3>
+            <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mb-0.5">
+              <h3 className="text-[18px] font-black text-[#333D33] tracking-tight leading-tight">{entry.japaneseName}</h3>
               {entry.type === "成虫" && (
                 <span className={`text-sm font-bold ${entry.gender === "オス" ? "text-blue-500" : entry.gender === "メス" ? "text-pink-500" : "text-gray-400"}`}>
                   {entry.gender === "オス" ? "♂" : entry.gender === "メス" ? "♀" : ""}
                 </span>
               )}
+              {entry.managementName && <span className="text-[10px] font-black bg-gray-100 px-2 py-0.5 rounded text-gray-500">{entry.managementName}</span>}
             </div>
-            <p className="text-[14px] italic text-[#D7CCC8] opacity-80 truncate">{entry.scientificName}</p>
+            <p className="text-[13px] italic text-[#D7CCC8] opacity-80 leading-tight">{entry.scientificName}</p>
           </div>
           <StatusBadge stage={stage} className="ml-2" />
         </div>
         
         <div className="flex justify-between items-end mt-3">
           <dl className="text-[13px] text-[#8B7D7B] space-y-1">
+            {entry.type === "幼虫" && logs[0] && (
+              <div className="text-[11px] font-bold text-gray-600 bg-gray-50/80 p-2 rounded-xl mb-2 border border-gray-100">
+                <div className="flex gap-2 mb-0.5">
+                  <span className="truncate">{logs[0].substrate}</span>
+                  <span className="shrink-0">{logs[0].bottleSize}</span>
+                </div>
+                <div className="text-[9px] text-gray-400 font-normal">
+                  水:{logs[0].moisture} 圧:{logs[0].pressure} ステージ:{logs[0].stage}
+                </div>
+              </div>
+            )}
             <div>
               <span className="text-muted">産地:</span> {entry.locality || "-"}
             </div>

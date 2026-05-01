@@ -151,10 +151,23 @@ export function LarvaDetail({
                         <span className="text-[10px] font-bold bg-[#F5F0EB] px-2 py-0.5 rounded text-gray-500 uppercase">{log.stage}</span>
                         <span className="text-xs text-gray-400 font-medium">{formatDate(log.date)}</span>
                       </div>
-                      <div className="font-black text-[#212529] text-lg">
-                        {log.weight}g <span className="text-[10px] text-gray-400 font-normal">/ {log.temperature || "-"}℃</span>
+                      <div className="flex items-baseline gap-2">
+                        <div className="font-black text-[#212529] text-lg">
+                          {log.weight}g <span className="text-[10px] text-gray-400 font-normal">/ {log.temperature || "-"}℃</span>
+                        </div>
                       </div>
-                      <div className="text-[10px] text-gray-400 font-bold mt-1">性別: {log.gender}</div>
+                      <div className="mt-1 space-y-0.5 border-t border-gray-100 pt-1">
+                        <div className="text-[11px] text-gray-600 font-bold flex gap-2">
+                          <span className="truncate">{log.substrate || "マット未設定"}</span>
+                          <span className="text-gray-300">|</span>
+                          <span className="shrink-0">{log.bottleSize || "-"}</span>
+                        </div>
+                        <div className="text-[10px] text-gray-400 flex gap-3">
+                          <span>水分: {log.moisture}</span>
+                          <span>詰圧: {log.pressure}</span>
+                          <span className="ml-auto">性別: {log.gender}</span>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
                       <button

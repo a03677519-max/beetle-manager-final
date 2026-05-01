@@ -161,7 +161,7 @@ export function AnalysisView({
         <div 
           key={stat.scientificName} 
           ref={(el) => { itemRefs.current[stat.scientificName] = el; }}
-          className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/60 shadow-[0_4px_20px_rgba(0,0,0,0.02)] overflow-hidden scroll-mt-48"
+          className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/60 shadow-[0_4px_20px_rgba(0,0,0,0.02)] overflow-hidden scroll-mt-80"
         >
           <button onClick={() => setExpandedNames(prev => prev.includes(stat.scientificName) ? prev.filter(n => n !== stat.scientificName) : [...prev, stat.scientificName])} className="w-full px-5 py-4 flex justify-between items-center">
             <div className="text-left">

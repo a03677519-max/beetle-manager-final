@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Search, Clipboard, Camera, Loader2, Crop, Check, X as CloseIcon, Trash2, Edit, CheckSquare, Square, ArrowUpDown } from "lucide-react";
+import { Search, Clipboard, Camera, Loader2, Crop, Check, X as CloseIcon, Trash2, Edit, CheckSquare, Square, ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Modal } from "./ui/modal";
 import { useSwitchBot } from "@/components/use-switchbot";
@@ -100,9 +100,28 @@ export function BeetleManager() {
   const [isOcrProcessing, setIsOcrProcessing] = useState(false);
   const [isAutoFillEnabled, setIsAutoFillEnabled] = useState(false);
   
+  const [expandedSpecies, setExpandedSpecies] = useState<string[]>([]);
+
+  const groupedEntries = useMemo(() => {
+    const groups: Record<string, BeetleEntry[]> = {};
+    filteredEntries.forEach(entry => {
+      const key = entry.scientificName || "Unknown";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(entry);
+    });
+    return groups;
+  }, [filteredEntries]);
+
+  const toggleSpecies = (sciName: string) => {
+    setExpandedSpecies(prev => 
+      prev.includes(sciName) ? prev.filter(s => s !== sciName) : [...prev, sciName]
+    );
+  };
+
   // 一括操作用のステート
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [showSort, setShowSort] = useState(false);
   const [isBulkEditing, setIsBulkEditing] = useState(false);
   const [sortConfig, setSortConfig] = useState({ 
     primary: "japaneseName", 
@@ -582,32 +601,42 @@ export function BeetleManager() {
       <section className="sticky top-0 z-30 bg-white/80 backdrop-blur-md pt-8 pb-4 px-6 border-b border-gray-100 mb-6">
         <div className="flex justify-between items-center mb-4">
           <p className="text-[11px] font-black text-[#D7CCC8] uppercase tracking-[0.2em] opacity-60">Breeding Dashboard</p>
-          <button 
-            onClick={handleToggleSelectionMode}
-            className={`text-[10px] font-bold px-3 py-1 rounded-full transition-all ${isSelectionMode ? "bg-[#F4511E] text-white" : "bg-gray-100 text-gray-500"}`}
-          >
-            {isSelectionMode ? "選択解除" : "一括操作"}
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setShowSort(!showSort)}
+              className={`text-[10px] font-bold px-3 py-1 rounded-full transition-all ${showSort ? "bg-[#FF9800] text-white" : "bg-gray-100 text-gray-500"}`}
+            >
+              並び替え
+            </button>
+            <button 
+              onClick={handleToggleSelectionMode}
+              className={`text-[10px] font-bold px-3 py-1 rounded-full transition-all ${isSelectionMode ? "bg-[#F4511E] text-white" : "bg-gray-100 text-gray-500"}`}
+            >
+              {isSelectionMode ? "選択解除" : "一括操作"}
+            </button>
+          </div>
         </div>
         
-        {isSelectionMode && (
+        {(isSelectionMode || showSort) && (
           <div className="bg-gray-50/50 p-3 rounded-[24px] border border-gray-100 mb-6 space-y-3">
             <div className="flex justify-between items-center mb-1">
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Sort & Selection</span>
-              <div className="flex gap-2">
-                <button 
-                  onClick={handleSelectAll}
-                  className="px-3 py-1 bg-white border border-gray-100 rounded-full text-[10px] font-black text-[#FF9800] shadow-sm active:scale-95 transition-all"
-                >
-                  すべて選択
-                </button>
-                <button 
-                  onClick={handleDeselectAll}
-                  className="px-3 py-1 bg-white border border-gray-100 rounded-full text-[10px] font-black text-gray-400 shadow-sm active:scale-95 transition-all"
-                >
-                  解除
-                </button>
-              </div>
+              {isSelectionMode && (
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleSelectAll}
+                    className="px-3 py-1 bg-white border border-gray-100 rounded-full text-[10px] font-black text-[#FF9800] shadow-sm active:scale-95 transition-all"
+                  >
+                    すべて選択
+                  </button>
+                  <button 
+                    onClick={handleDeselectAll}
+                    className="px-3 py-1 bg-white border border-gray-100 rounded-full text-[10px] font-black text-gray-400 shadow-sm active:scale-95 transition-all"
+                  >
+                    解除
+                  </button>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -639,14 +668,16 @@ export function BeetleManager() {
                 ))}
               </div>
             </div>
-            <div className="flex gap-2 pt-2 border-t border-gray-200/50">
-              <button onClick={handleBulkDelete} disabled={selectedIds.length === 0} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-500 rounded-xl text-[11px] font-bold disabled:opacity-30 transition-all active:scale-95">
-                <Trash2 size={14} /> 削除 ({selectedIds.length})
-              </button>
-              <button onClick={() => setIsBulkEditing(true)} disabled={selectedIds.length === 0} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-500 rounded-xl text-[11px] font-bold disabled:opacity-30 transition-all active:scale-95">
-                <Edit size={14} /> 編集 ({selectedIds.length})
-              </button>
-            </div>
+            {isSelectionMode && (
+              <div className="flex gap-2 pt-2 border-t border-gray-200/50">
+                <button onClick={handleBulkDelete} disabled={selectedIds.length === 0} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-red-50 text-red-500 rounded-xl text-[11px] font-bold disabled:opacity-30 transition-all active:scale-95">
+                  <Trash2 size={14} /> 削除 ({selectedIds.length})
+                </button>
+                <button onClick={() => setIsBulkEditing(true)} disabled={selectedIds.length === 0} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-500 rounded-xl text-[11px] font-bold disabled:opacity-30 transition-all active:scale-95">
+                  <Edit size={14} /> 編集 ({selectedIds.length})
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -838,7 +869,8 @@ export function BeetleManager() {
             onSubmit={(values, count) => {
               for (let index = 0; index < count; index += 1) {
                 const suffix = count > 1 ? `-${String(index + 1).padStart(2, "0")}` : "";
-                addLarva({ ...values, japaneseName: `${values.japaneseName}${suffix}` });
+                const mName = values.managementName || "";
+                addLarva({ ...values, managementName: mName ? `${mName}${suffix}` : suffix.replace("-", "") });
               }
               setIsCreating(false);
             }}
@@ -913,19 +945,52 @@ export function BeetleManager() {
           filteredEntries.length === 0 ? (
             <EmptyState />
           ) : (
-            filteredEntries.map((entry) => (
-              <EntryCard
-                key={entry.id}
-                entry={entry}
-                onOpen={isSelectionMode ? () => handleToggleSelect(entry.id) : setSelectedEntry}
-                onDelete={isSelectionMode ? undefined : (e, id) => {
-                  e.stopPropagation();
-                  if (window.confirm("本当に削除しますか？")) deleteEntry(id);
-                }}
-                isSelectionMode={isSelectionMode}
-                isSelected={selectedIds.includes(entry.id)}
-              />
-            ))
+            Object.entries(groupedEntries).map(([sciName, group]) => {
+              const isExpanded = expandedSpecies.includes(sciName) || isSelectionMode || query.length > 0;
+              const japaneseName = group[0]?.japaneseName || "不明";
+              
+              return (
+                <div key={sciName} className="mb-4">
+                  {!isSelectionMode && query.length === 0 && (
+                    <button 
+                      onClick={() => toggleSpecies(sciName)}
+                      className="w-full flex items-center justify-between p-4 bg-white/40 rounded-2xl mb-2 border border-white/60 active:scale-[0.98] transition-all"
+                    >
+                      <div className="text-left flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-[#4A3F35]">{japaneseName}</span>
+                          <span className="text-[10px] font-bold bg-[#FF9800] text-white px-2 py-0.5 rounded-full">{group.length}</span>
+                        </div>
+                        <div className="text-[10px] italic text-gray-400 truncate">{sciName}</div>
+                      </div>
+                      <div className="text-gray-300">
+                        {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                      </div>
+                    </button>
+                  )}
+                  
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <div className="space-y-3">
+                        {group.map((entry) => (
+                          <EntryCard
+                            key={entry.id}
+                            entry={entry}
+                            onOpen={isSelectionMode ? () => handleToggleSelect(entry.id) : setSelectedEntry}
+                            onDelete={isSelectionMode ? undefined : (e, id) => {
+                              e.stopPropagation();
+                              if (window.confirm("本当に削除しますか？")) deleteEntry(id);
+                            }}
+                            isSelectionMode={isSelectionMode}
+                            isSelected={selectedIds.includes(entry.id)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })
           )
         ) : activeTab === "分析" ? (
           <AnalysisView

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   DateRollField,
   BottomSheetInput,
@@ -11,6 +11,7 @@ import {
   SwitchBotTemperatureField,
 } from "@/components/entry-fields";
 import { today } from "@/lib/utils";
+import { useBeetleStore } from "@/store/use-beetle-store";
 import type { LarvaLog, LogStage, Gender } from "@/types/beetle";
 
 export function LarvaLogForm({
@@ -52,6 +53,28 @@ export function LarvaLogForm({
     gender: initialLogValues?.gender || lastLog?.gender || "不明",
     temperature: initialLogValues?.temperature?.toString() || "",
   });
+
+  const allEntries = useBeetleStore((state) => state.entries);
+
+  // 過去のログからマット名とボトルサイズの履歴を抽出（オートコンプリート用）
+  const suggestions = useMemo(() => {
+    const sSet = new Set<string>();
+    const bSet = new Set<string>();
+
+    allEntries.forEach((entry) => {
+      if (entry.type === "幼虫") {
+        entry.logs.forEach((log) => {
+          if (log.substrate) sSet.add(log.substrate);
+          if (log.bottleSize) bSet.add(log.bottleSize);
+        });
+      }
+    });
+
+    return {
+      substrate: Array.from(sSet).sort(),
+      bottleSize: Array.from(bSet).sort(),
+    };
+  }, [allEntries]);
 
   useEffect(() => {
     if (initialLogValues) {
@@ -101,12 +124,14 @@ export function LarvaLogForm({
           label="マット名"
           value={values.substrate}
           placeholder="マットの種類"
+          suggestions={suggestions.substrate}
           onChange={(val) => setValues({ ...values, substrate: val })}
         />
         <BottomSheetInput
           label="ボトルサイズ"
           value={values.bottleSize}
           placeholder="例: 800cc"
+          suggestions={suggestions.bottleSize}
           onChange={(val) => setValues({ ...values, bottleSize: val })}
         />
       </div>
@@ -132,21 +157,22 @@ export function LarvaLogForm({
         <LarvaStageField value={values.stage} onChange={(value) => setValues({ ...values, stage: value })} />
         <GenderField value={values.gender} onChange={(value) => setValues({ ...values, gender: value })} />
       </div>
-      <div className={initialLogValues ? "flex gap-3 pt-2" : "fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md p-4 pb-[calc(2rem+env(safe-area-inset-bottom,32px))] bg-white/90 backdrop-blur-md border-t z-50"}>
-        {initialLogValues && onCancel && (
-          <button 
-            type="button" 
-            className="flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-500 active:scale-95 transition-all"
-            onClick={onCancel}
-          >
-            キャンセル
+      {initialLogValues && (
+        <div className="flex gap-3 pt-2">
+          {onCancel && (
+            <button 
+              type="button" 
+              className="flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-500 active:scale-95 transition-all"
+              onClick={onCancel}
+            >
+              キャンセル
+            </button>
+          )}
+          <button type="submit" className="w-full py-3 bg-[#FF9800] text-white rounded-2xl font-bold shadow-lg shadow-[#FF9800]/20 active:scale-[0.98] transition-all">
+            更新する
           </button>
-        )}
-        <button type="submit" className={`w-full py-3 bg-[#FF9800] text-white rounded-2xl font-bold shadow-lg shadow-[#FF9800]/20 active:scale-[0.98] transition-all ${!initialLogValues ? "h-[52px]" : ""}`}>
-          {initialLogValues ? "更新する" : "作業を記録"}
-        </button>
-      </div>
-      {!initialLogValues && <div className="h-16" />} {/* 固定ボタン用の余白 */}
+        </div>
+      )}
     </form>
   );
 }
