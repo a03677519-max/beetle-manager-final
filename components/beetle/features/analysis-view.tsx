@@ -388,7 +388,7 @@ export function AnalysisView({
                              return null;
                            }} />
                          <Scatter
-                           data={selectedAnalysis.records?.filter(r => r.gender === viewGender).map(r => ({ name: r.mName, val: r.val, entryId: r.entryId }))}
+                           data={(selectedAnalysis.records || []).filter(r => r.gender === viewGender).map(r => ({ name: r.mName, val: r.val, entryId: r.entryId }))}
                            fill={viewGender === "オス" ? "#E67E22" : viewGender === "メス" ? "#EC407A" : "#D35400"}
                            style={{ cursor: "pointer" }}
                            onClick={(d: any) => { if (d?.entryId) { setSelectedEntry(entries.find(e => e.id === d.entryId) || null); setSelectedAnalysis(null); } }}
@@ -398,8 +398,8 @@ export function AnalysisView({
                    </div>
 
                    <div className="max-h-[30dvh] overflow-y-auto space-y-3 mb-10 pr-2 custom-scrollbar">
-                     {selectedAnalysis.records?.filter(r => r.gender === viewGender).length > 0 ? (
-                       sortRecords(selectedAnalysis.records).filter(r => r.gender === viewGender).map((rec, i) => (
+                     {(selectedAnalysis.records || []).filter(r => r.gender === viewGender).length > 0 ? (
+                       sortRecords(selectedAnalysis.records || []).filter(r => r.gender === viewGender).map((rec, i) => (
                        <div key={i} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-2xl font-black border border-gray-100">
                           <span className="text-gray-400 text-[10px] truncate max-w-[120px]">{rec.mName}</span> {/* Keep gray for subtle text */}
                           <span className="text-[#FF9800] text-xl leading-none">{rec.val}<span className="text-xs ml-0.5 font-bold">
