@@ -26,7 +26,7 @@ export function EntryDetail({
 
   const copyToClipboard = () => {
     // 実行時にプロパティが存在するか安全に確認するため、拡張した型として扱う
-    const e = entry as BeetleEntry & { hatchDate?: string; managementName?: string; actualEmergenceDate?: string; emergenceType?: string; feedingDate?: string; emergenceDate?: string; logs?: any[] };
+    const e = entry as any;
     const fmtDate = (d: string) => (d || "").replace(/-/g, "/");
     
     // 1-4行目
@@ -34,8 +34,7 @@ export function EntryDetail({
     text += `学名 ${e.scientificName}\n`;
     text += `産地 ${e.locality || ""}\n`;
     
-    // hatchDateがない場合はcreatedAtを使用するフォールバック
-    const displayDate = (e as any).hatchDate || e.createdAt || "";
+    const displayDate = e.hatchDate || e.createdAt || "";
     text += `累代 ${buildGenerationLabel(e.generation)} ${e.managementName || ""} ${fmtDate(displayDate)}`.trimEnd() + "\n";
     
     // 5行目：空行

@@ -50,7 +50,7 @@ export function BeetleManager() {
   const { fetchTemperature, isFetching } = useSwitchBot();
 
   const [selectedEntry, setSelectedEntry] = useState<BeetleEntry | null>(null);
-  const [activeTab, setActiveTab] = useState("ホーム");
+  const [activeTab, setActiveTab] = useState("成虫");
   const [query, setQuery] = useState("");
   const [createType, setCreateType] = useState<EntryType>("幼虫");
   const [pastedData, setPastedData] = useState<any>(null);
@@ -134,7 +134,6 @@ export function BeetleManager() {
   };
 
   const handleQuickExchange = (e: React.MouseEvent, entry: LarvaBeetle) => {
-    e.stopPropagation();
     const latestLog = entry.logs[0];
     addLarvaLog(entry.id, {
       date: today(),
@@ -446,58 +445,60 @@ export function BeetleManager() {
 
   return (
     <div className="app-container font-cute bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] min-h-screen pb-[calc(140px+env(safe-area-inset-bottom,32px))] leading-[1.7]">
-      <header className="px-6 pt-8 pb-4 flex justify-between items-end">
-        <div>
-          <p className="text-[14px] font-bold text-[#8B5A2B] uppercase tracking-widest mb-1.5">Breeding Log</p>
-          <h1 className="text-3xl font-black text-[#212529] tracking-tight">マイブリード</h1>
+      {/* 固定ヘッダーセクション */}
+      <section className="sticky top-0 z-30 bg-[#F8F9FA]/90 backdrop-blur-md pt-8 pb-4 px-6 border-b border-gray-100 mb-6">
+        <p className="text-[11px] font-black text-[#8B5A2B] uppercase tracking-[0.2em] mb-4 opacity-60">Breeding Dashboard</p>
+        
+        {/* 統計ボタン */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <button 
+            onClick={() => { setActiveTab("成虫"); setSelectedType("成虫"); }}
+            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "成虫" && selectedType === "成虫" ? "bg-[#2D5A27] border-[#2D5A27] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#212529]"}`}
+          >
+            <p className="text-[10px] font-bold opacity-70 uppercase mb-1">成虫</p>
+            <p className="text-2xl font-black">{stats.adults}<span className="text-[10px] ml-0.5">頭</span></p>
+          </button>
+          <button 
+            onClick={() => { setActiveTab("幼虫"); setSelectedType("幼虫"); }}
+            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "幼虫" && selectedType === "幼虫" ? "bg-[#2D5A27] border-[#2D5A27] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#212529]"}`}
+          >
+            <p className="text-[10px] font-bold opacity-70 uppercase mb-1">幼虫</p>
+            <p className="text-2xl font-black">{stats.larvae}<span className="text-[10px] ml-0.5">頭</span></p>
+          </button>
+          <button 
+            onClick={() => { setActiveTab("産卵セット"); setSelectedType("産卵セット"); }}
+            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "産卵セット" && selectedType === "産卵セット" ? "bg-[#2D5A27] border-[#2D5A27] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#212529]"}`}
+          >
+            <p className="text-[10px] font-bold opacity-70 uppercase mb-1">セット</p>
+            <p className="text-2xl font-black">{stats.spawnSets}<span className="text-[10px] ml-0.5">件</span></p>
+          </button>
         </div>
-      </header>
 
-      {/* 統計ダッシュボード */}
-      <section className="px-6 mb-6 grid grid-cols-3 gap-3">
-        <div className="bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-white/60 shadow-sm">
-          <p className="text-[12px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">成虫</p>
-          <p className="text-3xl font-black text-[#212529]">{stats.adults}<span className="text-[12px] ml-0.5 font-bold">頭</span></p>
-        </div>
-        <div className="bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-white/60 shadow-sm">
-          <p className="text-[12px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">幼虫</p>
-          <p className="text-3xl font-black text-[#212529]">{stats.larvae}<span className="text-[12px] ml-0.5 font-bold">頭</span></p>
-        </div>
-        <div className="bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-white/60 shadow-sm">
-          <p className="text-[12px] font-black text-[#8B5A2B] uppercase tracking-tighter opacity-70">セット</p>
-          <p className="text-3xl font-black text-[#212529]">{stats.spawnSets}<span className="text-[12px] ml-0.5 font-bold">件</span></p>
-        </div>
-      </section>
-
-      <section className="px-6 mb-8 sticky top-0 z-30 bg-white/20 backdrop-blur-md py-2">
-        <label className="flex items-center bg-white/70 backdrop-blur-md rounded-2xl px-5 py-4 shadow-sm border border-white/40 focus-within:border-[#2D5A27] transition-all">
-          <Search size={18} className="text-[#6C757D] mr-3" />
+        <label className="flex items-center bg-white/80 rounded-2xl px-4 py-3 shadow-sm border border-white/40 focus-within:border-[#2D5A27] transition-all mb-4">
+          <Search size={16} className="text-[#6C757D] mr-3" />
           <input
             type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="個体名・学名・産地で検索"
-            className="flex-1 text-[18px] text-[#212529] outline-none bg-transparent"
+            placeholder="検索..."
+            className="flex-1 text-base text-[#212529] outline-none bg-transparent"
           />
         </label>
-        <div className="flex gap-2.5 mt-4 overflow-x-auto no-scrollbar pb-1">
+
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
           <button
             type="button"
-            className={`px-5 py-2 rounded-full text-[14px] font-bold transition-all whitespace-nowrap ${
-              selectedType === "すべて" ? "bg-[#2D5A27] text-white shadow-md" : "bg-white/40 backdrop-blur-sm text-[#6C757D] border border-white/40"
-            }`}
-            onClick={() => setSelectedType("すべて")}
+            className={`px-4 py-1.5 rounded-full text-[12px] font-bold transition-all whitespace-nowrap ${selectedType === "すべて" ? "bg-[#2D5A27] text-white shadow-md" : "bg-white/40 text-[#6C757D] border border-white/40"}`}
+            onClick={() => { setActiveTab("成虫"); setSelectedType("すべて"); }}
           >
-            すべて
+            すべて表示
           </button>
           {ENTRY_TYPES.map((type) => (
             <button
               key={type}
               type="button"
-              className={`px-5 py-2 rounded-full text-[14px] font-bold transition-all whitespace-nowrap ${
-                selectedType === type ? "bg-[#2D5A27] text-white shadow-md" : "bg-white/40 backdrop-blur-sm text-[#6C757D] border border-white/40"
-              }`}
-              onClick={() => setSelectedType(type)}
+              className={`px-4 py-1.5 rounded-full text-[12px] font-bold transition-all whitespace-nowrap ${selectedType === type ? "bg-[#2D5A27] text-white shadow-md" : "bg-white/40 text-[#6C757D] border border-white/40"}`}
+              onClick={() => { setActiveTab(type); setSelectedType(type); }}
             >
               {type}
             </button>
@@ -652,7 +653,7 @@ export function BeetleManager() {
       </Modal>
 
       <section className="px-6">
-        {activeTab === "ホーム" || ENTRY_TYPES.includes(activeTab as EntryType) ? (
+        {ENTRY_TYPES.includes(activeTab as EntryType) || activeTab === "成虫" || selectedType === "すべて" ? (
           filteredEntries.length === 0 ? (
             <EmptyState />
           ) : (
