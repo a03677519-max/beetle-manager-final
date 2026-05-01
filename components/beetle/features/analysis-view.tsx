@@ -110,6 +110,7 @@ export function AnalysisView({
           if (log.temperature) groups[key].temperatures.push(Number(log.temperature));
         });
         if (entry.actualEmergenceDate) {
+          // 型エラーを回避するため any キャストまたは適切なプロパティチェック
           const hatchDate = (entry as any).hatchDate || entry.createdAt;
           const days = daysBetween(hatchDate, entry.actualEmergenceDate);
           if (days !== null) groups[key].larvaRecords.push({ val: days, mName, gender: currentGender, entryId: entry.id });
