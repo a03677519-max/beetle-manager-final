@@ -77,7 +77,7 @@ export function AnalysisView({
       if (element) {
         // アニメーションによるレイアウト変更を考慮して遅延実行
         const timer = setTimeout(() => {
-          element.scrollIntoView({ behavior: "smooth", block: "center" });
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
         }, 300);
         return () => clearTimeout(timer);
       }
@@ -128,7 +128,8 @@ export function AnalysisView({
           if (log.temperature) groups[key].temperatures.push(Number(log.temperature));
         });
         if (entry.actualEmergenceDate) {
-          const hatchDate = entry.hatchDate || entry.createdAt;
+          // LarvaBeetle型にhatchDateが含まれていない場合のエラーを回避
+          const hatchDate = (entry as any).hatchDate || entry.createdAt;
           const days = daysBetween(hatchDate, entry.actualEmergenceDate);
           if (days !== null) groups[key].larvaRecords.push({ val: days, mName, gender: currentGender, entryId: entry.id });
         }
@@ -160,7 +161,7 @@ export function AnalysisView({
         <div 
           key={stat.scientificName} 
           ref={(el) => { itemRefs.current[stat.scientificName] = el; }}
-          className="bg-white/70 backdrop-blur-sm rounded-3xl border border-white/60 shadow-sm overflow-hidden"
+          className="bg-white/70 backdrop-blur-sm rounded-3xl border border-white/60 shadow-sm overflow-hidden scroll-mt-48"
         >
           <button onClick={() => setExpandedNames(prev => prev.includes(stat.scientificName) ? prev.filter(n => n !== stat.scientificName) : [...prev, stat.scientificName])} className="w-full px-5 py-4 flex justify-between items-center">
             <div className="text-left">

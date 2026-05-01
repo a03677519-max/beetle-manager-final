@@ -745,7 +745,7 @@ export function BeetleManager() {
       </Modal>
 
       <section className="px-6">
-        {ENTRY_TYPES.includes(activeTab as EntryType) || activeTab === "成虫" || selectedType === "すべて" ? (
+        {activeTab !== "分析" && activeTab !== "タスク" && activeTab !== "設定" ? (
           filteredEntries.length === 0 ? (
             <EmptyState />
           ) : (
