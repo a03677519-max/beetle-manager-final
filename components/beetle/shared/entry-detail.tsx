@@ -80,7 +80,7 @@ export function EntryDetail({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/60 backdrop-blur-[2px] pointer-events-auto" 
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px] pointer-events-auto" 
         onClick={onClose} 
       />
       <motion.div 
@@ -92,7 +92,7 @@ export function EntryDetail({
       >
         <div className="flex justify-between items-center mb-6 sticky top-0 bg-white/90 backdrop-blur-sm z-10 h-[48px] border-b border-gray-50">
           <div className="text-left">
-            <h2 className="text-[18px] font-bold text-[#212529]">{entry.japaneseName}</h2>
+            <h2 className="text-[18px] font-bold text-[#333D33]">{entry.japaneseName}</h2>
             <p className="text-[12px] font-serif italic text-gray-400">{entry.scientificName}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ export function EntryDetail({
             </button>
             <button 
               type="button" 
-              className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-[#2D5A27] transition-colors" 
+              className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-[#8BC34A] transition-colors" 
               onClick={() => { onClose(); startEditing(entry.id); }}
             >
               <Edit2 size={18} />
@@ -139,11 +139,16 @@ export function EntryDetail({
           {entry.type === "産卵セット" ? <SpawnSetDetail entry={entry} /> : null}
         </div>
 
-        <div className="fixed bottom-0 left-0 w-full p-4 pb-[calc(2rem+env(safe-area-inset-bottom,32px))] bg-white/90 backdrop-blur-md border-t z-20">
-          <button className="w-full bg-[#2D5A27] text-white font-bold h-[52px] rounded-2xl shadow-lg active:scale-[0.98] transition-all">
-            作業を記録
-          </button>
-        </div>
+        {entry.type !== "幼虫" && (
+          <div className="fixed bottom-0 left-0 w-full p-4 pb-[calc(2rem+env(safe-area-inset-bottom,32px))] bg-white/90 backdrop-blur-md border-t z-20">
+            <button 
+              onClick={() => { onClose(); startEditing(entry.id); }}
+              className="w-full bg-[#8BC34A] text-white font-bold h-[52px] rounded-2xl shadow-lg active:scale-[0.98] transition-all"
+            >
+              作業を記録
+            </button>
+          </div>
+        )}
       </motion.div>
     </motion.div>
   );

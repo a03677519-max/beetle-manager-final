@@ -161,11 +161,11 @@ export function AnalysisView({
         <div 
           key={stat.scientificName} 
           ref={(el) => { itemRefs.current[stat.scientificName] = el; }}
-          className="bg-white/70 backdrop-blur-sm rounded-3xl border border-white/60 shadow-sm overflow-hidden scroll-mt-48"
+          className="bg-white/80 backdrop-blur-sm rounded-3xl border border-white/60 shadow-[0_4px_20px_rgba(0,0,0,0.02)] overflow-hidden scroll-mt-48"
         >
           <button onClick={() => setExpandedNames(prev => prev.includes(stat.scientificName) ? prev.filter(n => n !== stat.scientificName) : [...prev, stat.scientificName])} className="w-full px-5 py-4 flex justify-between items-center">
             <div className="text-left">
-              <div className="font-bold text-[#212529]">{stat.japaneseName}</div>
+              <div className="font-bold text-[#333D33]">{stat.japaneseName}</div>
               <div className="text-[10px] italic text-gray-400">{stat.scientificName}</div>
             </div>
             {expandedNames.includes(stat.scientificName) ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -173,7 +173,7 @@ export function AnalysisView({
           <AnimatePresence>
             {expandedNames.includes(stat.scientificName) && (
               <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="px-5 pb-5 flex flex-col gap-4 border-t border-gray-50/50 pt-4">
-                <div className="bg-white/40 border border-white/60 p-4 rounded-2xl">
+                <div className="bg-white/60 border border-white/60 p-4 rounded-2xl">
                   <div className="text-[12px] font-black text-gray-400 uppercase mb-3 tracking-widest text-center">サイズ記録 (MIN / MAX)</div>
                   <div className="flex items-center justify-around">
                     <div className="text-center">
@@ -188,7 +188,7 @@ export function AnalysisView({
                   </div>
                   <button 
                     onClick={() => setSelectedAnalysis({ label: "体重計測履歴", records: stat.weightRecords })}
-                    className="w-full mt-4 py-2.5 text-[12px] font-bold text-[var(--primary)] bg-white/80 border border-white rounded-xl shadow-sm active:scale-95 transition-all"
+                    className="w-full mt-4 py-2.5 text-[#8BC34A] bg-white/80 border border-white rounded-xl shadow-sm active:scale-95 transition-all"
                   >
                     履歴を詳しく見る
                   </button>
@@ -212,12 +212,12 @@ export function AnalysisView({
              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAnalysis(null)} />
              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white/95 backdrop-blur-xl p-8 rounded-[40px] w-full max-w-sm shadow-[0_20px_50px_rgba(0,0,0,0.3)] relative z-10 border border-white/20">
                <button onClick={() => setSelectedAnalysis(null)} className="absolute top-6 right-6 p-2 bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"><X size={18} /></button>
-               <h3 className="font-black text-2xl mb-8 text-[#212529] tracking-tight">{selectedAnalysis.label}</h3>
+               <h3 className="font-black text-2xl mb-8 text-[#333D33] tracking-tight">{selectedAnalysis.label}</h3>
 
                <div className="flex bg-gray-100 p-1 rounded-2xl mb-6">
                  {(["オス", "メス", "不明"] as const).map((g) => (
                    <button key={g} onClick={() => setViewGender(g)} className={`flex-1 py-2 text-xs font-black rounded-xl transition-all ${viewGender === g ? "bg-white text-[var(--primary)] shadow-sm" : "text-gray-400"}`}>{g}</button>
-                 ))}
+                 ))} {/* text-[var(--primary)] will be handled by global CSS variable or direct replacement */}
                </div>
                
                <div className="h-48 mb-6 bg-gray-50/50 rounded-3xl p-4">
@@ -231,7 +231,7 @@ export function AnalysisView({
                          if (active && payload && payload.length) {
                            return <div className="bg-white/90 p-2 rounded-lg text-[10px] font-bold shadow-xl">
                              <p>{payload[0].payload.name}</p>
-                             <p className="text-[var(--primary)] text-sm font-black">
+                             <p className="text-[#8BC34A] text-sm font-black">
                                {payload[0].value}{selectedAnalysis.label.includes("体重") ? "g" : "日"}
                              </p>
                            </div>;
@@ -252,8 +252,8 @@ export function AnalysisView({
                  {selectedAnalysis.records.filter(r => r.gender === viewGender).length > 0 ? (
                    sortRecords(selectedAnalysis.records).filter(r => r.gender === viewGender).map((rec, i) => (
                    <div key={i} className="flex justify-between items-center p-4 bg-gray-50/50 rounded-2xl font-black border border-gray-100">
-                      <span className="text-gray-400 text-[10px] truncate max-w-[120px]">{rec.mName}</span>
-                      <span className="text-[var(--primary)] text-xl leading-none">{rec.val}<span className="text-xs ml-0.5 font-bold">{selectedAnalysis.label.includes("体重") ? "g" : "日"}</span></span>
+                      <span className="text-gray-400 text-[10px] truncate max-w-[120px]">{rec.mName}</span> {/* Keep gray for subtle text */}
+                      <span className="text-[#8BC34A] text-xl leading-none">{rec.val}<span className="text-xs ml-0.5 font-bold">{selectedAnalysis.label.includes("体重") ? "g" : "日"}</span></span>
                    </div>
                  ))
                  ) : (
@@ -261,7 +261,7 @@ export function AnalysisView({
                  )}
                </div>
 
-               <button onClick={() => setSelectedAnalysis(null)} className="w-full py-5 text-center text-base text-white bg-[#2D5A27] font-black rounded-3xl shadow-[0_10px_20px_rgba(45,90,39,0.3)] active:scale-95 transition-all">
+               <button onClick={() => setSelectedAnalysis(null)} className="w-full py-5 text-center text-base text-white bg-[#8BC34A] font-black rounded-3xl shadow-[0_10px_20px_rgba(139,195,74,0.2)] active:scale-95 transition-all">
                  確認しました
                </button>
              </motion.div>
@@ -276,7 +276,7 @@ export function AnalysisView({
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedSpawnTable(null)} />
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white p-6 rounded-[32px] w-full max-w-lg max-h-[80vh] shadow-2xl relative z-10 flex flex-col overflow-hidden">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="font-black text-xl text-[#212529]">産卵セット記録: {selectedSpawnTable.japaneseName}</h3>
+                <h3 className="font-black text-xl text-[#333D33]">産卵セット記録: {selectedSpawnTable.japaneseName}</h3>
                 <button onClick={() => setSelectedSpawnTable(null)} className="p-2 bg-gray-100 rounded-full"><X size={18} /></button>
               </div>
               
@@ -298,12 +298,12 @@ export function AnalysisView({
                         className="active:bg-gray-50 cursor-pointer"
                         onClick={() => { setSelectedEntry(s); setSelectedSpawnTable(null); }}
                       >
-                        <td className="p-3 font-bold text-gray-800">{s.managementName || "-"}</td>
+                        <td className="p-3 font-bold text-gray-800">{s.managementName || "-"}</td> {/* Keep dark gray for readability */}
                         <td className="p-3 text-gray-500">{s.setDate.replace(/-/g, "/")}</td>
                         <td className="p-3 text-gray-600 font-medium">{s.substrate || "-"}</td>
                         <td className="p-3 text-gray-600">{s.temperature ? `${s.temperature}℃` : "-"}</td>
-                        <td className="p-3 text-right">
-                          <div className="w-6 h-6 bg-[var(--primary)]/10 text-[var(--primary)] rounded-full flex items-center justify-center mx-auto">
+                        <td className="p-3 text-right"> {/* text-[var(--primary)] will be handled */}
+                          <div className="w-6 h-6 bg-[#8BC34A]/10 text-[#8BC34A] rounded-full flex items-center justify-center mx-auto">
                             <ExternalLink size={12} />
                           </div>
                         </td>
@@ -323,19 +323,19 @@ export function AnalysisView({
         )}
       </AnimatePresence>
 
-      <section className="bg-white/60 backdrop-blur-md p-6 rounded-[24px] border border-white/60 shadow-sm mt-8">
-        <h3 className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest mb-4">Storage Management</h3>
+      <section className="bg-white/80 backdrop-blur-md p-6 rounded-[24px] border border-white/60 shadow-sm mt-8">
+        <h3 className="text-[10px] font-black text-[#D7CCC8] uppercase tracking-widest mb-4">Storage Management</h3>
         <div className="mb-4 p-4 bg-white/40 rounded-2xl border border-white/60 flex items-center justify-between">
           <div className="text-[10px] font-bold text-gray-600">
             {isPersisted ? "✅ 永続ストレージ有効" : "⚠️ 削除される可能性があります"}
           </div>
-          {!isPersisted && <button onClick={requestPersistence} className="text-[10px] bg-[var(--primary)] text-white px-3 py-1 rounded-full font-bold">有効化</button>}
+          {!isPersisted && <button onClick={requestPersistence} className="text-[10px] bg-[#8BC34A] text-white px-3 py-1 rounded-full font-bold">有効化</button>}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <button 
             onClick={handleSync} 
             disabled={isSyncing}
-            className="col-span-2 flex items-center justify-center gap-2 bg-[#2D5A27] text-white py-3 rounded-xl text-xs font-bold shadow-md active:scale-95 transition-all disabled:opacity-50"
+            className="col-span-2 flex items-center justify-center gap-2 bg-[#8BC34A] text-white py-3 rounded-xl text-xs font-bold shadow-md active:scale-95 transition-all disabled:opacity-50"
           >
             <Upload size={14} /> 
             {isSyncing ? "同期中..." : "GitHubへデータを同期"}
@@ -350,9 +350,9 @@ export function AnalysisView({
 
 function AnalysisItem({ label, value, onClick, isLink }: { label: string; value: string; onClick?: () => void; isLink?: boolean }) {
   return (
-    <div onClick={onClick} className={`p-4 rounded-2xl bg-white/40 border border-white/60 flex flex-col justify-center ${onClick ? "cursor-pointer active:bg-white/60 transition-colors" : ""}`}>
-      <div className="text-[12px] font-bold text-gray-400 uppercase mb-2 tracking-wider">{label}</div>
-      <div className={`text-[17px] font-black leading-tight ${isLink ? "text-[var(--primary)] underline decoration-dotted underline-offset-4" : "text-gray-800"}`}>{value}</div>
+    <div onClick={onClick} className={`p-4 rounded-2xl bg-white/40 border border-white/60 flex flex-col justify-center ${onClick ? "cursor-pointer active:bg-white/60 transition-colors" : ""}`}> {/* Keep white/40 for background */}
+      <div className="text-[12px] font-bold text-[#D7CCC8] uppercase mb-2 tracking-wider">{label}</div>
+      <div className={`text-[17px] font-black leading-tight ${isLink ? "text-[#8BC34A] underline decoration-dotted underline-offset-4" : "text-gray-800"}`}>{value}</div>
     </div>
   );
 }

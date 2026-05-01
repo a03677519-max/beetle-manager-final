@@ -120,9 +120,9 @@ export function EntryBaseFields({
           type="button"
           className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm text-left flex justify-between items-center active:bg-gray-50 transition-all border-dashed"
           onClick={() => setIsLinkedSelectOpen(true)}
-        >
+        > {/* Keep button */}
           <div className="flex items-center gap-2 overflow-hidden">
-            <LinkIcon size={14} className={selectedLinkedEntry ? "text-[#2D5A27]" : "text-gray-300"} />
+            <LinkIcon size={14} className={selectedLinkedEntry ? "text-[#8BC34A]" : "text-gray-300"} />
             <span className={`truncate ${selectedLinkedEntry ? "text-gray-800 font-bold" : "text-gray-300"}`}>
               {selectedLinkedEntry 
                 ? `${selectedLinkedEntry.japaneseName} ${selectedLinkedEntry.managementName ? `[${selectedLinkedEntry.managementName}]` : ""}`
@@ -160,16 +160,16 @@ export function EntryBaseFields({
                 <input
                   type="text"
                   placeholder="名前や管理名で検索..."
-                  value={searchQuery}
+                  value={searchQuery} // Keep value
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-12 bg-gray-50 rounded-2xl pl-11 pr-4 text-sm font-bold outline-none border border-transparent focus:border-[#2D5A27]/20 transition-all"
+                  className="w-full h-12 bg-gray-50 rounded-2xl pl-11 pr-4 text-sm font-bold outline-none border border-transparent focus:border-[#8BC34A]/20 transition-all"
                 />
               </div>
               <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
                 <button
                   type="button"
-                  className={`w-full text-left p-4 rounded-2xl font-bold transition-all ${!linkedEntryId ? "bg-[#2D5A27] text-white" : "bg-gray-50 text-gray-500"}`}
-                  onClick={() => { onChange({ linkedEntryId: undefined }); setIsLinkedSelectOpen(false); }}
+                  className={`w-full text-left p-4 rounded-2xl font-bold transition-all ${!linkedEntryId ? "bg-[#8BC34A] text-white" : "bg-gray-50 text-gray-500"}`}
+                  onClick={() => { onChange({ linkedEntryId: undefined }); setIsLinkedSelectOpen(false); }} // Keep onClick
                 >
                   なし (紐付け解除)
                 </button>
@@ -177,7 +177,7 @@ export function EntryBaseFields({
                   <button
                     key={e.id}
                     type="button"
-                    className={`w-full text-left p-4 rounded-2xl font-bold flex flex-col ${linkedEntryId === e.id ? "bg-[#2D5A27] text-white" : "bg-gray-50 text-gray-700"}`}
+                    className={`w-full text-left p-4 rounded-2xl font-bold flex flex-col ${linkedEntryId === e.id ? "bg-[#8BC34A] text-white" : "bg-gray-50 text-gray-700"}`} // Keep class
                     onClick={() => {
                       const nextGen = { ...e.generation };
                       if (nextGen.primary === "WD") { nextGen.primary = "WF" as any; nextGen.count = "1"; }

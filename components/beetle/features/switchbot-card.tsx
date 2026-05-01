@@ -51,7 +51,7 @@ export function SwitchBotCard() {
         <button type="button" className="button button-secondary" onClick={handleFetchDevices}>
           {isFetchingDevices ? "取得中..." : "デバイス取得"}
         </button>
-        <button type="button" className="button" onClick={handleFetchTemperature}>
+        <button type="button" className="button" onClick={handleFetchTemperature}> {/* This button uses the 'button' class, which should be updated */}
           {isFetching ? "取得中..." : "現在温度を使う"}
         </button>
       </div>

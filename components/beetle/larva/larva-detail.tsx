@@ -1,7 +1,7 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
-import { Download } from "lucide-react";
+import { useState } from "react";
+import { Trash2, Download, Edit2 } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -16,6 +16,7 @@ import { daysBetween, formatDate, today } from "@/lib/utils";
 import { useBeetleStore } from "@/store/use-beetle-store";
 import type { LarvaBeetle } from "@/types/beetle";
 import { LarvaLogForm } from "./larva-log-form";
+import { Modal } from "@/components/ui/modal";
 
 export function LarvaDetail({
   entry,
@@ -26,6 +27,7 @@ export function LarvaDetail({
   onFetchTemperature: (setter: (value: string) => void) => void;
   isFetchingTemperature: boolean;
 }) {
+  const [editingLog, setEditingLog] = useState<LarvaBeetle['logs'][0] | null>(null);
   const deleteLarvaLog = useBeetleStore((state) => state.deleteLarvaLog);
 
   const chartData = [...entry.logs]
@@ -73,7 +75,7 @@ export function LarvaDetail({
         </div>
         <div className="bg-[#F1F3F5] p-4 rounded-2xl border border-gray-100">
           <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest">最新体重</div>
-          <div className="text-xl font-bold text-[#2D5A27]">{entry.logs[0]?.weight || "-"}g</div>
+          <div className="text-xl font-bold text-[#689F38]">{entry.logs[0]?.weight || "-"}g</div>
         </div>
         <div className="bg-gray-50 p-4 rounded-2xl">
           <div className="text-xs text-gray-500">羽化日 ({entry.emergenceType})</div>
@@ -100,21 +102,21 @@ export function LarvaDetail({
           <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">体重推移グラフ</h3>
         </div>
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%"> {/* Keep ResponsiveContainer */}
             <AreaChart data={chartData}>
               <defs>
-                <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2D5A27" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#2D5A27" stopOpacity={0}/>
+                <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1"> {/* Keep linearGradient */}
+                  <stop offset="5%" stopColor="#689F38" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#689F38" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#DEE2E6" vertical={false} />
               <XAxis dataKey="date" stroke="#9ca3af" fontSize={10} />
               <YAxis stroke="#9ca3af" fontSize={10} axisLine={false} tickLine={false} />
               <Tooltip 
-                contentStyle={{ borderRadius: '1.25rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)' }}
+                 contentStyle={{ borderRadius: '1.25rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', color: '#689F38' }}
               />
-              <Area type="monotone" dataKey="weight" stroke="#2D5A27" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" name="体重(g)" dot={{ r: 4, fill: "#2D5A27", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
+              <Area type="monotone" dataKey="weight" stroke="#689F38" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" name="体重(g)" dot={{ r: 4, fill: "#689F38", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
               <Area type="monotone" dataKey="temperature" stroke="#E67E22" strokeWidth={2} fill="transparent" name="温度(℃)" dot={{ r: 2, fill: "#E67E22" }} strokeDasharray="5 5" />
             </AreaChart>
           </ResponsiveContainer>
@@ -122,7 +124,7 @@ export function LarvaDetail({
         <div className="mt-4 flex justify-center">
           <button 
             onClick={exportToCSV}
-            className="flex items-center gap-2 text-[10px] font-bold text-[#2D5A27] bg-[#2D5A27]/5 px-4 py-2 rounded-full hover:bg-[#2D5A27]/10 transition-colors"
+            className="flex items-center gap-2 text-[10px] font-bold text-[#689F38] bg-[#689F38]/5 px-4 py-2 rounded-full hover:bg-[#689F38]/10 transition-colors"
           >
             <Download size={14} />
             データをCSV形式でダウンロード
@@ -131,7 +133,7 @@ export function LarvaDetail({
       </section>
 
       <section className="mt-6 bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
-        <div className="text-[10px] font-black text-[#8B5A2B] mb-6 uppercase tracking-widest border-l-4 border-[#2D5A27] pl-3">History Log</div>
+        <div className="text-[10px] font-black text-[#BCAAA4] mb-6 uppercase tracking-widest border-l-4 border-[#8BC34A] pl-3">History Log</div>
         <div className="space-y-3">
           {entry.logs.length === 0 ? (
             <p className="text-sm text-gray-400 text-center py-4">飼育ログはまだありません。</p>
@@ -139,8 +141,11 @@ export function LarvaDetail({
             <div className="relative ml-2 border-l-2 border-gray-50 pl-6 space-y-6">
               {entry.logs.map((log) => (
                 <div className="relative" key={log.id}>
-                  <div className="absolute -left-[31px] top-4 w-4 h-4 rounded-full bg-white border-4 border-[#2D5A27] shadow-sm z-10" />
-                  <div className="flex items-center justify-between bg-[#F8F9FA] border border-gray-50 p-4 rounded-2xl transition-active active:bg-gray-100">
+                  <div className="absolute -left-[31px] top-4 w-4 h-4 rounded-full bg-white border-4 border-[#8BC34A] shadow-sm z-10 cursor-pointer" onClick={() => setEditingLog(log)} />
+                  <div 
+                    className="flex items-center justify-between bg-[#F8F9FA] border border-gray-50 p-4 rounded-2xl transition-active active:bg-gray-100 cursor-pointer shadow-sm"
+                    onClick={() => setEditingLog(log)}
+                  >
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-bold bg-gray-100 px-2 py-0.5 rounded text-gray-500 uppercase">{log.stage}</span>
@@ -151,10 +156,18 @@ export function LarvaDetail({
                       </div>
                       <div className="text-[10px] text-gray-400 font-bold mt-1">性別: {log.gender}</div>
                     </div>
-                    <button
-                      type="button"
-                      className="p-2 text-gray-300 hover:text-red-500"
-                      onClick={() => {
+                    <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="p-2 text-gray-300 hover:text-[#8BC34A] transition-colors"
+                        onClick={() => setEditingLog(log)}
+                      >
+                        <Edit2 size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                        onClick={() => {
                         if (window.confirm("このログを削除してもよろしいですか？一度削除すると元に戻せません。")) {
                           deleteLarvaLog(entry.id, log.id);
                         }
@@ -162,6 +175,7 @@ export function LarvaDetail({
                     >
                       <Trash2 size={16} />
                     </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -170,5 +184,23 @@ export function LarvaDetail({
         </div>
       </section>
     </>
+    <Modal
+      isOpen={!!editingLog}
+      onClose={() => setEditingLog(null)}
+      title={editingLog ? "ログの詳細確認・編集" : "新規ログを追加"}
+    >
+      <LarvaLogForm
+        initialLogValues={editingLog}
+        onSave={(values) => {
+          // Assuming useBeetleStore has an updateLarvaLog action
+          // If not, you'll need to add it to your store definition.
+          useBeetleStore.getState().updateLarvaLog(entry.id, values.id, values);
+          setEditingLog(null);
+        }}
+        onCancel={() => setEditingLog(null)}
+        onFetchTemperature={onFetchTemperature}
+        isFetchingTemperature={isFetchingTemperature}
+      />
+    </Modal>
   );
 }

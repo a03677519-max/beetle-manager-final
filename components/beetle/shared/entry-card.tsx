@@ -27,7 +27,7 @@ export function EntryCard({
   // エサ交換アラート（信号機）
   const lastLogDate = logs.length > 0 ? logs[0].date : entry.createdAt;
   const diffDays = daysBetween(lastLogDate, today()) ?? 0;
-  let dateColor = "text-[#2D5A27]"; // 緑
+  let dateColor = "text-[#8BC34A]"; // 明るい緑
   if (diffDays >= 90) dateColor = "text-[#E74C3C]"; // 赤
   else if (diffDays >= 60) dateColor = "text-[#F1C40F]"; // 黄
 
@@ -68,7 +68,7 @@ export function EntryCard({
 
   return (
     <article
-      className="flex bg-white/70 backdrop-blur-md rounded-[24px] p-4 shadow-[0_8px_32px_rgba(0,0,0,0.04)] cursor-pointer active:scale-[0.98] active:opacity-90 transition-all duration-200 select-none touch-manipulation relative overflow-hidden mb-4 border border-white/40"
+      className="flex bg-white/80 backdrop-blur-md rounded-[24px] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] cursor-pointer active:scale-[0.98] active:opacity-90 transition-all duration-200 select-none touch-manipulation relative overflow-hidden mb-4 border border-white/50"
       onClick={() => onOpen(entry)}
     >
       {entry.photos[0] && (
@@ -81,14 +81,14 @@ export function EntryCard({
         <div className="flex justify-between items-start mb-1">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <h3 className="text-[19px] font-black text-[#212529] tracking-tight truncate">{entry.japaneseName}</h3>
+              <h3 className="text-[19px] font-black text-[#333D33] tracking-tight truncate">{entry.japaneseName}</h3>
               {entry.type === "成虫" && (
                 <span className={`text-sm font-bold ${entry.gender === "オス" ? "text-blue-500" : entry.gender === "メス" ? "text-pink-500" : "text-gray-400"}`}>
                   {entry.gender === "オス" ? "♂" : entry.gender === "メス" ? "♀" : ""}
                 </span>
               )}
             </div>
-            <p className="text-[14px] italic text-[#8B5A2B] opacity-80 truncate">{entry.scientificName}</p>
+            <p className="text-[14px] italic text-[#D7CCC8] opacity-80 truncate">{entry.scientificName}</p>
           </div>
           <StatusBadge stage={stage} className="ml-2" />
         </div>
@@ -108,8 +108,8 @@ export function EntryCard({
           
           {latestWeight && (
             <div className="text-right w-1/2">
-              <div className="flex flex-col items-end justify-end">
-              <div className="text-[26px] font-black text-[var(--primary)] leading-none tracking-tighter">
+              <div className="flex flex-col items-end justify-end"> {/* Keep layout */}
+              <div className="text-[26px] font-black text-[#8BC34A] leading-none tracking-tighter">
                   {latestWeight}<span className="text-[14px] ml-0.5 font-bold">g</span>
                 </div>
                 <div className="mt-1.5 h-[14px]">
@@ -120,7 +120,7 @@ export function EntryCard({
                   )}
                 </div>
               </div>
-              <GrowthBar weight={latestWeight} />
+              <GrowthBar weight={latestWeight} /> {/* Keep GrowthBar */}
             </div>
           )}
         </div>
@@ -135,10 +135,10 @@ export function EntryCard({
         {logs.length > 1 && (
           <div className="absolute right-4 bottom-4 w-24 h-8 opacity-20 pointer-events-none">
               <svg viewBox="0 0 100 40" className="w-full h-full">
-              <path
+              <path // Keep path
                 d={`M ${logs.slice(0, 5).reverse().map((l, i) => `${(i * 25)},${40 - (l.weight / 50 * 30)}`).join(' L ')}`}
                 fill="none"
-                stroke="var(--primary)"
+                stroke="#8BC34A"
                 strokeWidth="3"
                 strokeLinecap="round"
               />

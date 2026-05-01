@@ -40,7 +40,7 @@ export function Field({
 }) {
   return (
     <label className="field">
-      <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block tracking-wider uppercase">{label}</span>
+      <span className="text-[12px] font-bold text-[#A67C52] mb-2 block tracking-wider uppercase">{label}</span>
       {children}
     </label>
   );
@@ -94,7 +94,7 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
   return (
     <div
       ref={scrollRef}
-      onScroll={handleScroll}
+      onScroll={handleScroll} // Keep scroll handling
       onTouchStart={stopPropagation}
       onTouchMove={stopPropagation}
       className="flex-1 h-full overflow-y-scroll snap-y snap-mandatory no-scrollbar py-[36px]"
@@ -114,9 +114,9 @@ function PickerContainer({ children }: { children: React.ReactNode }) {
       {/* グラデーションオーバーレイ */}
       <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-transparent to-white/90 pointer-events-none z-10" />
       
-      {/* センターハイライト */}
+      {/* Center highlight */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-        <div className="w-[96%] h-7 border-y border-[#2D5A27]/20 bg-[#2D5A27]/5 rounded-lg" />
+        <div className="w-[96%] h-7 border-y border-[#8BC34A]/20 bg-[#8BC34A]/5 rounded-lg" />
       </div>
       {children}
     </div>
@@ -146,45 +146,36 @@ export function WheelSelect({
 export function DateRollField({
   label,
   value,
-  onChange,
+  onChange, // Keep onChange
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
 }) {
   const parts = splitDate(value);
-  const isEnabled = !!value;
 
   return (
     <div className="field">
-      <div className="flex justify-between items-center mb-2">
+      <div className="mb-2">
         <span className="text-[11px] font-bold text-[var(--secondary)] tracking-wider uppercase">{label}</span>
-        <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
-            checked={isEnabled}
-            onChange={(event) => onChange(event.target.checked ? today() : "")}
-          />
-          入力
-        </label>
       </div>
       <PickerContainer>
         <DrumrollPicker
           options={dateOptions.years}
           value={parts.year}
-          onChange={(v) => isEnabled && onChange(buildDateFromParts(v, parts.month, parts.day))}
+          onChange={(v) => onChange(buildDateFromParts(v, parts.month, parts.day))}
         />
         <div className="w-[1px] h-full bg-gray-100/50" />
         <DrumrollPicker
           options={dateOptions.months}
           value={parts.month}
-          onChange={(v) => isEnabled && onChange(buildDateFromParts(parts.year, v, parts.day))}
+          onChange={(v) => onChange(buildDateFromParts(parts.year, v, parts.day))}
         />
         <div className="w-[1px] h-full bg-gray-100/50" />
         <DrumrollPicker
           options={dateOptions.days}
           value={parts.day}
-          onChange={(v) => isEnabled && onChange(buildDateFromParts(parts.year, parts.month, v))}
+          onChange={(v) => onChange(buildDateFromParts(parts.year, parts.month, v))}
         />
       </PickerContainer>
     </div>
@@ -201,8 +192,8 @@ export function GenerationRollField({
   const preview = useMemo(() => buildGenerationLabel(value), [value]);
 
   return (
-    <div className="field">
-      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1.5 block tracking-wider uppercase">累代</span>
+    <div className="field"> {/* Keep field class */}
+      <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block tracking-wider uppercase">累代</span>
       <PickerContainer>
         <DrumrollPicker
           options={GENERATION_PRIMARY}
@@ -221,7 +212,7 @@ export function GenerationRollField({
           value={value.count || "-"}
           onChange={(v) => onChange({ ...value, count: v === "-" ? "" : v })}
         />
-      </PickerContainer>
+      </PickerContainer> {/* Keep PickerContainer */}
       <p className="field-note">表示: {preview}</p>
     </div>
   );
@@ -257,20 +248,20 @@ export function LevelButtonGroup({
 }) {
   return (
     <div className="field">
-      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1.5 block uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block uppercase tracking-wider">{label}</span>
       <div className="flex bg-[#F1F3F5] rounded-xl p-1 gap-1">
         {values.map((option) => (
-          <button
+          <button // Keep button
             key={option}
             type="button"
             style={{ width: `${100 / values.length}%` }}
-            className={`py-1 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"}`}
+            className={`py-1 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#5BA353] text-white shadow-sm" : "text-gray-500"}`}
             onClick={() => onChange(option)}
           >
             {option}
           </button>
         ))}
-      </div>
+      </div> {/* Keep div */}
     </div>
   );
 }
@@ -292,8 +283,8 @@ export function BottomSheetSelect({
 
   return (
     <div className="field">
-      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1.5 block tracking-wider uppercase">{label}</span>
-      <button
+      <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block tracking-wider uppercase">{label}</span>
+      <button // Keep button
         type="button"
         className="w-full bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-left text-gray-700 min-h-[34px] transition-colors active:bg-gray-50"
         onClick={() => setIsOpen(true)}
@@ -321,10 +312,10 @@ export function BottomSheetSelect({
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-[11px] font-bold text-[#8B5A2B] uppercase tracking-wider">{label}</span>
+                  <span className="text-[11px] font-bold text-[#A67C52] uppercase tracking-wider">{label}</span>
                   <button
                     type="button"
-                    className="bg-[#2D5A27] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
+                    className="bg-[#8BC34A] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
                     onClick={() => setIsOpen(false)}
                   >
                     閉じる
@@ -335,8 +326,8 @@ export function BottomSheetSelect({
                     <button
                       key={option}
                       type="button"
-                      className={`w-full text-left px-4 py-3 rounded-2xl font-bold ${
-                        value === option ? "bg-[#2D5A27] text-white" : "bg-gray-50 text-gray-700"
+                      className={`w-full text-left px-4 py-3 rounded-2xl font-bold ${ // Keep button
+                        value === option ? "bg-[#8BC34A] text-white" : "bg-gray-50 text-gray-700"
                       }`}
                       onClick={() => {
                         onChange(option);
@@ -390,8 +381,8 @@ export function BottomSheetInput({
 
   return (
     <div className="field">
-      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1.5 block tracking-wider uppercase">{label}</span>
-      <button
+      <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block tracking-wider uppercase">{label}</span>
+      <button // Keep button
         type="button"
         className="w-full bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-left text-gray-700 min-h-[34px] transition-colors active:bg-gray-50"
         onClick={() => setIsOpen(true)}
@@ -419,10 +410,10 @@ export function BottomSheetInput({
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-[11px] font-bold text-[#8B5A2B] uppercase tracking-wider">{label}</span>
+                  <span className="text-[11px] font-bold text-[#A67C52] uppercase tracking-wider">{label}</span>
                   <button
                     type="button"
-                    className="bg-[#2D5A27] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
+                    className="bg-[#8BC34A] text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm"
                     onClick={() => setIsOpen(false)}
                   >
                     完了
@@ -433,17 +424,17 @@ export function BottomSheetInput({
                     ref={inputRef as React.RefObject<HTMLTextAreaElement>}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    placeholder={placeholder}
+                    placeholder={placeholder} // Keep placeholder
                     rows={5}
-                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-[16px] focus:bg-white focus:border-[#2D5A27] outline-none transition-all"
+                    className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-[16px] focus:bg-white focus:border-[#8BC34A] outline-none transition-all"
                   />
                 ) : (
                   <input
                     ref={inputRef as React.RefObject<HTMLInputElement>}
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    placeholder={placeholder}
-                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-2 text-[16px] focus:bg-white focus:border-[#2D5A27] outline-none transition-all"
+                    placeholder={placeholder} // Keep placeholder
+                    className="w-full h-12 bg-gray-50 border border-gray-100 rounded-2xl px-4 py-2 text-[16px] focus:bg-white focus:border-[#8BC34A] outline-none transition-all"
                   />
                 )}
 
@@ -453,9 +444,9 @@ export function BottomSheetInput({
                     <div className="flex flex-wrap gap-2">
                       {filteredSuggestions.map((suggestion) => (
                         <button
-                          key={suggestion}
+                          key={suggestion} // Keep key
                           type="button"
-                          className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-bold text-gray-600 active:bg-[#2D5A27] active:text-white transition-all"
+                          className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-bold text-gray-600 active:bg-[#8BC34A] active:text-white transition-all"
                           onClick={() => onChange(suggestion)}
                         >
                           {suggestion}
@@ -495,15 +486,15 @@ export function SwitchBotTemperatureField({
 }) {
   return (
     <div className="field">
-      <span className="text-[11px] font-bold text-[#8B5A2B] mb-1 block uppercase tracking-wider">温度 (℃)</span>
+      <span className="text-[11px] font-bold text-[#A67C52] mb-1 block uppercase tracking-wider">温度 (℃)</span>
       <div className="relative">
         <input 
-          className="w-full h-[36px] px-3 rounded-xl border border-[#DEE2E6] focus:border-[#2D5A27] focus:ring-1 focus:ring-[#2D5A27] outline-none text-sm placeholder:text-gray-300"
-          value={value} 
+          className="w-full h-[36px] px-3 rounded-xl border border-[#DEE2E6] focus:border-[#8BC34A] focus:ring-1 focus:ring-[#8BC34A] outline-none text-sm placeholder:text-gray-300"
+          value={value} // Keep value
           onChange={(event) => onChange(event.target.value)} 
           placeholder="例: 22.5 や 21〜23" 
         />
-        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-[#2D5A27] p-2" onClick={onFetch}>
+        <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8BC34A] p-2" onClick={onFetch}>
           <Thermometer size={18} className={isFetching ? "spin" : undefined} />
         </button>
       </div>
@@ -520,13 +511,13 @@ export function EmergenceTypeField({
 }) {
   return (
     <div className="field">
-      <span className="text-[12px] font-bold text-[#8B5A2B] mb-2 block uppercase tracking-wider">羽化区分</span>
+      <span className="text-[12px] font-bold text-[#A67C52] mb-2 block uppercase tracking-wider">羽化区分</span>
       <div className="flex bg-[#F1F3F5] rounded-xl p-1 gap-1">
         {(EMERGENCE_TYPES as unknown as string[]).map((option) => (
           <button
-            key={option}
+            key={option} // Keep key
             type="button"
-            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"}`}
+            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${option === value ? "bg-[#8BC34A] text-white shadow-sm" : "text-gray-500"}`}
             onClick={() => onChange(option as EmergenceType)}
           >
             {option}

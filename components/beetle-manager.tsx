@@ -493,37 +493,37 @@ export function BeetleManager() {
   };
 
   return (
-    <div className="app-container font-cute bg-gradient-to-br from-[#F8F9FA] to-[#E9ECEF] min-h-screen pb-[calc(140px+env(safe-area-inset-bottom,32px))] leading-[1.7]">
+    <div className="app-container font-cute bg-[#FDFDFD] min-h-screen pb-[calc(140px+env(safe-area-inset-bottom,32px))] leading-[1.7]">
       {/* 固定ヘッダーセクション */}
-      <section className="sticky top-0 z-30 bg-[#F8F9FA]/90 backdrop-blur-md pt-8 pb-4 px-6 border-b border-gray-100 mb-6">
-        <p className="text-[11px] font-black text-[#8B5A2B] uppercase tracking-[0.2em] mb-4 opacity-60">Breeding Dashboard</p>
+      <section className="sticky top-0 z-30 bg-white/80 backdrop-blur-md pt-8 pb-4 px-6 border-b border-gray-100 mb-6">
+        <p className="text-[11px] font-black text-[#D7CCC8] uppercase tracking-[0.2em] mb-4 opacity-60">Breeding Dashboard</p>
         
         {/* 統計ボタン */}
         <div className="grid grid-cols-3 gap-3 mb-6">
           <button 
             onClick={() => { setActiveTab("成虫"); setSelectedType("成虫"); }}
-            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "成虫" && selectedType === "成虫" ? "bg-[#2D5A27] border-[#2D5A27] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#212529]"}`}
+            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "成虫" && selectedType === "成虫" ? "bg-[#8BC34A] border-[#8BC34A] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#212529]"}`}
           >
             <p className="text-[10px] font-bold opacity-70 uppercase mb-1">成虫</p>
             <p className="text-2xl font-black">{stats.adults}<span className="text-[10px] ml-0.5">頭</span></p>
           </button>
           <button 
             onClick={() => { setActiveTab("幼虫"); setSelectedType("幼虫"); }}
-            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "幼虫" && selectedType === "幼虫" ? "bg-[#2D5A27] border-[#2D5A27] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#212529]"}`}
+            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "幼虫" && selectedType === "幼虫" ? "bg-[#8BC34A] border-[#8BC34A] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#212529]"}`}
           >
             <p className="text-[10px] font-bold opacity-70 uppercase mb-1">幼虫</p>
             <p className="text-2xl font-black">{stats.larvae}<span className="text-[10px] ml-0.5">頭</span></p>
           </button>
           <button 
             onClick={() => { setActiveTab("産卵セット"); setSelectedType("産卵セット"); }}
-            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "産卵セット" && selectedType === "産卵セット" ? "bg-[#2D5A27] border-[#2D5A27] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#212529]"}`}
+            className={`p-3 rounded-2xl border transition-all text-left ${activeTab === "産卵セット" && selectedType === "産卵セット" ? "bg-[#8BC34A] border-[#8BC34A] text-white shadow-lg" : "bg-white/60 border-white/80 text-[#212529]"}`}
           >
             <p className="text-[10px] font-bold opacity-70 uppercase mb-1">セット</p>
             <p className="text-2xl font-black">{stats.spawnSets}<span className="text-[10px] ml-0.5">件</span></p>
           </button>
         </div>
 
-        <label className="flex items-center bg-white/80 rounded-2xl px-4 py-3 shadow-sm border border-white/40 focus-within:border-[#2D5A27] transition-all mb-4">
+        <label className="flex items-center bg-white/80 rounded-2xl px-4 py-3 shadow-sm border border-white/40 focus-within:border-[#8BC34A] transition-all mb-4">
           <Search size={16} className="text-[#6C757D] mr-3" />
           <input
             type="text"
@@ -537,7 +537,7 @@ export function BeetleManager() {
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
           <button
             type="button"
-            className={`px-4 py-1.5 rounded-full text-[12px] font-bold transition-all whitespace-nowrap ${selectedType === "すべて" ? "bg-[#2D5A27] text-white shadow-md" : "bg-white/40 text-[#6C757D] border border-white/40"}`}
+            className={`px-4 py-1.5 rounded-full text-[12px] font-bold transition-all whitespace-nowrap ${selectedType === "すべて" ? "bg-[#8BC34A] text-white shadow-md" : "bg-white/40 text-[#6C757D] border border-white/40"}`}
             onClick={() => { setActiveTab("成虫"); setSelectedType("すべて"); }}
           >
             すべて表示
@@ -546,7 +546,7 @@ export function BeetleManager() {
             <button
               key={type}
               type="button"
-              className={`px-4 py-1.5 rounded-full text-[12px] font-bold transition-all whitespace-nowrap ${selectedType === type ? "bg-[#2D5A27] text-white shadow-md" : "bg-white/40 text-[#6C757D] border border-white/40"}`}
+              className={`px-4 py-1.5 rounded-full text-[12px] font-bold transition-all whitespace-nowrap ${selectedType === type ? "bg-[#8BC34A] text-white shadow-md" : "bg-white/40 text-[#6C757D] border border-white/40"}`}
               onClick={() => { setActiveTab(type); setSelectedType(type); }}
             >
               {type}
@@ -590,7 +590,7 @@ export function BeetleManager() {
             </button>
             <button 
               onClick={handleCropComplete}
-              className="flex-[2] py-3 bg-[#2D5A27] text-white rounded-xl font-bold flex items-center justify-center gap-2"
+              className="flex-[2] py-3 bg-[#8BC34A] text-white rounded-xl font-bold flex items-center justify-center gap-2"
             >
               <Check size={18} /> 範囲を確定して解析
             </button>
@@ -612,13 +612,13 @@ export function BeetleManager() {
             <div className="flex items-center gap-2">
               <button 
                 onClick={handlePasteAndFill}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#2D5A27] active:scale-95 transition-all"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#8BC34A] active:scale-95 transition-all"
               >
                 <Clipboard size={12} />
                 貼付
               </button>
               <label 
-                className={`flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#2D5A27] active:scale-95 transition-all cursor-pointer ${isOcrProcessing ? 'opacity-50 pointer-events-none' : ''}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#8BC34A] active:scale-95 transition-all cursor-pointer ${isOcrProcessing ? 'opacity-50 pointer-events-none' : ''}`}
               >
                 {isOcrProcessing ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
                 カメラで読み取り
@@ -632,15 +632,15 @@ export function BeetleManager() {
                 />
               </label>
             </div>
-            <div className="text-[10px] font-black text-[#8B5A2B] block tracking-widest uppercase">Select Type</div>
+            <div className="text-[10px] font-black text-[#D7CCC8] block tracking-widest uppercase">Select Type</div>
             {!editingEntry && (
               <label className="flex items-center gap-2 cursor-pointer group">
-                <span className={`text-[10px] font-bold transition-colors ${isAutoFillEnabled ? 'text-[#2D5A27]' : 'text-gray-400'} uppercase tracking-tighter`}>前回入力を自動反映</span>
+                <span className={`text-[10px] font-bold transition-colors ${isAutoFillEnabled ? 'text-[#8BC34A]' : 'text-gray-400'} uppercase tracking-tighter`}>前回入力を自動反映</span>
                 <div 
                   onClick={() => setIsAutoFillEnabled(!isAutoFillEnabled)}
-                  className={`w-8 h-4 rounded-full transition-colors relative border ${isAutoFillEnabled ? 'bg-[#2D5A27] border-[#2D5A27]' : 'bg-gray-100 border-gray-200'}`}
+                  className={`w-8 h-4 rounded-full transition-colors relative border ${isAutoFillEnabled ? 'bg-[#8BC34A] border-[#8BC34A]' : 'bg-gray-100 border-gray-200'}`}
                 >
-                  <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all shadow-sm ${isAutoFillEnabled ? 'left-[18px]' : 'left-0.5'}`} />
+                  <div className={`absolute top-0.5 w-2.5 h-2.5 bg-white rounded-full transition-all shadow-sm ${isAutoFillEnabled ? 'left-[1.125rem]' : 'left-0.5'}`} />
                 </div>
               </label>
             )}
@@ -653,7 +653,7 @@ export function BeetleManager() {
               data-ignore-click-outside="true"
               style={{ width: `${100 / ENTRY_TYPES.length}%` }}
               className={`py-2 text-sm font-bold rounded-lg transition-all select-none ${
-                createType === type ? "bg-[#2D5A27] text-white shadow-sm" : "text-gray-500"
+                createType === type ? "bg-[#8BC34A] text-white shadow-sm" : "text-gray-500"
               }`}
               onClick={() => {
                 setCreateType(type);
@@ -683,8 +683,7 @@ export function BeetleManager() {
           <LarvaForm
             initialValues={pastedData && pastedData.type === "幼虫" ? { ...emptyLarvaForm, ...pastedData } : getInitialValues("幼虫", emptyLarvaForm)}
             allEntries={entries}
-            onSubmit={(values) => {
-              const count = 1;
+            onSubmit={(values, count) => {
               for (let index = 0; index < count; index += 1) {
                 const suffix = count > 1 ? `-${String(index + 1).padStart(2, "0")}` : "";
                 addLarva({ ...values, japaneseName: `${values.japaneseName}${suffix}` });
@@ -747,7 +746,7 @@ export function BeetleManager() {
       <section className="px-6">
         {activeTab !== "分析" && activeTab !== "タスク" && activeTab !== "設定" ? (
           filteredEntries.length === 0 ? (
-            <EmptyState />
+            <EmptyState /> {/* Keep EmptyState */}
           ) : (
             filteredEntries.map((entry) => (
               <EntryCard

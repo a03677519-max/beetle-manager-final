@@ -45,12 +45,12 @@ export function TaskView({
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4 px-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tasks ({tasks.length})</h3>
-          {skippedTaskIds.length > 0 && <button onClick={() => setSkippedTaskIds([])} className="text-[9px] font-bold text-[#8B5A2B] bg-[#8B5A2B]/10 px-2 py-0.5 rounded-full">スキップ解除</button>}
+          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tasks ({tasks.length})</h3> {/* Keep gray for subtle text */}
+          {skippedTaskIds.length > 0 && <button onClick={() => setSkippedTaskIds([])} className="text-[9px] font-bold text-[#D7CCC8] bg-[#D7CCC8]/10 px-2 py-0.5 rounded-full">スキップ解除</button>}
         </div>
         <div className="flex bg-white/60 p-1 rounded-xl border border-white/60 backdrop-blur-sm">
           {["urgency", "type"].map((t) => (
-            <button key={t} onClick={() => setTaskSortType(t as "urgency" | "type")} className={`px-3 py-1 text-[9px] font-black rounded-lg transition-all uppercase ${taskSortType === t ? "bg-[#2D5A27] text-white" : "text-gray-400"}`}>
+            <button key={t} onClick={() => setTaskSortType(t as "urgency" | "type")} className={`px-3 py-1 text-[9px] font-black rounded-lg transition-all uppercase ${taskSortType === t ? "bg-[#8BC34A] text-white" : "text-gray-400"}`}>
               {t === "urgency" ? "緊急度" : "種別"}
             </button>
           ))}
@@ -63,11 +63,11 @@ export function TaskView({
         </div>
       ) : (
         tasks.map(({ entry, days, type }) => (
-          <div key={`${entry.id}-${type}`} onClick={() => setSelectedEntry(entry)} className="bg-white/70 backdrop-blur-sm p-4 rounded-[24px] border border-white/60 shadow-sm flex items-center justify-between active:scale-[0.98] transition-all mb-3">
+          <div key={`${entry.id}-${type}`} onClick={() => setSelectedEntry(entry)} className="bg-white/80 backdrop-blur-sm p-4 rounded-[24px] border border-white/60 shadow-sm flex items-center justify-between active:scale-[0.98] transition-all mb-3">
             <div className="flex items-center gap-3">
               <div className={`w-1.5 h-10 rounded-full ${type === 'emergence' ? 'bg-[#3498DB]' : (days >= 90 ? 'bg-[#E74C3C]' : 'bg-[#F1C40F]')}`} />
               <div>
-                <div className="font-bold text-[#212529] text-sm">{entry.japaneseName}</div>
+                <div className="font-bold text-[#333D33] text-sm">{entry.japaneseName}</div>
                 <div className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
                   {type === 'emergence' ? (days === 0 ? "今日羽化予定" : (days > 0 ? `あと${days}日で羽化` : `${Math.abs(days)}日前に羽化`)) : `${days}日間未交換`}
                 </div>
@@ -75,11 +75,11 @@ export function TaskView({
             </div>
             <div className="flex items-center gap-2">
               <button onClick={(e) => { e.stopPropagation(); setSkippedTaskIds([...skippedTaskIds, entry.id]); }} className="p-2 text-gray-300"><EyeOff size={14} /></button>
-              {type === "exchange" && (
-                <button onClick={(e) => handleQuickExchange(e, entry)} className="text-[10px] font-black bg-[#2D5A27] text-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">交換</button>
+              {type === "exchange" && ( {/* Keep condition */}
+                <button onClick={(e) => handleQuickExchange(e, entry)} className="text-[10px] font-black bg-[#8BC34A] text-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">交換</button>
               )}
-              {type === "emergence" && days <= 0 && (
-                <button onClick={(e) => handlePromoteToAdult(e, entry)} className="text-[10px] font-black bg-[#8B5A2B] text-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">成虫へ</button>
+              {type === "emergence" && days <= 0 && ( {/* Keep condition */}
+                <button onClick={(e) => handlePromoteToAdult(e, entry)} className="text-[10px] font-black bg-[#A1887F] text-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">成虫へ</button>
               )}
             </div>
           </div>

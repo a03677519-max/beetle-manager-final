@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { CountRollField, Field, DateRollField, BottomSheetInput } from "@/components/entry-fields";
+import { CountRollField, Field, DateRollField, BottomSheetInput, MoistureField, PressureField } from "@/components/entry-fields";
 import type { BeetleEntry, LarvaFormValues, LarvaLog, LogStage, Gender } from "@/types/beetle";
 import { EntryBaseFields } from "@/components/beetle/shared/entry-base-fields";
 import { today, daysBetween } from "@/lib/utils";
@@ -23,6 +23,10 @@ export function LarvaForm({
 }) {
   const [values, setValues] = useState<LarvaFormValues>(initialValues);
   const [count, setCount] = useState(1);
+  const [dateType, setDateType] = useState<"hatch" | "set">("hatch");
+  const [setStartDate, setSetStartDate] = useState(today());
+  const [setEndDate, setSetEndDate] = useState(today());
+
   const formRef = useRef<HTMLFormElement>(null);
   const isEmerged = !!values.actualEmergenceDate;
 
@@ -92,20 +96,83 @@ export function LarvaForm({
           onChange={(patch) => setValues({ ...values, ...patch })}
         />
 
-        <DateRollField
-          label="孵化 / セット投入日"
-          value={values.hatchDate || values.createdAt || ""}
-          onChange={(value) => setValues({ ...values, hatchDate: value })}
-        />
-        <div className="scale-90 origin-left"><CountRollField value={count} onChange={setCount} /></div>
+        <div className="pt-2 border-t border-gray-50 space-y-3">
+          <div className="field">
+            <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block tracking-wider uppercase">日付区分</span>
+            <div className="flex bg-gray-100/50 p-1 rounded-xl">
+              {(['hatch', 'set'] as const).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${dateType === type ? 'bg-white shadow-sm text-[#8BC34A]' : 'text-gray-400'}`}
+                  onClick={() => setDateType(type)}
+                >
+                  {type === 'hatch' ? '孵化日' : 'セット期間'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {dateType === "hatch" ? (
+            <DateRollField
+              label="孵化日"
+              value={values.hatchDate || values.createdAt || ""}
+              onChange={(value) => setValues({ ...values, hatchDate: value })}
+            />
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              <DateRollField label="開始日" value={setStartDate} onChange={setSetStartDate} />
+              <DateRollField label="終了日" value={setEndDate} onChange={setSetEndDate} />
+            </div>
+          )}
+
+          {!initialValues.id && (
+            <>
+              <DateRollField
+                label="初回交換日"
+                value={values.logs?.[0]?.date || today()}
+                onChange={(val) => {
+                  const newLogs = [...(values.logs || [])];
+                  if (newLogs[0]) {
+                    newLogs[0] = { ...newLogs[0], date: val };
+                    setValues({ ...values, logs: newLogs });
+                  }
+                }}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <MoistureField
+                  value={values.logs?.[0]?.moisture || 3}
+                  onChange={(val) => {
+                    const newLogs = [...(values.logs || [])];
+                    if (newLogs[0]) {
+                      newLogs[0] = { ...newLogs[0], moisture: val };
+                      setValues({ ...values, logs: newLogs });
+                    }
+                  }}
+                />
+                <PressureField
+                  value={values.logs?.[0]?.pressure || 3}
+                  onChange={(val) => {
+                    const newLogs = [...(values.logs || [])];
+                    if (newLogs[0]) {
+                      newLogs[0] = { ...newLogs[0], pressure: val };
+                      setValues({ ...values, logs: newLogs });
+                    }
+                  }}
+                />
+              </div>
+            </>
+          )}
+          <div className="scale-90 origin-left"><CountRollField value={count} onChange={setCount} /></div>
+        </div>
 
         <div className="pt-2 border-t border-gray-50">
         <div className="field">
           <label className="flex items-center gap-3 py-0.5">
             <input
               type="checkbox"
-              className="w-4 h-4 rounded-lg border-gray-300 text-[#2D5A27] focus:ring-[#2D5A27] select-none"
-              checked={isEmerged}
+              className="w-4 h-4 rounded-lg border-gray-300 text-[#8BC34A] focus:ring-[#8BC34A] select-none"
+              checked={isEmerged} // Keep checked
               onChange={(e) =>
                 setValues({
                   ...values,
@@ -115,7 +182,7 @@ export function LarvaForm({
             />
             <span className="text-sm font-bold text-gray-700">羽化済みとして登録</span>
           </label>
-        </div>
+        </div> {/* Keep div */}
 
         {isEmerged && (
           <div className="pt-2 border-t border-gray-100 space-y-3">
@@ -127,10 +194,10 @@ export function LarvaForm({
               }
             />
             {daysUntilEmergence !== null && (
-              <div className="flex items-baseline gap-2 px-3 py-2 bg-[#2D5A27]/5 rounded-xl border border-[#2D5A27]/10">
-                <span className="text-[10px] font-black text-[#2D5A27] uppercase tracking-wider">羽化までの日数:</span>
-                <span className="text-xl font-black text-[#2D5A27] leading-none">{daysUntilEmergence}</span>
-                <span className="text-xs font-bold text-[#2D5A27]">日</span>
+              <div className="flex items-baseline gap-2 px-3 py-2 bg-[#8BC34A]/5 rounded-xl border border-[#8BC34A]/10">
+                <span className="text-[10px] font-black text-[#689F38] uppercase tracking-wider">羽化までの日数:</span>
+                <span className="text-xl font-black text-[#689F38] leading-none">{daysUntilEmergence}</span>
+                <span className="text-xs font-bold text-[#689F38]">日</span>
               </div>
             )}
             <Field label="羽化/掘り出し">
@@ -138,8 +205,8 @@ export function LarvaForm({
                 <button
                   type="button"
                   className={`flex-1 px-4 py-1.5 rounded-xl border font-bold text-sm transition-all select-none ${
-                    values.emergenceType === "羽化"
-                      ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md shadow-[#2D5A27]/20 scale-[1.02]"
+                    values.emergenceType === "羽化" // Keep condition
+                      ? "bg-[#8BC34A] text-white border-[#8BC34A] shadow-md shadow-[#8BC34A]/20 scale-[1.02]"
                       : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white/80 active:scale-95"
                   }`}
                   onClick={() => setValues({ ...values, emergenceType: "羽化" })}
@@ -149,8 +216,8 @@ export function LarvaForm({
                 <button
                   type="button"
                   className={`flex-1 px-4 py-1.5 rounded-xl border font-bold text-sm transition-all select-none ${
-                    values.emergenceType === "掘り出し"
-                      ? "bg-[#2D5A27] text-white border-[#2D5A27] shadow-md shadow-[#2D5A27]/20 scale-[1.02]"
+                    values.emergenceType === "掘り出し" // Keep condition
+                      ? "bg-[#8BC34A] text-white border-[#8BC34A] shadow-md shadow-[#8BC34A]/20 scale-[1.02]"
                       : "bg-white/60 border-gray-200 text-gray-600 hover:bg-white/80 active:scale-95"
                   }`}
                   onClick={() => setValues({ ...values, emergenceType: "掘り出し" })}
@@ -165,26 +232,26 @@ export function LarvaForm({
 
         <div className="pt-2 border-t border-gray-50">
         <div className="flex justify-between items-center mb-2">
-          <div className="text-[10px] font-black text-[#8B5A2B] uppercase tracking-widest border-l-4 border-[#2D5A27] pl-3">飼育ログ</div>
-          <button
+          <div className="text-[10px] font-black text-[#BCAAA4] uppercase tracking-widest border-l-4 border-[#8BC34A] pl-3">飼育ログ</div>
+          <button // Keep button
             type="button"
             onClick={addRecord}
-            className="text-[10px] bg-[#2D5A27] text-white px-4 py-1.5 rounded-full font-black shadow-sm active:scale-95 transition-all select-none"
+            className="text-[10px] bg-[#8BC34A] text-white px-4 py-1.5 rounded-full font-black shadow-sm active:scale-95 transition-all select-none"
           >
             + ログを追加
           </button>
         </div>
 
         {logStats && (
-          <div className="bg-[#2D5A27]/5 rounded-2xl p-2 border border-[#2D5A27]/10 flex justify-around">
+          <div className="bg-[#5BA353]/5 rounded-2xl p-2 border border-[#5BA353]/10 flex justify-around">
             <div className="text-center">
-              <div className="text-[9px] font-black text-[#2D5A27] uppercase">最大体重</div>
-              <div className="text-xl font-black text-[#2D5A27]">{logStats.maxWeight}<span className="text-xs ml-0.5">g</span></div>
+              <div className="text-[9px] font-black text-[#689F38] uppercase">最大体重</div>
+              <div className="text-xl font-black text-[#689F38]">{logStats.maxWeight}<span className="text-xs ml-0.5">g</span></div>
             </div>
-            <div className="w-px bg-[#2D5A27]/20 my-1" />
+            <div className="w-px bg-[#8BC34A]/20 my-1" />
             <div className="text-center">
-              <div className="text-[9px] font-black text-[#2D5A27] uppercase">平均管理温度</div>
-              <div className="text-xl font-black text-[#2D5A27]">{logStats.avgTemp}<span className="text-xs ml-0.5">℃</span></div>
+              <div className="text-[9px] font-black text-[#689F38] uppercase">平均管理温度</div>
+              <div className="text-xl font-black text-[#689F38]">{logStats.avgTemp}<span className="text-xs ml-0.5">℃</span></div>
             </div>
           </div>
         )}
@@ -220,9 +287,9 @@ export function LarvaForm({
                 <Field label="体重 (g)">
                   <input
                     type="number"
-                    step="0.1"
+                    step="0.1" // Keep step
                     value={record.weight}
-                      className="w-full bg-white/80 border border-gray-200 rounded-xl px-2 py-1.5 text-sm font-bold focus:border-[#2D5A27] focus:ring-2 focus:ring-[#2D5A27]/20 outline-none"
+                      className="w-full bg-white/80 border border-gray-200 rounded-xl px-2 py-1.5 text-sm font-bold focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 outline-none"
                     onChange={(e) => {
                       const newLogs = [...(values.logs || [])];
                       newLogs[index] = { ...record, weight: parseFloat(e.target.value) || 0 };
@@ -239,7 +306,7 @@ export function LarvaForm({
                       <button
                         key={stage}
                         type="button"
-                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all select-none ${record.stage === stage ? 'bg-white shadow-sm text-[#2D5A27]' : 'text-gray-400'}`}
+                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all select-none ${record.stage === stage ? 'bg-white shadow-sm text-[#8BC34A]' : 'text-gray-400'}`}
                         onClick={() => {
                           const newLogs = [...(values.logs || [])];
                           newLogs[index] = { ...record, stage: stage as LogStage };
@@ -257,7 +324,7 @@ export function LarvaForm({
                       <button
                         key={s}
                         type="button"
-                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all select-none ${record.gender === s ? 'bg-white shadow-sm text-[#2D5A27]' : 'text-gray-400'}`}
+                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all select-none ${record.gender === s ? 'bg-white shadow-sm text-[#8BC34A]' : 'text-gray-400'}`}
                         onClick={() => {
                           const newLogs = [...(values.logs || [])];
                           newLogs[index] = { ...record, gender: s as Gender };
@@ -312,7 +379,7 @@ export function LarvaForm({
         </button>
         <button 
           type="submit" 
-          className="flex-[2] h-10 rounded-2xl font-bold text-white bg-[#2D5A27] shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all select-none"
+          className="flex-[2] h-10 rounded-2xl font-bold text-white bg-[#8BC34A] shadow-lg shadow-[#8BC34A]/30 hover:brightness-110 active:scale-95 transition-all select-none"
         >
           保存する
         </button>
