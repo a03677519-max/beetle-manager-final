@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useRef, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, ChevronUp, Download, Upload, X, FileSpreadsheet, BarChart3 } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Upload, X, FileSpreadsheet, BarChart3, ExternalLink } from "lucide-react";
 import {
   ScatterChart,
   Scatter,
@@ -14,7 +14,7 @@ import {
   ZAxis,
   Cell,
 } from "recharts";
-import type { BeetleEntry, EntryType, Gender, LarvaBeetle } from "@/types/beetle";
+import type { BeetleEntry, EntryType, Gender, LarvaBeetle, SpawnSet } from "@/types/beetle";
 import { daysBetween } from "@/lib/utils";
 
 interface AnalysisViewProps {
@@ -43,7 +43,7 @@ interface GroupStats {
   weightRecords: AnalysisRecord[];
   maxWeightEntry: BeetleEntry | null;
   temperatures: number[];
-  spawnMethods: string[];
+  spawnSetEntries: SpawnSet[];
   larvaRecords: AnalysisRecord[];
   dormancyRecords: AnalysisRecord[];
   lifespanRecords: AnalysisRecord[];
@@ -63,6 +63,7 @@ export function AnalysisView({
 }: AnalysisViewProps) {
   const [expandedNames, setExpandedNames] = useState<string[]>([]);
   const [selectedAnalysis, setSelectedAnalysis] = useState<{ label: string; records: AnalysisRecord[] } | null>(null);
+  const [selectedSpawnTable, setSelectedSpawnTable] = useState<GroupStats | null>(null);
   const [viewGender, setViewGender] = useState<Gender>("オス");
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -88,7 +89,7 @@ export function AnalysisView({
           weightRecords: [],
           maxWeightEntry: null,
           temperatures: [],
-          spawnMethods: [],
+          spawnSetEntries: [],
           larvaRecords: [],
           dormancyRecords: [],
           lifespanRecords: []
@@ -96,7 +97,7 @@ export function AnalysisView({
       }
       if (entry.type === "産卵セット") {
         if (entry.temperature) groups[key].temperatures.push(Number(entry.temperature));
-        if (entry.substrate) groups[key].spawnMethods.push(entry.substrate);
+        groups[key].spawnSetEntries.push(entry);
       }
       if (entry.type === "幼虫") {
         entry.logs.forEach(log => {
@@ -109,7 +110,7 @@ export function AnalysisView({
           if (log.temperature) groups[key].temperatures.push(Number(log.temperature));
         });
         if (entry.actualEmergenceDate) {
-          const hatchDate = (entry as LarvaBeetle).hatchDate || entry.createdAt;
+          const hatchDate = (entry as any).hatchDate || entry.createdAt;
           const days = daysBetween(hatchDate, entry.actualEmergenceDate);
           if (days !== null) groups[key].larvaRecords.push({ val: days, mName, gender: currentGender, entryId: entry.id });
         }
@@ -170,7 +171,7 @@ export function AnalysisView({
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                <AnalysisItem label="産卵方法" value={stat.spawnMethods.length > 0 ? stat.spawnMethods[0] : "-"} onClick={() => { setSelectedType("産卵セット"); setActiveTab("産卵セット"); }} isLink />
+                <AnalysisItem label="産卵方法" value={stat.spawnSetEntries.length > 0 ? `${stat.spawnSetEntries.length}件の記録` : "-"} onClick={() => setSelectedSpawnTable(stat as any)} isLink />
                 <AnalysisItem label="平均休眠期間" value={stat.avgDormancy ? `${stat.avgDormancy}日` : "-"} onClick={() => setSelectedAnalysis({ label: "休眠期間データ", records: stat.dormancyRecords })} isLink />
                 <AnalysisItem label="平均寿命" value={stat.avgLifespan ? `${stat.avgLifespan}日` : "-"} onClick={() => setSelectedAnalysis({ label: "生存期間データ", records: stat.lifespanRecords })} isLink />
                 <AnalysisItem label="平均幼虫期間" value={stat.avgLarva ? `${stat.avgLarva}日` : "-"} onClick={() => setSelectedAnalysis({ label: "幼虫期間データ", records: stat.larvaRecords })} isLink />
@@ -241,6 +242,60 @@ export function AnalysisView({
                  確認しました
                </button>
              </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* 産卵セット エクセル風テーブルモーダル */}
+      <AnimatePresence>
+        {selectedSpawnTable && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedSpawnTable(null)} />
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="bg-white p-6 rounded-[32px] w-full max-w-lg max-h-[80vh] shadow-2xl relative z-10 flex flex-col overflow-hidden">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-black text-xl text-[#212529]">産卵セット記録: {selectedSpawnTable.japaneseName}</h3>
+                <button onClick={() => setSelectedSpawnTable(null)} className="p-2 bg-gray-100 rounded-full"><X size={18} /></button>
+              </div>
+              
+              <div className="flex-1 overflow-auto border border-gray-100 rounded-xl">
+                <table className="w-full text-[11px] border-collapse bg-white">
+                  <thead className="sticky top-0 bg-gray-50 z-10">
+                    <tr className="border-b border-gray-200">
+                      <th className="p-2 text-left font-black text-gray-500 whitespace-nowrap">管理名</th>
+                      <th className="p-2 text-left font-black text-gray-500 whitespace-nowrap">セット日</th>
+                      <th className="p-2 text-left font-black text-gray-500 whitespace-nowrap">産卵方法</th>
+                      <th className="p-2 text-left font-black text-gray-500 whitespace-nowrap">温度</th>
+                      <th className="p-2 text-center font-black text-gray-500"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {selectedSpawnTable.spawnSetEntries.sort((a,b) => b.setDate.localeCompare(a.setDate)).map((s) => (
+                      <tr 
+                        key={s.id} 
+                        className="active:bg-gray-50 cursor-pointer"
+                        onClick={() => { setSelectedEntry(s); setSelectedSpawnTable(null); }}
+                      >
+                        <td className="p-3 font-bold text-gray-800">{s.managementName || "-"}</td>
+                        <td className="p-3 text-gray-500">{s.setDate.replace(/-/g, "/")}</td>
+                        <td className="p-3 text-gray-600 font-medium">{s.substrate || "-"}</td>
+                        <td className="p-3 text-gray-600">{s.temperature ? `${s.temperature}℃` : "-"}</td>
+                        <td className="p-3 text-right">
+                          <div className="w-6 h-6 bg-[var(--primary)]/10 text-[var(--primary)] rounded-full flex items-center justify-center mx-auto">
+                            <ExternalLink size={12} />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {selectedSpawnTable.spawnSetEntries.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="p-10 text-center text-gray-400 font-bold">データがありません</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-4 text-[10px] text-gray-400 font-bold text-center italic">行をタップして詳細データへジャンプ</p>
+            </motion.div>
           </div>
         )}
       </AnimatePresence>

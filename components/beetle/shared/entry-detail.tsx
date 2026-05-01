@@ -34,7 +34,7 @@ export function EntryDetail({
     text += `学名 ${e.scientificName}\n`;
     text += `産地 ${e.locality || ""}\n`;
     
-    const displayDate = e.hatchDate || e.createdAt || "";
+    const displayDate = e.hatchDate || e.setDate || e.createdAt || "";
     text += `累代 ${buildGenerationLabel(e.generation)} ${e.managementName || ""} ${fmtDate(displayDate)}`.trimEnd() + "\n";
     
     // 5行目：空行

@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Search, Clipboard, Camera, Loader2 } from "lucide-react";
+import { Search, Clipboard, Camera, Loader2, Crop, Check, X as CloseIcon } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Modal } from "./ui/modal";
 import { useSwitchBot } from "@/components/use-switchbot";
@@ -50,6 +50,47 @@ export function BeetleManager() {
   const { fetchTemperature, isFetching } = useSwitchBot();
 
   const [selectedEntry, setSelectedEntry] = useState<BeetleEntry | null>(null);
+  
+  // クロップ用のステート
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 100, height: 100 });
+  const [isCropping, setIsCropping] = useState(false);
+  const cropImageRef = useRef<HTMLImageElement>(null);
+
+  const handleCropComplete = async () => {
+    if (!cropImageRef.current || !cropSrc) return;
+    
+    const canvas = document.createElement("canvas");
+    const img = cropImageRef.current;
+    
+    // 表示サイズと実際の画像サイズの比率を計算
+    const scaleX = img.naturalWidth / img.width;
+    const scaleY = img.naturalHeight / img.height;
+    
+    canvas.width = cropArea.width * scaleX;
+    canvas.height = cropArea.height * scaleY;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    
+    ctx.drawImage(
+      img,
+      cropArea.x * scaleX,
+      cropArea.y * scaleY,
+      cropArea.width * scaleX,
+      cropArea.height * scaleY,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+    
+    const croppedDataUrl = canvas.toDataURL("image/jpeg");
+    setCropSrc(null);
+    setIsCropping(false);
+    processOCR(croppedDataUrl);
+  };
+
   const [activeTab, setActiveTab] = useState("成虫");
   const [query, setQuery] = useState("");
   const [createType, setCreateType] = useState<EntryType>("幼虫");
@@ -279,8 +320,8 @@ export function BeetleManager() {
     // 日付の揺らぎ（2024.01.01 や 2024 01 01、誤字など）を補正する
     const fixOcrDate = (d: string) => {
       if (!d) return "";
-      // OCRでよくある誤認識（O→0, I/l→1）を置換し、数字以外の区切りをハイフンに統一
-      const clean = d.replace(/[Oo]/g, "0").replace(/[I|il]/g, "1").replace(/[^0-9]/g, "-").replace(/-+/g, "-");
+      // 数字以外の区切りをハイフンに統一
+      const clean = d.replace(/[Oo]/g, "0").replace(/[I|il]/g, "1").replace(/[^0-9/.-]/g, "-").replace(/[./]/g, "-").replace(/-+/g, "-");
       const match = clean.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
       if (match) {
         return `${match[1]}-${match[2].padStart(2, "0")}-${match[3].padStart(2, "0")}`;
@@ -290,68 +331,72 @@ export function BeetleManager() {
 
     const lines = text.split('\n');
     const patch: any = { type: "幼虫", logs: [] };
-    lines.forEach((line, i) => {
+    lines.forEach((line) => {
       const l = line.trim();
-        if (!l && i !== 4) return; // 5行目(index 4)は空行なので無視しない
+      if (!l) return;
 
-        if (i === 0) patch.japaneseName = l.replace(/^(和名|和各)\s*/, ""); // 和名または和各を認識
-        if (i === 1) patch.scientificName = l.replace(/^学名\s*/, ""); // 学名 (例: 学各などの誤認識があれば /^(学名|学各)\s*/ のように追加)
-        if (i === 2) patch.locality = l.replace(/^産地\s*/, ""); // 産地
-        if (i === 3) {
-          const parts = l.replace(/^累代\s*/, "").split(/\s+/); // 累代
-          // 累代ラベルの解析
-          const genStr = parts[0] || "";
-          let primary: any = "-";
-          let count = "";
-          if (genStr.startsWith("CB")) { primary = "CB"; count = genStr.replace("CB", ""); }
-          else if (genStr.startsWith("WF")) { primary = "WF"; count = genStr.replace("WF", ""); }
-          else if (genStr.startsWith("F")) { primary = "F"; count = genStr.replace("F", ""); }
-          else if (genStr === "WD") { primary = "WD"; count = ""; }
-          patch.generation = { primary, secondary: "-", count };
-          
-          if (parts[1]) patch.managementName = parts[1];
-          // parts[2]以降に日付があるか、あるいは行の末尾から日付を探す
-          const dateCandidate = parts.find(p => p.match(/\d/));
-          if (dateCandidate && patch.type === "幼虫") {
-            patch.hatchDate = fixOcrDate(dateCandidate);
-          }
+      // ラベルに基づいた抽出
+      if (l.match(/^(和名|和各)/)) {
+        patch.japaneseName = l.replace(/^(和名|和各)\s*/, "");
+      } else if (l.match(/^学名/)) {
+        patch.scientificName = l.replace(/^学名\s*/, "");
+      } else if (l.match(/^産地/)) {
+        patch.locality = l.replace(/^産地\s*/, "");
+      } else if (l.match(/^累代/)) {
+        const content = l.replace(/^累代\s*/, "");
+        const parts = content.split(/\s+/);
+        const genStr = parts[0] || "";
+        let primary: any = "-";
+        let count = "";
+        if (genStr.startsWith("CB")) { primary = "CB"; count = genStr.replace("CB", ""); }
+        else if (genStr.startsWith("WF")) { primary = "WF"; count = genStr.replace("WF", ""); }
+        else if (genStr.startsWith("F")) { primary = "F"; count = genStr.replace("F", ""); }
+        else if (genStr === "WD") { primary = "WD"; count = ""; }
+        patch.generation = { primary, secondary: "-", count };
+        
+        // 管理名と日付の分離（日付パターンを探す）
+        const dateIndex = parts.findIndex((p, idx) => idx > 0 && p.match(/\d{4}[^\d]\d{1,2}/));
+        if (dateIndex !== -1) {
+          patch.hatchDate = fixOcrDate(parts[dateIndex]);
+          if (dateIndex > 1) patch.managementName = parts.slice(1, dateIndex).join(" ");
+        } else if (parts.length > 1) {
+          patch.managementName = parts.slice(1).join(" ");
         }
+      } 
+      
+      // 飼育ログのパターンマッチ (日付 + マット + 水/圧など)
+      const logMatch = l.match(/(\d{4}[^\d]\d{1,2}[^\d]\d{1,2})\s+(.*?)\s+水(\d+)圧(\d+)\s+(.*?)\s+(\S+)\s+(\S+)/);
+      if (logMatch) {
+        patch.logs.push({
+          id: Math.random().toString(36).substr(2, 9),
+          date: fixOcrDate(logMatch[1]),
+          substrate: logMatch[2],
+          moisture: parseInt(logMatch[3]),
+          pressure: parseInt(logMatch[4]),
+          bottleSize: logMatch[5],
+          stage: logMatch[6],
+          gender: logMatch[7],
+          weight: 0,
+          temperature: ""
+        });
+      }
 
-        // 6-9行目: 飼育ログ
-        if (i >= 5 && i <= 8 && l !== "") {
-          const logMatch = l.match(/^(\d{4}[^\d]\d{1,2}[^\d]\d{1,2})\s+(.*?)\s+水(\d+)圧(\d+)\s+(.*?)\s+(\S+)\s+(\S+)$/);
-          if (logMatch) {
-            patch.logs.push({
-              id: Math.random().toString(36).substr(2, 9),
-              date: fixOcrDate(logMatch[1]),
-              substrate: logMatch[2],
-              moisture: parseInt(logMatch[3]),
-              pressure: parseInt(logMatch[4]),
-              bottleSize: logMatch[5],
-              stage: logMatch[6],
-              gender: logMatch[7],
-              weight: 0,
-              temperature: ""
-            });
-          }
-        }
-
-        // 10行目: 羽化・掘り出し / 後食
-        if (i === 9) {
-          const eDateMatch = l.match(/^(\d{4}[^\d]\d{1,2}[^\d]\d{1,2})\s+(羽化|掘り出し)/);
-          if (eDateMatch) {
-            patch.actualEmergenceDate = fixOcrDate(eDateMatch[1]);
-            patch.emergenceType = eDateMatch[2];
-            patch.type = "幼虫";
-          }
-          const fDateMatch = l.match(/(\d{4}[^\d]\d{1,2}[^\d]\d{1,2})\s+後食/);
-          if (fDateMatch) {
-            patch.feedingDate = fixOcrDate(fDateMatch[1]);
-            patch.type = "成虫";
-            patch.emergenceDate = patch.actualEmergenceDate || "";
-          }
-        }
-      });
+      // 羽化・掘り出しの抽出
+      const eDateMatch = l.match(/(\d{4}[^\d]\d{1,2}[^\d]\d{1,2})\s+(羽化|掘り出し|堀)/);
+      if (eDateMatch) {
+        patch.actualEmergenceDate = fixOcrDate(eDateMatch[1]);
+        patch.emergenceType = eDateMatch[2] === "堀" ? "掘り出し" : eDateMatch[2];
+        patch.emergenceDate = patch.actualEmergenceDate;
+      }
+      
+      // 後食の抽出
+      const fDateMatch = l.match(/(\d{4}[^\d]\d{1,2}[^\d]\d{1,2})\s+後食/);
+      if (fDateMatch) {
+        patch.feedingDate = fixOcrDate(fDateMatch[1]);
+        patch.type = "成虫";
+        if (!patch.emergenceDate) patch.emergenceDate = patch.actualEmergenceDate || "";
+      }
+    });
     return patch;
   };
 
@@ -420,15 +465,20 @@ export function BeetleManager() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropSrc(reader.result as string);
+      setIsCropping(true);
+    };
+    reader.readAsDataURL(file);
+    if (event.target) event.target.value = "";
+  };
+
+  const processOCR = async (imageUrl: string) => {
     setIsOcrProcessing(true);
     try {
-      // 画像の前処理を実行してOCR用画像を生成
-      const processedImageUrl = await preprocessImage(file);
-
-      // Tesseract.jsを動的インポート
-      // @ts-ignore - モジュール未インストール時のビルドエラーを抑制
       const Tesseract = (await import('tesseract.js')).default;
-      const { data: { text } } = await Tesseract.recognize(processedImageUrl, 'jpn+eng');
+      const { data: { text } } = await Tesseract.recognize(imageUrl, 'jpn+eng');
       
       const patch = parsePastedText(text);
       setPastedData(patch);
@@ -439,7 +489,6 @@ export function BeetleManager() {
       window.alert("文字の読み取りに失敗しました。tesseract.jsがインストールされているか確認してください。");
     } finally {
       setIsOcrProcessing(false);
-      if (event.target) event.target.value = "";
     }
   };
 
@@ -505,6 +554,49 @@ export function BeetleManager() {
           ))}
         </div>
       </section>
+
+      {/* クロップモーダル */}
+      <Modal isOpen={isCropping} onClose={() => setIsCropping(false)} title="読み取り範囲を選択">
+        <div className="flex flex-col gap-4">
+          <div className="relative overflow-hidden bg-black rounded-2xl aspect-square flex items-center justify-center">
+            {cropSrc && (
+              <>
+                <img 
+                  ref={cropImageRef}
+                  src={cropSrc} 
+                  alt="Crop Target" 
+                  className="max-w-full max-h-full object-contain"
+                />
+                {/* 簡易的なドラッグ不可の範囲表示（実際はライブラリ導入推奨だが、ここではUIのみ） */}
+                <div 
+                  className="absolute border-2 border-[var(--primary)] shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] pointer-events-none"
+                  style={{
+                    left: `${cropArea.x}%`,
+                    top: `${cropArea.y}%`,
+                    width: `${cropArea.width}%`,
+                    height: `${cropArea.height}%`
+                  }}
+                />
+              </>
+            )}
+          </div>
+          <p className="text-[10px] text-gray-500 text-center font-bold">※ 全体が収まるように調整して確定してください</p>
+          <div className="flex gap-3">
+            <button 
+              onClick={() => setIsCropping(false)}
+              className="flex-1 py-3 bg-gray-100 rounded-xl font-bold text-gray-500"
+            >
+              キャンセル
+            </button>
+            <button 
+              onClick={handleCropComplete}
+              className="flex-[2] py-3 bg-[#2D5A27] text-white rounded-xl font-bold flex items-center justify-center gap-2"
+            >
+              <Check size={18} /> 範囲を確定して解析
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         isOpen={isCreating || !!editingEntry}
