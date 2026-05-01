@@ -149,6 +149,13 @@ export function AnalysisView({
           spawnEggRecords: [],
           spawnLarvaRecords: [],
           adultSizeVsMaxLarvaWeightRecords: [],
+          maxWeight: null,
+          minWeight: null,
+          avgLarva: null,
+          avgDormancy: null,
+          avgLifespan: null,
+          avgSize: null,
+          avgEggs: null,
           avgLarvaCount: null,
         };
       }
