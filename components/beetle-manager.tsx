@@ -10,7 +10,7 @@ import {
   formatGeneration,
   today,
 } from "../lib/utils";
-import { pushDataToGitHub } from "../lib/github";
+import { pushDataToGitHub } from "@/lib/github";
 import {
   emptyAdultForm,
   emptyLarvaForm,
