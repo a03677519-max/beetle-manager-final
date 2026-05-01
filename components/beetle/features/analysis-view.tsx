@@ -76,7 +76,10 @@ export function AnalysisView({
     entries.forEach((entry) => {
       const key = entry.scientificName || "未設定";
       const mName = entry.managementName || "No Name";
-      const currentGender = entry.type === "成虫" ? entry.gender : (entry.logs[0]?.gender || "不明");
+      const currentGender = 
+        entry.type === "成虫" ? entry.gender : 
+        entry.type === "幼虫" ? (entry.logs[0]?.gender || "不明") : 
+        "不明";
 
       if (!groups[key]) {
         groups[key] = {
