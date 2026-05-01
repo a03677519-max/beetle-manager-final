@@ -37,6 +37,7 @@ export type BaseBeetle = {
   updatedAt: string;
   managementName?: string;
   linkedEntryId?: string;
+  memo?: string;
 };
 
 export type LarvaLog = {
@@ -69,6 +70,7 @@ export type LarvaBeetle = BaseBeetle & {
   actualEmergenceDate: string;
   emergenceType: EmergenceType;
   hatchDate: string;
+  nextExchangeDate?: string;
 };
 
 export type SpawnSet = BaseBeetle & {
