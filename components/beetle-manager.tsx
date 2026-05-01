@@ -102,16 +102,6 @@ export function BeetleManager() {
   
   const [expandedSpecies, setExpandedSpecies] = useState<string[]>([]);
 
-  const groupedEntries = useMemo(() => {
-    const groups: Record<string, BeetleEntry[]> = {};
-    filteredEntries.forEach(entry => {
-      const key = entry.scientificName || "Unknown";
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(entry);
-    });
-    return groups;
-  }, [filteredEntries]);
-
   const toggleSpecies = (sciName: string) => {
     setExpandedSpecies(prev => 
       prev.includes(sciName) ? prev.filter(s => s !== sciName) : [...prev, sciName]
@@ -138,6 +128,45 @@ export function BeetleManager() {
     { id: 'managementName', label: '管理名' },
     { id: 'date', label: '日付' },
   ];
+
+  const filteredEntries = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    const list = entries.filter((entry) => {
+      const matchesType = selectedType === "すべて" || entry.type === selectedType;
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        [entry.japaneseName, entry.scientificName, entry.locality, formatGeneration(entry.generation), entry.managementName]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedQuery);
+      return matchesType && matchesQuery;
+    });
+
+    const getSortVal = (e: BeetleEntry, key: string) => {
+      if (key === "date") return (e as any).hatchDate || (e as any).setDate || (e as any).actualEmergenceDate || (e as any).emergenceDate || e.createdAt || "";
+      if (key === "managementName") return e.managementName || e.japaneseName;
+      return (e as any)[key] || "";
+    };
+
+    return [...list].sort((a, b) => {
+      let p = getSortVal(a, sortConfig.primary).localeCompare(getSortVal(b, sortConfig.primary), "ja", { numeric: true });
+      if (p !== 0) {
+        return sortConfig.primaryDirection === "asc" ? p : -p;
+      }
+      let s = getSortVal(a, sortConfig.secondary).localeCompare(getSortVal(b, sortConfig.secondary), "ja", { numeric: true });
+      return sortConfig.secondaryDirection === "asc" ? s : -s;
+    });
+  }, [entries, query, selectedType, sortConfig]);
+
+  const groupedEntries = useMemo(() => {
+    const groups: Record<string, BeetleEntry[]> = {};
+    filteredEntries.forEach(entry => {
+      const key = entry.scientificName || "Unknown";
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(entry);
+    });
+    return groups;
+  }, [filteredEntries]);
 
   const handleToggleSelect = (id: string) => {
     setSelectedIds(prev => 
@@ -238,35 +267,6 @@ export function BeetleManager() {
     larvae: entries.filter(e => e.type === "幼虫").length,
     spawnSets: entries.filter(e => e.type === "産卵セット").length,
   }), [entries]);
-
-  const filteredEntries = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-    const list = entries.filter((entry) => {
-      const matchesType = selectedType === "すべて" || entry.type === selectedType;
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        [entry.japaneseName, entry.scientificName, entry.locality, formatGeneration(entry.generation), entry.managementName]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalizedQuery);
-      return matchesType && matchesQuery;
-    });
-
-    const getSortVal = (e: BeetleEntry, key: string) => {
-      if (key === "date") return (e as any).hatchDate || (e as any).setDate || (e as any).actualEmergenceDate || (e as any).emergenceDate || e.createdAt || "";
-      if (key === "managementName") return e.managementName || e.japaneseName;
-      return (e as any)[key] || "";
-    };
-
-    return [...list].sort((a, b) => {
-      let p = getSortVal(a, sortConfig.primary).localeCompare(getSortVal(b, sortConfig.primary), "ja", { numeric: true });
-      if (p !== 0) {
-        return sortConfig.primaryDirection === "asc" ? p : -p;
-      }
-      let s = getSortVal(a, sortConfig.secondary).localeCompare(getSortVal(b, sortConfig.secondary), "ja", { numeric: true });
-      return sortConfig.secondaryDirection === "asc" ? s : -s;
-    });
-  }, [entries, query, selectedType, sortConfig]);
 
   const fetchCurrentTemperature = async (setter: (value: string) => void) => {
     try {
