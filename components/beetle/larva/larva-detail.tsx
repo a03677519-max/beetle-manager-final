@@ -183,24 +183,24 @@ export function LarvaDetail({
           )}
         </div>
       </section>
+      <Modal
+        isOpen={!!editingLog}
+        onClose={() => setEditingLog(null)}
+        title={editingLog ? "ログの詳細確認・編集" : "新規ログを追加"}
+      >
+        <LarvaLogForm
+          initialLogValues={editingLog}
+          onSave={(values) => {
+            // Assuming useBeetleStore has an updateLarvaLog action
+            // If not, you'll need to add it to your store definition.
+            useBeetleStore.getState().updateLarvaLog(entry.id, values.id, values);
+            setEditingLog(null);
+          }}
+          onCancel={() => setEditingLog(null)}
+          onFetchTemperature={onFetchTemperature}
+          isFetchingTemperature={isFetchingTemperature}
+        />
+      </Modal>
     </>
-    <Modal
-      isOpen={!!editingLog}
-      onClose={() => setEditingLog(null)}
-      title={editingLog ? "ログの詳細確認・編集" : "新規ログを追加"}
-    >
-      <LarvaLogForm
-        initialLogValues={editingLog}
-        onSave={(values) => {
-          // Assuming useBeetleStore has an updateLarvaLog action
-          // If not, you'll need to add it to your store definition.
-          useBeetleStore.getState().updateLarvaLog(entry.id, values.id, values);
-          setEditingLog(null);
-        }}
-        onCancel={() => setEditingLog(null)}
-        onFetchTemperature={onFetchTemperature}
-        isFetchingTemperature={isFetchingTemperature}
-      />
-    </Modal>
   );
 }

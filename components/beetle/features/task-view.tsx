@@ -75,10 +75,10 @@ export function TaskView({
             </div>
             <div className="flex items-center gap-2">
               <button onClick={(e) => { e.stopPropagation(); setSkippedTaskIds([...skippedTaskIds, entry.id]); }} className="p-2 text-gray-300"><EyeOff size={14} /></button>
-              {type === "exchange" && ( {/* Keep condition */}
+              {type === "exchange" && (
                 <button onClick={(e) => handleQuickExchange(e, entry)} className="text-[10px] font-black bg-[#8BC34A] text-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">交換</button>
               )}
-              {type === "emergence" && days <= 0 && ( {/* Keep condition */}
+              {type === "emergence" && days <= 0 && (
                 <button onClick={(e) => handlePromoteToAdult(e, entry)} className="text-[10px] font-black bg-[#A1887F] text-white px-4 py-2 rounded-full shadow-lg active:scale-95 transition-all">成虫へ</button>
               )}
             </div>
