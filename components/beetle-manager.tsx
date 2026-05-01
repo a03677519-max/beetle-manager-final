@@ -928,7 +928,7 @@ export function BeetleManager() {
                 let currentEntries = [...entries];
                 for (let i = 1; i < count; i++) {
                   const mName = generateUniqueMName(value.managementName || "", currentEntries);
-                  const { id, photos, createdAt, updatedAt, ...rest } = value;
+                  const { id, photos, createdAt, ...rest } = value;
                   addLarva({ ...rest as any, managementName: mName, photos: [] });
                   currentEntries.push({ managementName: mName } as any);
                 }
