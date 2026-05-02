@@ -74,7 +74,6 @@ export type LarvaBeetle = BaseBeetle & {
   emergenceType: EmergenceType;
   hatchDate: string;
   extractionDate?: string;
-  nextExchangeDate?: string;
 };
 
 export type SpawnSet = BaseBeetle & {

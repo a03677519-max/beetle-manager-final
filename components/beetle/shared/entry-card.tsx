@@ -32,17 +32,11 @@ export function EntryCard({
   const lastLogDate = logs.length > 0 ? logs[0].date : entry.createdAt;
   const diffDays = daysBetween(lastLogDate, today()) ?? 0;
 
-  const nextDate = (entry as any).nextExchangeDate;
-  const daysToNext = nextDate ? daysBetween(today(), nextDate) : null;
-
   let dateColor = "text-[#FF9800]"; // 明るいオレンジ (既に暖色)
-  if (nextDate) {
-    if (daysToNext! <= 0) dateColor = "text-[#E74C3C]";
-    else if (daysToNext! <= 14) dateColor = "text-[#F1C40F]";
-  } else {
-    if (diffDays >= 90) dateColor = "text-[#E74C3C]"; // 赤
-    else if (diffDays >= 60) dateColor = "text-[#F1C40F]"; // 黄
-  }
+
+  if (diffDays >= 90) dateColor = "text-[#E74C3C]"; // 赤
+  else if (diffDays >= 60) dateColor = "text-[#F1C40F]"; // 黄
+
 
   const stageMap: Record<string, Stage> = { "成虫": "成虫", "幼虫": "幼虫", "産卵セット": "卵" };
   const stage = stageMap[entry.type] || "卵";
@@ -148,11 +142,7 @@ export function EntryCard({
               </div>
             )}
             <div className={`text-[11px] font-bold mt-1 ${dateColor}`}>
-              {nextDate ? (
-                <>予定: {nextDate.replace(/-/g, "/")} {daysToNext! <= 0 ? "(超過)" : `(あと${daysToNext}日)`}</>
-              ) : (
-                diffDays > 0 ? `${diffDays}日前に交換` : "今日交換"
-              )}
+              {diffDays > 0 ? `${diffDays}日前に交換` : "今日交換"}
             </div>
           </dl>
           

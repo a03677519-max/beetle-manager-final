@@ -25,17 +25,12 @@ export function TaskView({
     const exchangeTasks = visibleEntries
       .filter((e): e is LarvaBeetle => e.type === "幼虫")
       .map(e => {
-        const nextDate = (e as any).nextExchangeDate;
-        if (nextDate) {
-          // 予定日がある場合は、今日から何日後か（マイナスなら超過）
-          const daysToNext = daysBetween(today(), nextDate) ?? 0;
-          // 予定日が2週間以内、または過ぎているものを表示
-          return { entry: e, days: daysToNext, type: "exchange" as const, useScheduledDate: true };
-        }
-        // 予定日がない場合は従来通り経過日数で計算
-        return { entry: e, days: daysBetween(e.logs[0]?.date || e.createdAt, today()) ?? 0, type: "exchange" as const, useScheduledDate: false };
+        // 経過日数（60日以上）で計算
+        const lastExchange = e.logs[0]?.date || e.createdAt;
+        const daysSinceExchange = daysBetween(lastExchange, today()) ?? 0;
+        return { entry: e, days: daysSinceExchange, type: "exchange" as const };
       })
-      .filter(t => t.useScheduledDate ? t.days <= 14 : t.days >= 60);
+      .filter(t => t.days >= 60);
 
     const emergenceTasks = visibleEntries
       .filter((e): e is LarvaBeetle => e.type === "幼虫" && !!e.actualEmergenceDate)
@@ -82,14 +77,7 @@ export function TaskView({
                 <div className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
                   {type === 'emergence' 
                     ? (days === 0 ? "今日羽化予定" : (days > 0 ? `あと${days}日で羽化` : `${Math.abs(days)}日前に羽化`)) 
-                    : (type === 'exchange' && (entry as any).nextExchangeDate 
-                        ? (days === 0 
-                            ? "今日交換予定" 
-                            : (days > 0 ? `あと${days}日で交換` : `交換予定から${Math.abs(days)}日経過`)
-                          )
-                        : `${days}日間未交換`
-                      )
-                  }
+                    : `${days}日間未交換`}
                 </div>
               </div>
             </div>
