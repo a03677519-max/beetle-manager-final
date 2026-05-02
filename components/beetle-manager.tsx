@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef } from "react";
-import { AnimatePresence } from "framer-motion";
-import { Search, Clipboard, Camera, Loader2, Crop, Check, X as CloseIcon, Trash2, Edit, CheckSquare, Square, ArrowUpDown, ChevronDown, ChevronUp } from "lucide-react";
+import { AnimatePresence, motion, Reorder } from "framer-motion";
+import { Search, Clipboard, Camera, Loader2, Crop, Check, X as CloseIcon, Trash2, Edit, CheckSquare, Square, ArrowUpDown, ChevronDown, ChevronUp, Settings } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Modal } from "./ui/modal";
 import { useSwitchBot } from "@/components/use-switchbot";
@@ -29,6 +29,7 @@ import { EmptyState } from "./beetle/shared/empty-state";
 import { EntryDetail } from "./beetle/shared/entry-detail";
 import { AnalysisView } from "./beetle/features/analysis-view";
 import { TaskView } from "./beetle/features/task-view";
+import { SettingsView } from "./beetle/features/settings-view"; // 新設を想定
 
 export function BeetleManager() {
   const entries = useBeetleStore((state) => state.entries);
@@ -93,12 +94,14 @@ export function BeetleManager() {
 
   const [activeTab, setActiveTab] = useState("成虫");
   const [query, setQuery] = useState("");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [createType, setCreateType] = useState<EntryType>("幼虫");
   const [pastedData, setPastedData] = useState<any>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isOcrProcessing, setIsOcrProcessing] = useState(false);
   const [isAutoFillEnabled, setIsAutoFillEnabled] = useState(false);
+  const [spawnTemplate, setSpawnTemplate] = useState<any>(null);
   
   // 一括操作用のステート
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -123,17 +126,11 @@ export function BeetleManager() {
 
   // 管理名のユニークな名前を生成するユーティリティ
   const generateUniqueMName = (base: string, currentEntries: BeetleEntry[]) => {
-    if (!base) return "";
-    let candidate = base;
+    let namePart = base || "個体";
     let suffix = 1;
 
-    const match = base.match(/^(.*?)-(\d+)$/);
-    let namePart = base;
-    if (match) {
-      namePart = match[1];
-      suffix = parseInt(match[2]);
-      candidate = `${namePart}-${String(suffix).padStart(2, "0")}`;
-    }
+    let candidate = `${namePart}-${String(suffix).padStart(2, "0")}`;
+    if (!base) candidate = `個体-${String(suffix).padStart(2, "0")}`;
 
     while (currentEntries.some(e => e.managementName === candidate)) {
       suffix++;
@@ -162,14 +159,21 @@ export function BeetleManager() {
      };
  
      return [...list].sort((a, b) => {
-       let p = getSortVal(a, sortConfig.primary).localeCompare(getSortVal(b, sortConfig.primary), "ja", { numeric: true });
+       let p = String(getSortVal(a, sortConfig.primary)).localeCompare(String(getSortVal(b, sortConfig.primary)), "ja", { numeric: true });
        if (p !== 0) {
          return sortConfig.primaryDirection === "asc" ? p : -p;
        }
-       let s = getSortVal(a, sortConfig.secondary).localeCompare(getSortVal(b, sortConfig.secondary), "ja", { numeric: true });
+       let s = String(getSortVal(a, sortConfig.secondary)).localeCompare(String(getSortVal(b, sortConfig.secondary)), "ja", { numeric: true });
        return sortConfig.secondaryDirection === "asc" ? s : -s;
      });
    }, [entries, query, selectedType, sortConfig]);
+
+  // 並べ替え（ドラッグ）完了時の処理
+  const handleReorder = (newOrder: BeetleEntry[], sciName: string) => {
+    const otherEntries = entries.filter(e => e.scientificName !== sciName);
+    // 全体の順序を更新（簡易実装: ストアの順序を書き換え）
+    importData([...otherEntries, ...newOrder]);
+  };
 
   const groupedEntries = useMemo(() => {
     const groups: Record<string, BeetleEntry[]> = {};
@@ -444,11 +448,13 @@ export function BeetleManager() {
     // 日付の揺らぎ（2024.01.01 や 2024 01 01、誤字など）を補正する
     const fixOcrDate = (d: string) => {
       if (!d) return "";
-      // 数字以外の区切りをハイフンに統一
-      const clean = d.replace(/[Oo]/g, "0").replace(/[I|il]/g, "1").replace(/[^0-9/.-]/g, "-").replace(/[./]/g, "-").replace(/-+/g, "-");
-      const match = clean.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+      // OCR特有の誤字や区切り文字を正規化
+      const clean = d.replace(/[Oo]/g, "0").replace(/[I|il]/g, "1").replace(/[^0-9/.-]/g, "-").replace(/[./]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+      const match = clean.match(/(\d{2,4})-(\d{1,2})-(\d{1,2})/);
       if (match) {
-        return `${match[1]}-${match[2].padStart(2, "0")}-${match[3].padStart(2, "0")}`;
+        let year = match[1];
+        if (year.length === 2) year = "20" + year;
+        return `${year}-${match[2].padStart(2, "0")}-${match[3].padStart(2, "0")}`;
       }
       return "";
     };
@@ -801,6 +807,7 @@ export function BeetleManager() {
           setIsCreating(false);
           startEditing(null);
           setPastedData(null);
+          setSpawnTemplate(null);
         }}
         title={editingEntry ? "編集" : "新規登録"}
       >
@@ -895,7 +902,7 @@ export function BeetleManager() {
         ) : null}
         {isCreating && !editingEntry && createType === "産卵セット" ? (
           <SpawnSetForm
-            initialValues={getInitialValues("産卵セット", emptySpawnSetForm)}
+            initialValues={spawnTemplate ? { ...emptySpawnSetForm, ...spawnTemplate } : getInitialValues("産卵セット", emptySpawnSetForm)}
             allEntries={entries}
             onSubmit={(value) => {
               addSpawnSet(value);
@@ -997,10 +1004,19 @@ export function BeetleManager() {
                   
                   <AnimatePresence>
                     {isExpanded && (
-                      <div className="space-y-3">
+                      <Reorder.Group 
+                        axis="y" 
+                        values={group} 
+                        onReorder={(newOrder) => handleReorder(newOrder, sciName)}
+                        className="space-y-3"
+                      >
                         {group.map((entry) => (
+                          <Reorder.Item 
+                            key={entry.id} 
+                            value={entry}
+                            dragListener={!isSelectionMode}
+                          >
                           <EntryCard
-                            key={entry.id}
                             entry={entry}
                             onOpen={isSelectionMode ? () => handleToggleSelect(entry.id) : setSelectedEntry}
                             onDelete={isSelectionMode ? undefined : (e, id) => {
@@ -1010,8 +1026,9 @@ export function BeetleManager() {
                             isSelectionMode={isSelectionMode}
                             isSelected={selectedIds.includes(entry.id)}
                           />
+                          </Reorder.Item>
                         ))}
-                      </div>
+                      </Reorder.Group>
                     )}
                   </AnimatePresence>
                 </div>
@@ -1030,6 +1047,11 @@ export function BeetleManager() {
             requestPersistence={requestPersistence}
             handleSync={handleGitHubSync}
             isSyncing={isSyncing}
+            onAddSpawnTemplate={(template) => {
+              setSpawnTemplate(template);
+              setCreateType("産卵セット");
+              setIsCreating(true);
+            }}
           />
         ) : activeTab === "タスク" ? (
           <TaskView
@@ -1055,10 +1077,12 @@ export function BeetleManager() {
           />
         )}
       </AnimatePresence>
+      {isSettingsOpen && <SettingsView onClose={() => setIsSettingsOpen(false)} />}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onTabChange={(tab) => {
+          if (tab === "設定") { setIsSettingsOpen(true); return; }
           if (ENTRY_TYPES.includes(tab as EntryType)) setSelectedType(tab as EntryType);
         }}
         onAdd={() => setIsCreating(true)}

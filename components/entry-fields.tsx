@@ -153,6 +153,8 @@ export function DateRollField({
   onChange: (value: string) => void;
 }) {
   const parts = splitDate(value);
+  // もし日付が未設定の場合は現在の年月日をデフォルトとして渡すことで「反映されない」問題を回避
+  const currentParts = value ? parts : splitDate(today());
 
   return (
     <div className="field">
@@ -162,20 +164,32 @@ export function DateRollField({
       <PickerContainer>
         <DrumrollPicker
           options={dateOptions.years}
-          value={parts.year}
-          onChange={(v) => onChange(buildDateFromParts(v, parts.month, parts.day))}
+          value={parts.year !== "-" ? parts.year : currentParts.year}
+          onChange={(v) => {
+            const m = parts.month !== "-" ? parts.month : currentParts.month;
+            const d = parts.day !== "-" ? parts.day : currentParts.day;
+            onChange(buildDateFromParts(v, m, d));
+          }}
         />
         <div className="w-[1px] h-full bg-gray-100/50" />
         <DrumrollPicker
           options={dateOptions.months}
-          value={parts.month}
-          onChange={(v) => onChange(buildDateFromParts(parts.year, v, parts.day))}
+          value={parts.month !== "-" ? parts.month : currentParts.month}
+          onChange={(v) => {
+            const y = parts.year !== "-" ? parts.year : currentParts.year;
+            const d = parts.day !== "-" ? parts.day : currentParts.day;
+            onChange(buildDateFromParts(y, v, d));
+          }}
         />
         <div className="w-[1px] h-full bg-gray-100/50" />
         <DrumrollPicker
           options={dateOptions.days}
-          value={parts.day}
-          onChange={(v) => onChange(buildDateFromParts(parts.year, parts.month, v))}
+          value={parts.day !== "-" ? parts.day : currentParts.day}
+          onChange={(v) => {
+            const y = parts.year !== "-" ? parts.year : currentParts.year;
+            const m = parts.month !== "-" ? parts.month : currentParts.month;
+            onChange(buildDateFromParts(y, m, v));
+          }}
         />
       </PickerContainer>
     </div>

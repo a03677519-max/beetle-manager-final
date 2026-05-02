@@ -38,6 +38,7 @@ export type BaseBeetle = {
   managementName?: string;
   linkedEntryId?: string;
   memo?: string;
+  order?: number; // 並べ替え用
 };
 
 export type LarvaLog = {

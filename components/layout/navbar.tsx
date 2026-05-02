@@ -1,57 +1,69 @@
 "use client";
-import { Home, Bug, CircleDot, Database, ListChecks, PieChart, Plus } from "lucide-react";
 
-export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: { 
-  activeTab: string, 
-  setActiveTab: (tab: string) => void, 
-  onTabChange?: (tab: string) => void,
-  onAdd: () => void 
-}) {
-  const tabs = [
-    { name: "ホーム", icon: Home },
-    { name: "成虫", icon: Bug },
-    { name: "幼虫", icon: CircleDot },
-    { name: "産卵セット", icon: Database },
-    { name: "タスク", icon: ListChecks },
-    { name: "分析", icon: PieChart },
+import React from "react";
+import { Bug, Baby, Plus, Package, BarChart3, CheckSquare, Settings } from "lucide-react";
+
+interface NavbarProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  onTabChange: (tab: string) => void;
+  onAdd: () => void;
+}
+
+export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: NavbarProps) {
+  // ホームボタンを削除し、ナビゲーション項目を再定義
+  const navItems = [
+    { id: "成虫", icon: Bug, label: "成虫" },
+    { id: "幼虫", icon: Baby, label: "幼虫" },
+    { id: "産卵セット", icon: Package, label: "セット" },
+    { id: "分析", icon: BarChart3, label: "分析" },
+    { id: "タスク", icon: CheckSquare, label: "タスク" },
+    { id: "設定", icon: Settings, label: "設定" }, // 右端に配置
   ];
 
   return (
-    <nav className="fixed bottom-2 left-2 right-2 bg-white/70 backdrop-blur-lg border border-white/40 rounded-[28px] h-[72px] flex justify-around items-center z-40 shadow-2xl">
-      {tabs.slice(0, 3).map((tab) => (
+    <div className="fixed bottom-0 left-0 right-0 z-50">
+      {/* 中央の追加ボタン (Floating Action Button) */}
+      <div className="absolute -top-16 left-1/2 -translate-x-1/2">
         <button
-          key={tab.name}
-          onClick={() => {
-            setActiveTab(tab.name);
-            onTabChange?.(tab.name);
-          }}
-          className={`flex flex-col items-center p-2 rounded-lg ${activeTab === tab.name ? "text-[var(--primary)]" : "text-gray-500"}`}
+          onClick={onAdd}
+          className="w-14 h-14 bg-[#FF9800] text-white rounded-full shadow-[0_8px_20px_rgba(255,152,0,0.4)] flex items-center justify-center active:scale-90 transition-all border-4 border-white"
         >
-          <tab.icon size={22} />
-          <span className="text-[11px] font-medium mt-0.5">{tab.name}</span>
+          <Plus size={32} />
         </button>
-      ))}
-      
-      <button 
-        onClick={onAdd}
-        className="w-[60px] h-[60px] bg-[var(--primary)] text-white rounded-full flex items-center justify-center shadow-[0_8px_20px_rgba(74,144,226,0.3)] -mt-12 border-4 border-[#F8F9FA] active:scale-95 transition-all"
-      >
-        <Plus size={24} />
-      </button>
+      </div>
 
-      {tabs.slice(3).map((tab) => (
-        <button
-          key={tab.name}
-          onClick={() => {
-            setActiveTab(tab.name);
-            onTabChange?.(tab.name);
-          }}
-          className={`flex flex-col items-center p-2 rounded-lg ${activeTab === tab.name ? "text-[var(--primary)]" : "text-gray-500"}`}
-        >
-          <tab.icon size={22} />
-          <span className="text-[11px] font-medium mt-0.5">{tab.name}</span>
-        </button>
-      ))}
-    </nav>
+      {/* ナビゲーションバー本体 */}
+      <nav className="bg-white/90 backdrop-blur-xl border-t border-gray-100 px-2 py-3 pb-[calc(12px+env(safe-area-inset-bottom,32px))] flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+
+          return (
+            <button
+              key={item.id}
+              onClick={() => {
+                // 「設定」は永続的なタブ切り替えではなくアクション（モーダル）のため、
+                // アクティブなタブの状態は更新せずに親へ通知する
+                if (item.id !== "設定") {
+                  setActiveTab(item.id);
+                }
+                onTabChange(item.id);
+              }}
+              className={`flex flex-col items-center gap-1 transition-all duration-300 min-w-[48px] ${
+                isActive ? "text-[#FF9800]" : "text-gray-400"
+              }`}
+            >
+              <div className={`p-1 rounded-xl transition-all ${isActive ? "bg-[#FF9800]/10" : ""}`}>
+                <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
+              </div>
+              <span className={`text-[9px] font-black tracking-tighter ${isActive ? "opacity-100" : "opacity-60"}`}>
+                {item.label}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
