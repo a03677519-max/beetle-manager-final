@@ -15,11 +15,13 @@ export function LarvaForm({
   onSubmit,
   onCancel,
   allEntries,
+  className,
 }: {
   initialValues: LarvaFormValues;
   onSubmit: (value: LarvaFormValues, count: number) => void;
   onCancel: () => void;
   allEntries: BeetleEntry[];
+  className?: string;
 }) {
   const [values, setValues] = useState<LarvaFormValues>(initialValues);
   const [count, setCount] = useState(1);
