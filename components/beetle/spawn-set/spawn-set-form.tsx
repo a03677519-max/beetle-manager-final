@@ -46,6 +46,23 @@ export function SpawnSetForm({
         onSubmit(values);
       }}
     >
+      {/* Header Actions */}
+      <div className="sticky top-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-3 border-b border-gray-100 flex justify-between items-center z-50 mb-4">
+        <button
+          type="button"
+          className="text-gray-500 font-bold text-sm px-4 py-1.5 rounded-full hover:bg-gray-50"
+          onClick={onCancel}
+        >
+          キャンセル
+        </button>
+        <button 
+          type="submit" 
+          className="bg-[#2D5A27] text-white px-6 py-1.5 rounded-full font-bold text-sm shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all select-none"
+        >
+          保存する
+        </button>
+      </div>
+
       <div className="flex-1 overflow-y-auto px-1 space-y-3 mb-2">
         <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2">
         <EntryBaseFields
@@ -146,23 +163,6 @@ export function SpawnSetForm({
         onChange={(val) => setValues({ ...values, memo: val })}
       />
         </div>
-      </div>
-
-      {/* Actions */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-100 flex gap-3 z-50 pb-[calc(92px+env(safe-area-inset-bottom,16px))]"> {/* ナビゲーションバーの高さ+α */}
-        <button
-          type="button"
-          className="flex-1 h-10 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"
-          onClick={onCancel}
-        >
-          キャンセル
-        </button>
-        <button 
-          type="submit" 
-          className="flex-[2] h-10 rounded-2xl font-bold text-white bg-[#2D5A27] shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all select-none"
-        >
-          保存する
-        </button>
       </div>
     </form>
   );

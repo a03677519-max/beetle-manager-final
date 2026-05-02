@@ -158,7 +158,7 @@ export function LarvaDetail({
                         className="p-2 text-gray-300 hover:text-[#FF9800] transition-colors"
                         onClick={() => setEditingLog(log)}
                       >
-                        <Edit2 size(16) />
+                        <Edit2 size={16} />
                       </button>
                       <button
                         type="button"

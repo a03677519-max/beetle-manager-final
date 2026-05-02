@@ -148,7 +148,22 @@ export function LarvaForm({
         onSubmit(finalValues, count);
       }}
     >
-      {/* Quick Nav (Removed as per request) */}
+      {/* Header Actions */}
+      <div className="sticky top-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-3 border-b border-gray-100 flex justify-between items-center z-50 mb-4">
+        <button
+          type="button"
+          className="text-gray-500 font-bold text-sm px-4 py-1.5 rounded-full hover:bg-gray-50"
+          onClick={onCancel}
+        >
+          キャンセル
+        </button>
+        <button 
+          type="submit" 
+          className="bg-[#FF9800] text-white px-6 py-1.5 rounded-full font-bold text-sm shadow-lg shadow-[#FF9800]/30 hover:brightness-110 active:scale-95 transition-all select-none"
+        >
+          保存する
+        </button>
+      </div>
 
       <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2 flex-1 overflow-y-auto mb-4">
         <EntryBaseFields
@@ -451,23 +466,6 @@ export function LarvaForm({
           ))}
         </div>
         </div>
-      </div>
-
-      {/* Actions */}
-      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-100 flex gap-3 z-50 pb-[calc(92px+env(safe-area-inset-bottom,16px))]"> {/* ナビゲーションバーの高さ+α */}
-        <button
-          type="button"
-          className="flex-1 h-10 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"
-          onClick={onCancel}
-        >
-          キャンセル
-        </button>
-        <button 
-          type="submit" 
-          className="flex-[2] h-10 rounded-2xl font-bold text-white bg-[#FF9800] shadow-lg shadow-[#FF9800]/30 hover:brightness-110 active:scale-95 transition-all select-none"
-        >
-          保存する
-        </button>
       </div>
     </form>
   );
