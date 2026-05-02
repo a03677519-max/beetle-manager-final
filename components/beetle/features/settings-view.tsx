@@ -6,7 +6,7 @@ import { useBeetleStore } from "@/store/use-beetle-store";
 import { BottomSheetInput } from "@/components/entry-fields";
 
 export function SettingsView({ onClose }: { onClose: () => void }) {
-  const { switchBot, gitHub, setSwitchBot, setGitHub } = useBeetleStore();
+  const { switchBot, gitHub, updateSwitchBot, updateGitHub } = useBeetleStore();
 
   return (
     <motion.div 
@@ -28,9 +28,9 @@ export function SettingsView({ onClose }: { onClose: () => void }) {
             <h3 className="text-sm font-black uppercase tracking-widest">SwitchBot API</h3>
           </div>
           <div className="space-y-4">
-            <BottomSheetInput label="Token" value={switchBot.token} onChange={(v) => setSwitchBot({ ...switchBot, token: v })} />
-            <BottomSheetInput label="Secret" value={switchBot.secret} onChange={(v) => setSwitchBot({ ...switchBot, secret: v })} />
-            <BottomSheetInput label="Device ID" value={switchBot.deviceId} onChange={(v) => setSwitchBot({ ...switchBot, deviceId: v })} />
+            <BottomSheetInput label="Token" value={switchBot.token} onChange={(v) => updateSwitchBot({ token: v })} />
+            <BottomSheetInput label="Secret" value={switchBot.secret} onChange={(v) => updateSwitchBot({ secret: v })} />
+            <BottomSheetInput label="Device ID" value={switchBot.deviceId} onChange={(v) => updateSwitchBot({ deviceId: v })} />
           </div>
         </section>
 
@@ -40,8 +40,8 @@ export function SettingsView({ onClose }: { onClose: () => void }) {
             <h3 className="text-sm font-black uppercase tracking-widest">GitHub Sync</h3>
           </div>
           <div className="space-y-4">
-            <BottomSheetInput label="Repo (owner/name)" value={gitHub.repo} onChange={(v) => setGitHub({ ...gitHub, repo: v })} />
-            <BottomSheetInput label="Token" value={gitHub.token} onChange={(v) => setGitHub({ ...gitHub, token: v })} />
+            <BottomSheetInput label="Repo (owner/name)" value={gitHub.repo} onChange={(v) => updateGitHub({ repo: v })} />
+            <BottomSheetInput label="Token" value={gitHub.token} onChange={(v) => updateGitHub({ token: v })} />
           </div>
         </section>
       </div>
