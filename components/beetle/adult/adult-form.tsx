@@ -144,7 +144,7 @@ export function AdultForm({
       </div>
 
       {/* Actions */}
-      <div className="pt-1 pb-3 flex gap-3">
+      <div className="sticky bottom-[-24px] bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 mt-6 border-t border-gray-100 flex gap-3 z-50 pb-[calc(1rem+env(safe-area-inset-bottom,16px))]">
         <button
           type="button"
           className="flex-1 h-10 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"

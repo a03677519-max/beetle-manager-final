@@ -8,9 +8,10 @@ interface NavbarProps {
   setActiveTab: (tab: string) => void;
   onTabChange: (tab: string) => void;
   onAdd: () => void;
+  showAddButton?: boolean;
 }
 
-export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: NavbarProps) {
+export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd, showAddButton = true }: NavbarProps) {
   // ホームボタンを削除し、ナビゲーション項目を再定義
   const navItems = [
     { id: "成虫", icon: Bug, label: "成虫" },
@@ -24,6 +25,7 @@ export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: NavbarPr
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
       {/* 中央の追加ボタン (Floating Action Button) */}
+      {showAddButton && (
       <div className="absolute -top-16 left-1/2 -translate-x-1/2">
         <button
           onClick={onAdd}
@@ -32,6 +34,7 @@ export function Navbar({ activeTab, setActiveTab, onTabChange, onAdd }: NavbarPr
           <Plus size={32} />
         </button>
       </div>
+      )}
 
       {/* ナビゲーションバー本体 */}
       <nav className="bg-white/90 backdrop-blur-xl border-t border-gray-100 px-2 py-3 pb-[calc(12px+env(safe-area-inset-bottom,32px))] flex items-center justify-around shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">

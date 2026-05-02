@@ -13,6 +13,10 @@ export function SpawnSetDetail({ entry }: { entry: SpawnSet }) {
           {formatDate(entry.setDate)} 〜 {entry.setEndDate ? formatDate(entry.setEndDate) : "継続中"}
         </div>
       </div>
+      <div className="bg-gray-50 p-4 rounded-2xl">
+        <div className="text-xs text-gray-500">割出日</div>
+        <div className="font-bold text-gray-800 truncate">{entry.setEndDate ? formatDate(entry.setEndDate) : "-"}</div>
+      </div>
       <div className="bg-[#FF9800]/5 border border-[#FF9800]/10 p-4 rounded-2xl">
         <div className="text-xs text-[#FF9800]">卵数</div>
         <div className="text-xl font-black text-[#FF9800]">{entry.eggCount ?? "-"} <span className="text-xs">個</span></div>

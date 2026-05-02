@@ -23,7 +23,7 @@ export function LarvaForm({
 }) {
   const [values, setValues] = useState<LarvaFormValues>(initialValues);
   const [count, setCount] = useState(1);
-  const [dateType, setDateType] = useState<"hatch" | "set">("hatch");
+  const [dateType, setDateType] = useState<"hatch" | "set" | "extraction">("hatch");
   const [setStartDate, setSetStartDate] = useState(today());
   const [setEndDate, setSetEndDate] = useState(today());
 
@@ -32,9 +32,13 @@ export function LarvaForm({
 
   useEffect(() => {
     setValues(initialValues);
-    // 再編集時（idがある場合）、hatchDateが入っていれば「孵化日」、なければ「セット期間」を初期選択にする
+    // 再編集時（idがある場合）、既存データの状況に合わせて初期タブを選択
     if (initialValues.id) {
-      setDateType(initialValues.hatchDate ? "hatch" : "set");
+      if (initialValues.extractionDate) {
+        setDateType("extraction");
+      } else {
+        setDateType(initialValues.hatchDate ? "hatch" : "set");
+      }
     }
   }, [initialValues]);
 
@@ -123,15 +127,15 @@ export function LarvaForm({
         <div className="pt-2 border-t border-gray-50 space-y-3">
           <div className="field">
             <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block tracking-wider uppercase">日付区分</span>
-            <div className="flex bg-[#F5F0EB]/50 p-1 rounded-xl">
-              {(['hatch', 'set'] as const).map((type) => (
+            <div className="flex bg-[#F5F0EB]/50 p-1 rounded-xl gap-1">
+              {(['hatch', 'set', 'extraction'] as const).map((type) => (
                 <button
                   key={type}
                   type="button"
                   className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${dateType === type ? 'bg-white shadow-sm text-[#FF9800]' : 'text-gray-400'}`}
                   onClick={() => setDateType(type)}
                 >
-                  {type === 'hatch' ? '孵化日' : 'セット期間'}
+                  {type === 'hatch' ? '孵化日' : type === 'set' ? 'セット期間' : '割出日'}
                 </button>
               ))}
             </div>
@@ -143,11 +147,17 @@ export function LarvaForm({
               value={values.hatchDate || values.createdAt || ""}
               onChange={(value) => setValues({ ...values, hatchDate: value })}
             />
-          ) : (
+          ) : dateType === "set" ? (
             <div className="grid grid-cols-2 gap-4">
               <DateRollField label="開始日" value={setStartDate} onChange={setSetStartDate} />
               <DateRollField label="終了日" value={setEndDate} onChange={setSetEndDate} />
             </div>
+          ) : (
+            <DateRollField
+              label="割出日"
+              value={values.extractionDate || ""}
+              onChange={(value) => setValues({ ...values, extractionDate: value })}
+            />
           )}
           {!initialValues.id && (
             <>
@@ -415,7 +425,7 @@ export function LarvaForm({
       </div>
 
       {/* Actions */}
-      <div className="pt-1 pb-3 flex gap-3">
+      <div className="sticky bottom-[-24px] bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 mt-6 border-t border-gray-100 flex gap-3 z-50 pb-[calc(1rem+env(safe-area-inset-bottom,16px))]">
         <button
           type="button"
           className="flex-1 h-10 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"

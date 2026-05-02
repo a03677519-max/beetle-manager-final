@@ -1086,6 +1086,7 @@ export function BeetleManager() {
           if (ENTRY_TYPES.includes(tab as EntryType)) setSelectedType(tab as EntryType);
         }}
         onAdd={() => setIsCreating(true)}
+        showAddButton={!isCreating && !editingId}
       />
     </div>
   );

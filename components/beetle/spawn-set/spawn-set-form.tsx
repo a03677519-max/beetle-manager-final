@@ -27,6 +27,7 @@ export function SpawnSetForm({
   allEntries: BeetleEntry[];
 }) {
   const [values, setValues] = useState<SpawnSetFormValues>(initialValues);
+  const [endDateType, setEndDateType] = useState<"割出" | "掘出">("割出");
   const formRef = useRef<HTMLFormElement>(null);
 
   // 外部からの初期値変更を同期
@@ -51,6 +52,22 @@ export function SpawnSetForm({
           onChange={(patch) => setValues({ ...values, ...patch })}
         />
 
+        <div className="field">
+          <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block tracking-wider uppercase">終了区分</span>
+          <div className="flex bg-[#F5F0EB]/50 p-1 rounded-xl gap-1">
+            {(['割出', '掘出'] as const).map((type) => (
+              <button
+                key={type}
+                type="button"
+                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${endDateType === type ? 'bg-white shadow-sm text-[#FF9800]' : 'text-gray-400'}`}
+                onClick={() => setEndDateType(type)}
+              >
+                {type === '割出' ? '割出' : '掘出'}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <DateRollField
             label="開始日"
@@ -58,7 +75,7 @@ export function SpawnSetForm({
             onChange={(value) => setValues({ ...values, setDate: value })}
           />
           <DateRollField
-            label="終了日 (割出日)"
+            label={endDateType === '割出' ? '割出日' : '掘り出し日'}
             value={values.setEndDate || ""}
             onChange={(value) => setValues({ ...values, setEndDate: value })}
           />
@@ -128,7 +145,7 @@ export function SpawnSetForm({
       </div>
 
       {/* Actions */}
-      <div className="pt-1 pb-3 flex gap-3">
+      <div className="sticky bottom-[-24px] bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 mt-6 border-t border-gray-100 flex gap-3 z-50 pb-[calc(1rem+env(safe-area-inset-bottom,16px))]">
         <button
           type="button"
           className="flex-1 h-10 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"
