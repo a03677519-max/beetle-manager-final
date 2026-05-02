@@ -114,46 +114,6 @@ export function LarvaDetail({
           </div>
         )}
       </div>
-      <LarvaLogForm
-        lastLog={entry.logs[0]}
-        onSubmit={(value) => useBeetleStore.getState().addLarvaLog(entry.id, value)}
-        onFetchTemperature={onFetchTemperature}
-        isFetchingTemperature={isFetchingTemperature}
-      />
-      <section className="mt-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">体重推移グラフ</h3>
-        </div>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%"> {/* Keep ResponsiveContainer */}
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1"> {/* Keep linearGradient */}
-                  <stop offset="5%" stopColor="#EF6C00" stopOpacity={0.2}/>
-                  <stop offset="95%" stopColor="#EF6C00" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#DEE2E6" vertical={false} />
-              <XAxis dataKey="date" stroke="#9ca3af" fontSize={10} />
-              <YAxis stroke="#9ca3af" fontSize={10} axisLine={false} tickLine={false} />
-              <Tooltip 
-                 contentStyle={{ borderRadius: '1.25rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', color: '#EF6C00' }}
-              />
-              <Area type="monotone" dataKey="weight" stroke="#EF6C00" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" name="体重(g)" dot={{ r: 4, fill: "#EF6C00", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
-              <Area type="monotone" dataKey="temperature" stroke="#E67E22" strokeWidth={2} fill="transparent" name="温度(℃)" dot={{ r: 2, fill: "#E67E22" }} strokeDasharray="5 5" />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="mt-4 flex justify-center">
-          <button 
-            onClick={exportToCSV}
-            className="flex items-center gap-2 text-[10px] font-bold text-[#EF6C00] bg-[#EF6C00]/5 px-4 py-2 rounded-full hover:bg-[#EF6C00]/10 transition-colors"
-          >
-            <Download size={14} />
-            データをCSV形式でダウンロード
-          </button>
-        </div>
-      </section>
 
       <section className="mt-6 bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
         <div className="text-[10px] font-black text-[#BCAAA4] mb-6 uppercase tracking-widest border-l-4 border-[#FF9800] pl-3">History Log</div>
@@ -198,7 +158,7 @@ export function LarvaDetail({
                         className="p-2 text-gray-300 hover:text-[#FF9800] transition-colors"
                         onClick={() => setEditingLog(log)}
                       >
-                        <Edit2 size={16} />
+                        <Edit2 size(16) />
                       </button>
                       <button
                         type="button"
@@ -217,6 +177,47 @@ export function LarvaDetail({
               ))}
             </div>
           )}
+        </div>
+      </section>
+
+      <LarvaLogForm
+        lastLog={entry.logs[0]}
+        onSubmit={(value) => useBeetleStore.getState().addLarvaLog(entry.id, value)}
+        onFetchTemperature={onFetchTemperature}
+        isFetchingTemperature={isFetchingTemperature}
+      />
+      <section className="mt-6 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider">体重推移グラフ</h3>
+        </div>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%"> {/* Keep ResponsiveContainer */}
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1"> {/* Keep linearGradient */}
+                  <stop offset="5%" stopColor="#EF6C00" stopOpacity={0.2}/>
+                  <stop offset="95%" stopColor="#EF6C00" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#DEE2E6" vertical={false} />
+              <XAxis dataKey="date" stroke="#9ca3af" fontSize={10} />
+              <YAxis stroke="#9ca3af" fontSize={10} axisLine={false} tickLine={false} />
+              <Tooltip 
+                 contentStyle={{ borderRadius: '1.25rem', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', backgroundColor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(8px)', color: '#EF6C00' }}
+              />
+              <Area type="monotone" dataKey="weight" stroke="#EF6C00" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" name="体重(g)" dot={{ r: 4, fill: "#EF6C00", strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
+              <Area type="monotone" dataKey="temperature" stroke="#E67E22" strokeWidth={2} fill="transparent" name="温度(℃)" dot={{ r: 2, fill: "#E67E22" }} strokeDasharray="5 5" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="mt-4 flex justify-center">
+          <button 
+            onClick={exportToCSV}
+            className="flex items-center gap-2 text-[10px] font-bold text-[#EF6C00] bg-[#EF6C00]/5 px-4 py-2 rounded-full hover:bg-[#EF6C00]/10 transition-colors"
+          >
+            <Download size={14} />
+            データをCSV形式でダウンロード
+          </button>
         </div>
       </section>
 

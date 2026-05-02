@@ -158,16 +158,19 @@ export function DateRollField({
   // 初期表示時に値が空、または不完全（"-"が含まれる）なら、
   // 現在の年月日を初期値として親に反映させて保存漏れを防ぐ
   useEffect(() => {
-    const isComplete = parts.year !== "-" && parts.month !== "-" && parts.day !== "-";
-    if (!isComplete) {
-      const d = buildDateFromParts(
-        parts.year !== "-" ? parts.year : currentParts.year,
-        parts.month !== "-" ? parts.month : currentParts.month,
-        parts.day !== "-" ? parts.day : currentParts.day
+    // If the value is explicitly empty, do not try to "fix" it to today's date.
+    // This allows forms to have genuinely empty date fields.
+    if (value === "") return;
+
+    // If the date is incomplete, try to complete it with current date parts.
+    if (parts.year === "-" || parts.month === "-" || parts.day === "-") {
+      const completedDate = buildDateFromParts(
+        parts.year !== "-" ? parts.year : currentParts.year, // Use existing part, or current year
+        parts.month !== "-" ? parts.month : currentParts.month, // Use existing part, or current month
+        parts.day !== "-" ? parts.day : currentParts.day // Use existing part, or current day
       );
-      // 無限ループ防止のため、値が実際に変わる場合のみ通知
-      if (d && d !== value) {
-        onChange(d);
+      if (completedDate && completedDate !== value) {
+        onChange(completedDate);
       }
     }
   }, [value, parts, currentParts, onChange]);

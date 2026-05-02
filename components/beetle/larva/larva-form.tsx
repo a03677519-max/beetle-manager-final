@@ -42,7 +42,10 @@ export function LarvaForm({
       } else {
         setDateType(initialValues.hatchDate ? "hatch" : "set");
       }
-      if (initialValues.hatchDate) setSetStartDate(initialValues.hatchDate);
+      // Initialize setStartDate and setEndDate for the "set" period tab,
+      // in case the user switches to it.
+      setSetStartDate(initialValues.hatchDate || initialValues.createdAt || today());
+      setSetEndDate(initialValues.extractionDate || today());
     }
   }, [initialValues]);
 
@@ -52,12 +55,10 @@ export function LarvaForm({
       // セット期間へ切り替える際、既存の日付があれば開始/終了日に反映
       if (values.hatchDate) setSetStartDate(values.hatchDate);
       if (values.extractionDate) setSetEndDate(values.extractionDate);
-    } else if (type === "hatch") {
-      // 孵化日へ切り替える際、セット開始日があれば反映
-      if (dateType === "set") setValues({ ...values, hatchDate: setStartDate });
-    } else if (type === "extraction") {
-      // 割出日へ切り替える際、セット終了日があれば反映
-      if (dateType === "set") setValues({ ...values, extractionDate: setEndDate });
+    } else if (type === "hatch" && dateType === "set") { // Only update if switching FROM "set"
+      setValues((prev) => ({ ...prev, hatchDate: setStartDate }));
+    } else if (type === "extraction" && dateType === "set") { // Only update if switching FROM "set"
+      setValues((prev) => ({ ...prev, extractionDate: setEndDate }));
     }
     setDateType(type);
   };
@@ -453,7 +454,7 @@ export function LarvaForm({
       </div>
 
       {/* Actions */}
-      <div className="shrink-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-100 flex gap-3 z-50 pb-[calc(92px+env(safe-area-inset-bottom,16px))]"> {/* ナビゲーションバーの高さ+α */}
+      <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-100 flex gap-3 z-50 pb-[calc(92px+env(safe-area-inset-bottom,16px))]"> {/* ナビゲーションバーの高さ+α */}
         <button
           type="button"
           className="flex-1 h-10 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"
