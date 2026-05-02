@@ -152,9 +152,25 @@ export function DateRollField({
   value: string;
   onChange: (value: string) => void;
 }) {
-  const parts = splitDate(value);
-  // もし日付が未設定の場合は現在の年月日をデフォルトとして渡すことで「反映されない」問題を回避
-  const currentParts = value ? parts : splitDate(today());
+  const parts = useMemo(() => splitDate(value), [value]);
+  const currentParts = useMemo(() => splitDate(today()), []);
+
+  // 初期表示時に値が空、または不完全（"-"が含まれる）なら、
+  // 現在の年月日を初期値として親に反映させて保存漏れを防ぐ
+  useEffect(() => {
+    const isComplete = parts.year !== "-" && parts.month !== "-" && parts.day !== "-";
+    if (!isComplete) {
+      const d = buildDateFromParts(
+        parts.year !== "-" ? parts.year : currentParts.year,
+        parts.month !== "-" ? parts.month : currentParts.month,
+        parts.day !== "-" ? parts.day : currentParts.day
+      );
+      // 無限ループ防止のため、値が実際に変わる場合のみ通知
+      if (d && d !== value) {
+        onChange(d);
+      }
+    }
+  }, [value, parts, currentParts, onChange]);
 
   return (
     <div className="field">

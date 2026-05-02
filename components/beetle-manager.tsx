@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion, Reorder } from "framer-motion";
-import { Search, Clipboard, Camera, Loader2, Crop, Check, X as CloseIcon, Trash2, Edit, CheckSquare, Square, ArrowUpDown, ChevronDown, ChevronUp, Settings } from "lucide-react";
+import { Search, Clipboard, Camera, Loader2, Crop, Check, X as CloseIcon, Trash2, Edit, CheckSquare, Square, ArrowUpDown, ChevronDown, ChevronUp, Settings, ChevronLeft, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/layout/navbar";
 import { Modal } from "./ui/modal";
 import { useSwitchBot } from "@/components/use-switchbot";
@@ -849,7 +849,20 @@ export function BeetleManager() {
               </label>
             )}
           </div>
-          <div className="flex bg-gray-50 shadow-inner rounded-xl p-1 gap-1">
+          <div className="text-[10px] font-black text-[#D7CCC8] block tracking-widest uppercase mb-1 px-1">種別を選択</div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="p-2 bg-gray-50 rounded-xl text-gray-400 active:text-[#FF9800] active:bg-[#FF9800]/5 transition-all"
+              onClick={() => {
+                const idx = ENTRY_TYPES.indexOf(createType);
+                const prevIdx = (idx - 1 + ENTRY_TYPES.length) % ENTRY_TYPES.length;
+                setCreateType(ENTRY_TYPES[prevIdx]);
+              }}
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="flex-1 flex bg-gray-50 shadow-inner rounded-xl p-1 gap-1">
           {ENTRY_TYPES.map((type) => (
             <button
               key={type}
@@ -870,6 +883,18 @@ export function BeetleManager() {
               {type}
             </button>
           ))}
+          </div>
+            <button
+              type="button"
+              className="p-2 bg-gray-50 rounded-xl text-gray-400 active:text-[#FF9800] active:bg-[#FF9800]/5 transition-all"
+              onClick={() => {
+                const idx = ENTRY_TYPES.indexOf(createType);
+                const nextIdx = (idx + 1) % ENTRY_TYPES.length;
+                setCreateType(ENTRY_TYPES[nextIdx]);
+              }}
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
         </div>
 

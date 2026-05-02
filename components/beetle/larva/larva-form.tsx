@@ -15,11 +15,13 @@ export function LarvaForm({
   onSubmit,
   onCancel,
   allEntries,
+  className,
 }: {
   initialValues: LarvaFormValues;
   onSubmit: (value: LarvaFormValues, count: number) => void;
   onCancel: () => void;
   allEntries: BeetleEntry[];
+  className?: string;
 }) {
   const [values, setValues] = useState<LarvaFormValues>(initialValues);
   const [count, setCount] = useState(1);
@@ -108,14 +110,15 @@ export function LarvaForm({
   return (
     <form
       ref={formRef}
-      className={`flex flex-col h-full overflow-hidden ${className || ''}`}
+      className={`flex flex-col h-full ${className || ''}`}
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(values, count);
       }}
     >
-      <div className="flex-1 overflow-y-auto px-1 space-y-3 mb-2">
-        <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2">
+      {/* Quick Nav (Removed as per request) */}
+
+      <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2 flex-1 overflow-y-auto mb-4">
         <EntryBaseFields
           {...values}
           managementName={values.managementName || ""}
@@ -419,7 +422,6 @@ export function LarvaForm({
               </div>
             </div>
           ))}
-        </div>
         </div>
         </div>
       </div>
