@@ -875,6 +875,7 @@ export function BeetleManager() {
 
         {isCreating && !editingEntry && createType === "成虫" ? (
           <AdultForm
+            className="flex-1"
             initialValues={pastedData && pastedData.type === "成虫" ? { ...emptyAdultForm, ...pastedData } : getInitialValues("成虫", emptyAdultForm)}
             onSubmit={(value) => {
               addAdult(value);
@@ -904,6 +905,7 @@ export function BeetleManager() {
         {isCreating && !editingEntry && createType === "産卵セット" ? (
           <SpawnSetForm
             className="flex-1"
+            initialValues={spawnTemplate ? { ...emptySpawnSetForm, ...spawnTemplate } : getInitialValues("産卵セット", emptySpawnSetForm)}
             allEntries={entries}
             onSubmit={(value) => {
               addSpawnSet(value);
