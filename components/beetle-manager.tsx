@@ -885,6 +885,7 @@ export function BeetleManager() {
         ) : null}
         {isCreating && !editingEntry && createType === "幼虫" ? (
           <LarvaForm
+            className="flex-1"
             initialValues={pastedData && pastedData.type === "幼虫" ? { ...emptyLarvaForm, ...pastedData } : getInitialValues("幼虫", emptyLarvaForm)}
             allEntries={entries}
             onSubmit={(values, count) => {
@@ -902,7 +903,7 @@ export function BeetleManager() {
         ) : null}
         {isCreating && !editingEntry && createType === "産卵セット" ? (
           <SpawnSetForm
-            initialValues={spawnTemplate ? { ...emptySpawnSetForm, ...spawnTemplate } : getInitialValues("産卵セット", emptySpawnSetForm)}
+            className="flex-1"
             allEntries={entries}
             onSubmit={(value) => {
               addSpawnSet(value);
@@ -916,6 +917,7 @@ export function BeetleManager() {
 
         {editingEntry?.type === "成虫" ? (
           <AdultForm
+            className="flex-1"
             initialValues={editingEntry}
             onSubmit={(value) => {
               updateAdult(editingEntry.id, value);
@@ -926,6 +928,7 @@ export function BeetleManager() {
         ) : null}
         {editingEntry?.type === "幼虫" ? (
           <LarvaForm
+            className="flex-1"
             initialValues={editingEntry}
             allEntries={entries}
             onSubmit={(value, count) => {
@@ -947,6 +950,7 @@ export function BeetleManager() {
         ) : null}
         {editingEntry?.type === "産卵セット" ? (
           <SpawnSetForm
+            className="flex-1"
             initialValues={editingEntry}
             allEntries={entries}
             onSubmit={(value) => {

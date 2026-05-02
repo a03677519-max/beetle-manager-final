@@ -18,6 +18,7 @@ export function SpawnSetForm({
   onFetchTemperature,
   isFetchingTemperature,
   allEntries,
+  className,
 }: {
   initialValues: SpawnSetFormValues;
   onSubmit: (value: SpawnSetFormValues) => void;
@@ -25,6 +26,7 @@ export function SpawnSetForm({
   onFetchTemperature: (setter: (value: string) => void) => void;
   isFetchingTemperature: boolean;
   allEntries: BeetleEntry[];
+  className?: string;
 }) {
   const [values, setValues] = useState<SpawnSetFormValues>(initialValues);
   const [endDateType, setEndDateType] = useState<"割出" | "掘出">("割出");
@@ -38,13 +40,13 @@ export function SpawnSetForm({
   return (
     <form
       ref={formRef}
-      className="space-y-2"
+      className={`flex flex-col h-full ${className || ''}`}
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(values);
       }}
     >
-      <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2">
+      <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2 flex-1 overflow-y-auto mb-4">
         <EntryBaseFields
           {...values}
           managementName={values.managementName || ""}
@@ -145,7 +147,7 @@ export function SpawnSetForm({
       </div>
 
       {/* Actions */}
-      <div className="sticky bottom-[-24px] bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 mt-6 border-t border-gray-100 flex gap-3 z-50 pb-[calc(1rem+env(safe-area-inset-bottom,16px))]">
+      <div className="shrink-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-100 flex gap-3 z-50 pb-[calc(1rem+env(safe-area-inset-bottom,16px))]">
         <button
           type="button"
           className="flex-1 h-10 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"
