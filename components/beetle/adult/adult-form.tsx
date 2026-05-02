@@ -11,6 +11,7 @@ export function AdultForm({
   initialValues,
   onSubmit,
   onCancel,
+  className,
 }: {
   initialValues: AdultFormValues;
   onSubmit: (value: AdultFormValues) => void;

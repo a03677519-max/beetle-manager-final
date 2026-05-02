@@ -26,7 +26,6 @@ export function LarvaForm({
   const [dateType, setDateType] = useState<"hatch" | "set" | "extraction">("hatch");
   const [setStartDate, setSetStartDate] = useState(today());
   const [setEndDate, setSetEndDate] = useState(today());
-  const { className } = props;
 
   const formRef = useRef<HTMLFormElement>(null);
   const isEmerged = !!values.actualEmergenceDate;
