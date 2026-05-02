@@ -141,7 +141,7 @@ export function EntryDetail({
           </div>
         </div>
 
-        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom,32px))] bg-white/90 backdrop-blur-md border-t z-20 shrink-0">
+        <div className="p-4 pb-[calc(80px+env(safe-area-inset-bottom,32px))] bg-white/90 backdrop-blur-md border-t z-20 shrink-0">
           <button 
             onClick={() => { onClose(); startEditing(entry.id); }}
               className="w-full bg-[#FF9800] text-white font-bold h-[52px] rounded-2xl shadow-lg active:scale-[0.98] transition-all"

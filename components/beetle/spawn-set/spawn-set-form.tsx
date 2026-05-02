@@ -147,7 +147,7 @@ export function SpawnSetForm({
       </div>
 
       {/* Actions */}
-      <div className="shrink-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-100 flex gap-3 z-50 pb-[calc(1rem+env(safe-area-inset-bottom,16px))]">
+      <div className="shrink-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-100 flex gap-3 z-50 pb-[calc(80px+env(safe-area-inset-bottom,16px))]">
         <button
           type="button"
           className="flex-1 h-10 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"
