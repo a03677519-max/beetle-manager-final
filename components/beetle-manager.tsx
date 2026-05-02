@@ -944,7 +944,6 @@ export function BeetleManager() {
 
         {editingEntry?.type === "成虫" ? (
           <AdultForm
-            className="flex-1"
             initialValues={editingEntry}
             onSubmit={(value) => {
               updateAdult(editingEntry.id, value);
@@ -955,7 +954,6 @@ export function BeetleManager() {
         ) : null}
         {editingEntry?.type === "幼虫" ? (
           <LarvaForm
-            className="flex-1"
             initialValues={editingEntry}
             allEntries={entries}
             onSubmit={(value, count) => {
@@ -977,7 +975,6 @@ export function BeetleManager() {
         ) : null}
         {editingEntry?.type === "産卵セット" ? (
           <SpawnSetForm
-            className="flex-1"
             initialValues={editingEntry}
             allEntries={entries}
             onSubmit={(value) => {
@@ -998,7 +995,7 @@ export function BeetleManager() {
           <LarvaForm
             initialValues={{ ...emptyLarvaForm, id: 'bulk' }}
             allEntries={entries}
-            onSubmit={(values) => handleBulkEditSubmit(values)}
+            onSubmit={(values) => handleBulkEditSubmit(values)} // count は一括編集では使用しない
             onCancel={() => setIsBulkEditing(false)}
           />
         </div>
@@ -1117,7 +1114,7 @@ export function BeetleManager() {
           if (ENTRY_TYPES.includes(tab as EntryType)) setSelectedType(tab as EntryType);
         }}
         onAdd={() => setIsCreating(true)}
-        showAddButton={!isCreating && !editingId}
+        showAddButton={!isCreating && !editingId && !selectedEntry && !isSettingsOpen}
       />
     </div>
   );

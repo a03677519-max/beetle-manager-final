@@ -76,7 +76,7 @@ export function TaskView({
                 <div className="font-bold text-[#333D33] text-sm">{entry.japaneseName}</div>
                 <div className="text-[9px] text-gray-400 font-bold uppercase tracking-tight">
                   {type === 'emergence' 
-                    ? (days === 0 ? "今日羽化予定" : (days > 0 ? `あと${days}日で羽化` : `${Math.abs(days)}日前に羽化`)) 
+                    ? (days === 0 ? "今日羽化予定" : (days > 0 ? `あと${days}日で羽化` : `${Math.abs(days)}日前に羽化`))
                     : `${days}日間未交換`}
                 </div>
               </div>

@@ -115,9 +115,6 @@ export function LarvaLogForm({
         }
       }}
     >
-      <div className="text-[11px] font-black text-[#A1887F] uppercase tracking-widest border-l-4 border-[#FF9800] pl-3 mb-2">
-        {initialLogValues ? "ログの詳細確認・編集" : "飼育ログを追加"}
-      </div>
       <DateRollField label="日付" value={values.date} onChange={(value) => setValues({ ...values, date: value })} />
       <div className="grid grid-cols-2 gap-3">
         <BottomSheetInput
@@ -157,22 +154,20 @@ export function LarvaLogForm({
         <LarvaStageField value={values.stage} onChange={(value) => setValues({ ...values, stage: value })} />
         <GenderField value={values.gender} onChange={(value) => setValues({ ...values, gender: value })} />
       </div>
-      {initialLogValues && (
-        <div className="flex gap-3 pt-2">
-          {onCancel && (
-            <button 
-              type="button" 
-              className="flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-500 active:scale-95 transition-all"
-              onClick={onCancel}
-            >
-              キャンセル
-            </button>
-          )}
-          <button type="submit" className="w-full py-3 bg-[#FF9800] text-white rounded-2xl font-bold shadow-lg shadow-[#FF9800]/20 active:scale-[0.98] transition-all">
-            更新する
+      <div className="flex gap-3 pt-2">
+        {initialLogValues && onCancel && (
+          <button 
+            type="button" 
+            className="flex-1 py-3 bg-gray-100 rounded-2xl font-bold text-gray-500 active:scale-95 transition-all"
+            onClick={onCancel}
+          >
+            キャンセル
           </button>
-        </div>
-      )}
+        )}
+        <button type="submit" className="w-full py-3 bg-[#FF9800] text-white rounded-2xl font-bold shadow-lg shadow-[#FF9800]/20 active:scale-[0.98] transition-all select-none">
+          保存する
+        </button>
+      </div>
     </form>
   );
 }

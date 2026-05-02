@@ -189,7 +189,7 @@ export function AnalysisView({
         });
         if (entry.actualEmergenceDate) {
           // LarvaBeetle型にhatchDateが含まれていない場合のエラーを回避
-          const hatchDate = (entry as any).hatchDate || entry.createdAt;
+          const hatchDate = entry.hatchDate || entry.extractionDate || entry.createdAt; // 孵化日 > 割出日 > 作成日の優先順位
           const days = daysBetween(hatchDate, entry.actualEmergenceDate);
           if (days !== null) groups[key].larvaRecords.push({ val: days, mName, gender: currentGender, entryId: entry.id });
         }

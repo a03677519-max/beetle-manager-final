@@ -78,7 +78,7 @@ function DrumrollPicker<T extends string | number>({ options, value, onChange }:
       if (options[index] !== undefined && String(options[index]) !== String(value)) {
         onChange(String(options[index]));
       }
-    }, 150); // 150ms スクロールが止まったら確定
+    }, 80); // 80ms に短縮してレスポンスを向上
   };
 
   // スクロールエリア外でのタッチによるスクロール干渉を抑制

@@ -38,11 +38,29 @@ export function LarvaForm({
     if (initialValues.id) {
       if (initialValues.extractionDate) {
         setDateType("extraction");
+        setSetEndDate(initialValues.extractionDate);
       } else {
         setDateType(initialValues.hatchDate ? "hatch" : "set");
       }
+      if (initialValues.hatchDate) setSetStartDate(initialValues.hatchDate);
     }
   }, [initialValues]);
+
+  // タブ切り替え時に日付データを同期する
+  const handleTabChange = (type: "hatch" | "set" | "extraction") => {
+    if (type === "set") {
+      // セット期間へ切り替える際、既存の日付があれば開始/終了日に反映
+      if (values.hatchDate) setSetStartDate(values.hatchDate);
+      if (values.extractionDate) setSetEndDate(values.extractionDate);
+    } else if (type === "hatch") {
+      // 孵化日へ切り替える際、セット開始日があれば反映
+      if (dateType === "set") setValues({ ...values, hatchDate: setStartDate });
+    } else if (type === "extraction") {
+      // 割出日へ切り替える際、セット終了日があれば反映
+      if (dateType === "set") setValues({ ...values, extractionDate: setEndDate });
+    }
+    setDateType(type);
+  };
 
   useEffect(() => {
     if (!initialValues.id && (!values.logs || values.logs.length === 0)) {
@@ -110,10 +128,23 @@ export function LarvaForm({
   return (
     <form
       ref={formRef}
-      className={`flex flex-col h-full ${className || ''}`}
+      className={`flex flex-col h-full overflow-hidden ${className || ''}`}
       onSubmit={(event) => {
         event.preventDefault();
-        onSubmit(values, count);
+        const finalValues = { ...values };
+        // 重複防止ロジック: 選択されたタイプ以外の日付データを確実にクリアする
+        if (dateType === "hatch") {
+          // 孵化日の場合は割出日を空にする
+          finalValues.extractionDate = "";
+        } else if (dateType === "extraction") {
+          // 割出日の場合は孵化日を空にする
+          finalValues.hatchDate = "";
+        } else if (dateType === "set") {
+          // セット期間の場合は終了日を割出日とし、孵化日を空にする
+          finalValues.extractionDate = setEndDate;
+          finalValues.hatchDate = "";
+        }
+        onSubmit(finalValues, count);
       }}
     >
       {/* Quick Nav (Removed as per request) */}
@@ -135,7 +166,7 @@ export function LarvaForm({
                   key={type}
                   type="button"
                   className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${dateType === type ? 'bg-white shadow-sm text-[#FF9800]' : 'text-gray-400'}`}
-                  onClick={() => setDateType(type)}
+                  onClick={() => handleTabChange(type)}
                 >
                   {type === 'hatch' ? '孵化日' : type === 'set' ? 'セット期間' : '割出日'}
                 </button>
@@ -422,7 +453,7 @@ export function LarvaForm({
       </div>
 
       {/* Actions */}
-      <div className="shrink-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-100 flex gap-3 z-50 pb-[calc(92px+env(safe-area-inset-bottom,16px))]">
+      <div className="shrink-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-4 border-t border-gray-100 flex gap-3 z-50 pb-[calc(92px+env(safe-area-inset-bottom,16px))]"> {/* ナビゲーションバーの高さ+α */}
         <button
           type="button"
           className="flex-1 h-10 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 active:scale-95 transition-all select-none"

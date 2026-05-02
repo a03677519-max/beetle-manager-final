@@ -141,6 +141,11 @@ export function EntryCard({
                 <span className="text-muted">孵化日:</span> {entry.hatchDate.replace(/-/g, "/")}
               </div>
             )}
+            {entry.type === "幼虫" && !entry.hatchDate && entry.extractionDate && (
+              <div>
+                <span className="text-muted">割出日:</span> {entry.extractionDate.replace(/-/g, "/")}
+              </div>
+            )}
             <div className={`text-[11px] font-bold mt-1 ${dateColor}`}>
               {diffDays > 0 ? `${diffDays}日前に交換` : "今日交換"}
             </div>
