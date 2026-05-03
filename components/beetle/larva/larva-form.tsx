@@ -46,15 +46,16 @@ export function LarvaForm({
   // タブ切り替え時に日付データを同期する
   useEffect(() => {
     const type = dateType;
-    const currentActiveDate = values.hatchDate || values.extractionDate || setEndDate || today();
+    // 現在保持している有効な日付を取得（リセット防止）
+    const currentActiveDate = values.hatchDate || values.extractionDate || initialValues.hatchDate || initialValues.extractionDate || today();
     
     if (type === "hatch") {
-      setValues(prev => ({ ...prev, hatchDate: currentActiveDate, extractionDate: "" }));
+      setValues(prev => ({ ...prev, hatchDate: prev.hatchDate || currentActiveDate, extractionDate: "" }));
     } else if (type === "extraction") {
-      setValues(prev => ({ ...prev, extractionDate: currentActiveDate, hatchDate: "" }));
+      setValues(prev => ({ ...prev, extractionDate: prev.extractionDate || currentActiveDate, hatchDate: "" }));
     } else if (type === "set") {
-      setSetStartDate(values.hatchDate || today());
-      setSetEndDate(values.extractionDate || today());
+      setSetStartDate(values.hatchDate || initialValues.hatchDate || today());
+      setSetEndDate(values.extractionDate || initialValues.extractionDate || today());
     }
   }, [dateType]);
 

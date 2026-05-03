@@ -50,6 +50,8 @@ export function BeetleManager() {
   const gitHub = useBeetleStore((state) => state.gitHub);
   const { fetchTemperature, isFetching } = useSwitchBot();
 
+  const editingEntry = entries.find((entry) => entry.id === editingId) ?? null;
+
   const [selectedEntry, setSelectedEntry] = useState<BeetleEntry | null>(null);
   
   // クロップ用のステート
@@ -114,7 +116,10 @@ export function BeetleManager() {
       else if (editingEntry.hatchDate) setLarvaDateType("hatch");
       else setLarvaDateType("set");
     } else if (editingEntry?.type === "産卵セット") {
-      setSpawnSetDateType(editingEntry.setEndDate ? "割出" : "割出");
+      setSpawnSetDateType((editingEntry as any).endDateType || "割出");
+    } else {
+      setLarvaDateType("hatch");
+      setSpawnSetDateType("割出");
     }
   }, [editingEntry]);
   
