@@ -53,7 +53,7 @@ export function LarvaForm({
     // セット期間用の日付を初期化（既存の日付があれば優先、なければ作成日や今日）
     setSetStartDate(hatch || fmt(initialValues.createdAt) || today());
     setSetEndDate(extraction || today());
-  }, [initialValues, initialValues.id]);
+  }, [initialValues.id, initialValues.hatchDate, initialValues.extractionDate, initialValues.actualEmergenceDate, initialValues.createdAt]);
 
   // タブ切り替え時に日付データを同期する
   useEffect(() => {

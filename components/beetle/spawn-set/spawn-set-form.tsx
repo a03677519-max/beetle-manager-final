@@ -49,7 +49,7 @@ export function SpawnSetForm({
     if (initialValues.setEndDate) {
       // 必要に応じてロジック追加。デフォルトは割出。
     }
-  }, [initialValues]);
+  }, [initialValues.id, initialValues.setDate, initialValues.setEndDate]);
 
   return (
     <form
