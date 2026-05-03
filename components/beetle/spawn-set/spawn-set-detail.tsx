@@ -6,7 +6,7 @@ import { formatDate } from "@/lib/utils";
 
 export function SpawnSetDetail({ entry }: { entry: SpawnSet }) {
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-3 touch-pan-y select-none">
       <div className="bg-gray-50 p-4 rounded-2xl col-span-2">
         <div className="text-xs text-gray-500">セット期間</div>
         <div className="font-bold text-gray-800 truncate">

@@ -29,41 +29,62 @@ export function SpawnSetForm({
   className?: string;
 }) {
   const [values, setValues] = useState<SpawnSetFormValues>(initialValues);
-  const [endDateType, setEndDateType] = useState<"割出" | "掘出">("割出");
+  const [endDateType, setEndDateType] = useState<"割出" | "掘出">(
+    initialValues.setEndDate ? "割出" : "割出"
+  );
   const formRef = useRef<HTMLFormElement>(null);
 
   // 外部からの初期値変更を同期
   useEffect(() => {
     setValues(initialValues);
+    // 再編集時に記録に応じてタイプを推定
+    if (initialValues.setEndDate) {
+      // 必要に応じてロジック追加。デフォルトは割出。
+    }
   }, [initialValues]);
 
   return (
     <form
       ref={formRef}
-      className={`flex flex-col h-full overflow-hidden ${className || ''}`}
+      className={`flex flex-col h-full overflow-hidden touch-pan-y ${className || ''}`}
       onSubmit={(event) => {
         event.preventDefault();
         onSubmit(values);
       }}
     >
       {/* Header Actions */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-3 border-b border-gray-100 flex justify-between items-center z-50 mb-4">
+      <div className="sticky top-0 bg-white/95 backdrop-blur-sm -mx-6 px-4 py-2 border-b border-gray-100 flex items-center gap-2 z-50 mb-4 h-[54px]">
         <button
           type="button"
-          className="text-gray-500 font-bold text-sm px-4 py-1.5 rounded-full hover:bg-gray-50"
+          className="text-gray-400 font-bold text-xs px-1 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
           onClick={onCancel}
         >
           キャンセル
         </button>
+
+        {/* タイプセレクト（終了区分）を中央〜右寄りに配置 */}
+        <div className="flex-1 flex bg-gray-100/80 p-0.5 rounded-lg gap-0.5">
+          {(['割出', '掘出'] as const).map((type) => (
+            <button
+              key={type}
+              type="button"
+              className={`flex-1 py-1 rounded-md text-[10px] font-black transition-all ${endDateType === type ? 'bg-white shadow-sm text-[#FF9800]' : 'text-gray-400'}`}
+              onClick={() => setEndDateType(type)}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+
         <button 
           type="submit" 
-          className="bg-[#2D5A27] text-white px-6 py-1.5 rounded-full font-bold text-sm shadow-lg shadow-[#2D5A27]/30 hover:brightness-110 active:scale-95 transition-all select-none"
+          className="bg-[#2D5A27] text-white px-4 py-1.5 rounded-lg font-black text-[11px] shadow-md shadow-[#2D5A27]/20 hover:brightness-110 active:scale-95 transition-all select-none whitespace-nowrap"
         >
-          保存する
+          保存
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-1 space-y-3 mb-2">
+      <div className="flex-1 overflow-y-auto px-1 space-y-3 mb-2 overscroll-contain">
         <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2">
         <EntryBaseFields
           {...values}
@@ -71,22 +92,6 @@ export function SpawnSetForm({
           allEntries={allEntries}
           onChange={(patch) => setValues({ ...values, ...patch })}
         />
-
-        <div className="field">
-          <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block tracking-wider uppercase">終了区分</span>
-          <div className="flex bg-[#F5F0EB]/50 p-1 rounded-xl gap-1">
-            {(['割出', '掘出'] as const).map((type) => (
-              <button
-                key={type}
-                type="button"
-                className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${endDateType === type ? 'bg-white shadow-sm text-[#FF9800]' : 'text-gray-400'}`}
-                onClick={() => setEndDateType(type)}
-              >
-                {type === '割出' ? '割出' : '掘出'}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <DateRollField

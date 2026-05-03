@@ -108,11 +108,9 @@ export function BeetleManager() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showSort, setShowSort] = useState(false);
   const [isBulkEditing, setIsBulkEditing] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ 
-    primary: "japaneseName", 
-    primaryDirection: "asc" as "asc" | "desc",
-    secondary: "managementName", 
-    secondaryDirection: "asc" as "asc" | "desc" 
+  const [sortConfig, setSortConfig] = useState({
+    key: "date",
+    direction: "desc" as "asc" | "desc"
   });
 
   const sortKeys = [
@@ -159,12 +157,8 @@ export function BeetleManager() {
      };
  
      return [...list].sort((a, b) => {
-       let p = String(getSortVal(a, sortConfig.primary)).localeCompare(String(getSortVal(b, sortConfig.primary)), "ja", { numeric: true });
-       if (p !== 0) {
-         return sortConfig.primaryDirection === "asc" ? p : -p;
-       }
-       let s = String(getSortVal(a, sortConfig.secondary)).localeCompare(String(getSortVal(b, sortConfig.secondary)), "ja", { numeric: true });
-       return sortConfig.secondaryDirection === "asc" ? s : -s;
+       const v = String(getSortVal(a, sortConfig.key)).localeCompare(String(getSortVal(b, sortConfig.key)), "ja", { numeric: true });
+       return sortConfig.direction === "asc" ? v : -v;
      });
    }, [entries, query, selectedType, sortConfig]);
 
@@ -215,13 +209,22 @@ export function BeetleManager() {
       if (!entry) return;
       
       const patch: any = {};
-      if (values.japaneseName) patch.japaneseName = values.japaneseName;
-      if (values.scientificName) patch.scientificName = values.scientificName;
-      if (values.locality) patch.locality = values.locality;
-      if (values.generation) patch.generation = values.generation;
-      if (values.hatchDate) patch.hatchDate = values.hatchDate;
-      if (values.nextExchangeDate) patch.nextExchangeDate = values.nextExchangeDate;
-      if (values.memo) patch.memo = values.memo;
+      if (values.japaneseName && values.japaneseName.trim() !== "") patch.japaneseName = values.japaneseName;
+      if (values.scientificName && values.scientificName.trim() !== "") patch.scientificName = values.scientificName;
+      if (values.locality && values.locality.trim() !== "") patch.locality = values.locality;
+      
+      // 累代: デフォルトの状態（- / - / 空）でない場合のみ更新対象にする
+      if (values.generation && (
+        values.generation.primary !== "-" || 
+        values.generation.secondary !== "-" || 
+        (values.generation.count && values.generation.count !== "")
+      )) {
+        patch.generation = values.generation;
+      }
+
+      if (values.hatchDate && values.hatchDate !== "") patch.hatchDate = values.hatchDate;
+      if (values.extractionDate && values.extractionDate !== "") patch.extractionDate = values.extractionDate;
+      if (values.memo && values.memo.trim() !== "") patch.memo = values.memo;
 
       if (entry.type === "成虫") updateAdult(id, { ...entry, ...patch });
       else if (entry.type === "幼虫") updateLarva(id, { ...entry, ...patch });
@@ -667,31 +670,18 @@ export function BeetleManager() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-                <div className="flex flex-col items-start min-w-[50px]">
-                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">1st Sort</span>
-                  <button 
-                    onClick={() => setSortConfig(s => ({ ...s, primaryDirection: s.primaryDirection === "asc" ? "desc" : "asc" }))}
-                    className="text-[8px] font-black text-[#F4511E] flex items-center gap-0.5"
-                  >
-                    <ArrowUpDown size={8} /> {sortConfig.primaryDirection === "asc" ? "昇順" : "降順"}
-                  </button>
-                </div>
-                {sortKeys.map(k => (
-                  <button key={`p-${k.id}`} onClick={() => setSortConfig(s => ({...s, primary: k.id}))} className={`px-3 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all ${sortConfig.primary === k.id ? "bg-[#FF9800] text-white shadow-sm" : "bg-white text-gray-400 border border-gray-100"}`}>{k.label}</button>
-                ))}
-              </div>
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
                 <div className="flex flex-col items-start min-w-[50px]">
-                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">2nd Sort</span>
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Sort By</span>
                   <button 
-                    onClick={() => setSortConfig(s => ({ ...s, secondaryDirection: s.secondaryDirection === "asc" ? "desc" : "asc" }))}
+                    onClick={() => setSortConfig(s => ({ ...s, direction: s.direction === "asc" ? "desc" : "asc" }))}
                     className="text-[8px] font-black text-[#F4511E] flex items-center gap-0.5"
                   >
-                    <ArrowUpDown size={8} /> {sortConfig.secondaryDirection === "asc" ? "昇順" : "降順"}
+                    <ArrowUpDown size={8} /> {sortConfig.direction === "asc" ? "昇順" : "降順"}
                   </button>
                 </div>
                 {sortKeys.map(k => (
-                  <button key={`s-${k.id}`} onClick={() => setSortConfig(s => ({...s, secondary: k.id}))} className={`px-3 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all ${sortConfig.secondary === k.id ? "bg-[#FF9800] text-white shadow-sm" : "bg-white text-gray-400 border border-gray-100"}`}>{k.label}</button>
+                  <button key={`p-${k.id}`} onClick={() => setSortConfig(s => ({...s, key: k.id}))} className={`px-3 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all ${sortConfig.key === k.id ? "bg-[#FF9800] text-white shadow-sm" : "bg-white text-gray-400 border border-gray-100"}`}>{k.label}</button>
                 ))}
               </div>
             </div>
@@ -993,7 +983,7 @@ export function BeetleManager() {
         <div className="p-1">
           <p className="text-[10px] text-gray-400 mb-4">※ 入力した項目のみが選択中の個体すべてに上書きされます。</p>
           <LarvaForm
-            initialValues={{ ...emptyLarvaForm, id: 'bulk' }}
+            initialValues={{ ...emptyLarvaForm, id: 'bulk', hatchDate: '' }}
             allEntries={entries}
             onSubmit={(values) => handleBulkEditSubmit(values)} // count は一括編集では使用しない
             onCancel={() => setIsBulkEditing(false)}
@@ -1042,7 +1032,7 @@ export function BeetleManager() {
                           <Reorder.Item 
                             key={entry.id} 
                             value={entry}
-                            dragListener={!isSelectionMode}
+                            dragListener={false} // スクロール時のカードのスライド（動き）を完全に防止
                           >
                           <EntryCard
                             entry={entry}
