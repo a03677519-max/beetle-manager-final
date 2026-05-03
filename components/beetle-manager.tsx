@@ -312,8 +312,6 @@ export function BeetleManager() {
     }
   };
 
-  const editingEntry = entries.find((entry) => entry.id === editingId) ?? null;
-
   const stats = useMemo(() => ({
     adults: entries.filter(e => e.type === "成虫").length,
     larvae: entries.filter(e => e.type === "幼虫").length,
