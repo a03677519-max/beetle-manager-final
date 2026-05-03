@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { daysBetween, formatDate, today } from "@/lib/utils";
+import { daysBetween, formatDate, getLarvaDateInfo, today } from "@/lib/utils";
 import { useBeetleStore } from "@/store/use-beetle-store";
 import type { LarvaBeetle } from "@/types/beetle";
 import { LarvaLogForm } from "./larva-log-form";
@@ -78,13 +78,16 @@ export function LarvaDetail({
           <div className="text-xs text-gray-500">累代</div>
           <div className="font-bold text-gray-800 truncate">{buildGenerationLabel(entry.generation)}</div>
         </div>
-        <div className="bg-gray-50 p-4 rounded-2xl">
-          <div className="text-xs text-gray-500">孵化日</div>
-          <div className="font-bold text-gray-800 truncate">{entry.hatchDate ? formatDate(entry.hatchDate) : "-"}</div>
-        </div>
-        <div className="bg-gray-50 p-4 rounded-2xl">
-          <div className="text-xs text-gray-500">割出日</div>
-          <div className="font-bold text-gray-800 truncate">{entry.extractionDate ? formatDate(entry.extractionDate) : "-"}</div>
+        <div className="bg-gray-50 p-4 rounded-2xl col-span-2">
+          {(() => {
+            const { label, value } = getLarvaDateInfo(entry);
+            return (
+              <>
+                <div className="text-xs text-gray-500">{label}</div>
+                <div className="font-bold text-gray-800 truncate">{value}</div>
+              </>
+            );
+          })()}
         </div>
         <div className="bg-gray-50 p-4 rounded-2xl">
           <div className="text-xs text-gray-500">羽化日 ({entry.emergenceType})</div>

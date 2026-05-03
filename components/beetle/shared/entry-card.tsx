@@ -4,7 +4,7 @@ import { StatusBadge, Stage } from "@/components/ui/status-badge";
 import { GrowthBar } from "@/components/ui/growth-bar";
 import { buildGenerationLabel } from "@/components/entry-fields";
 import type { BeetleEntry } from "@/types/beetle";
-import { daysBetween, today } from "@/lib/utils";
+import { daysBetween, today, getLarvaDateInfo } from "@/lib/utils";
 import Image from "next/image";
 import { Trash2 } from "lucide-react";
 
@@ -136,14 +136,12 @@ export function EntryCard({
             <div>
               <span className="text-muted">累代:</span> {buildGenerationLabel(entry.generation)}
             </div>
-            {entry.type === "幼虫" && entry.hatchDate && (
+            {entry.type === "幼虫" && (
               <div>
-                <span className="text-muted">孵化日:</span> {entry.hatchDate.replace(/-/g, "/")}
-              </div>
-            )}
-            {entry.type === "幼虫" && !entry.hatchDate && entry.extractionDate && (
-              <div>
-                <span className="text-muted">割出日:</span> {entry.extractionDate.replace(/-/g, "/")}
+                {(() => {
+                  const { label, value } = getLarvaDateInfo(entry as any);
+                  return <><span className="text-muted">{label}:</span> {value}</>;
+                })()}
               </div>
             )}
             <div className={`text-[11px] font-bold mt-1 ${dateColor}`}>

@@ -27,7 +27,13 @@ export function AdultForm({
   // This is important if the parent component can change `initialValues`
   // while this component is still mounted (e.g., for editing different entries).
   useEffect(() => {
-    setValues(initialValues);
+    const fmt = (d?: string) => (d ? d.slice(0, 10) : "");
+    setValues({
+      ...initialValues,
+      emergenceDate: fmt(initialValues.emergenceDate),
+      feedingDate: fmt(initialValues.feedingDate),
+      deathDate: fmt(initialValues.deathDate),
+    });
   }, [initialValues]);
 
   const handleLarvaDataPaste = async () => {

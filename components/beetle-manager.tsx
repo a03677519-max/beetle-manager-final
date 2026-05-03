@@ -111,17 +111,21 @@ export function BeetleManager() {
 
   // 再編集時に既存データから日付区分を復元
   useEffect(() => {
-    if (editingEntry?.type === "幼虫") {
-      if (editingEntry.extractionDate) setLarvaDateType("extraction");
-      else if (editingEntry.hatchDate) setLarvaDateType("hatch");
-      else setLarvaDateType("set");
-    } else if (editingEntry?.type === "産卵セット") {
-      setSpawnSetDateType((editingEntry as any).endDateType || "割出");
-    } else {
+    if (!editingEntry) {
       setLarvaDateType("hatch");
       setSpawnSetDateType("割出");
+      return;
     }
-  }, [editingEntry]);
+
+    if (editingEntry.type === "幼虫") {
+      // 両方の日付がある場合は「セット」と判定
+      if (editingEntry.hatchDate && editingEntry.extractionDate) setLarvaDateType("set");
+      else if (editingEntry.extractionDate) setLarvaDateType("extraction");
+      else setLarvaDateType("hatch");
+    } else if (editingEntry.type === "産卵セット") {
+      setSpawnSetDateType((editingEntry as any).endDateType || "割出");
+    }
+  }, [editingEntry, editingEntry?.id]);
   
   // 一括操作用のステート
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -145,22 +149,39 @@ export function BeetleManager() {
   // 管理名のユニークな名前を生成するユーティリティ
   const generateUniqueMName = (base: string, currentEntries: BeetleEntry[]) => {
     const namePart = base.trim() || "個体";
-    const sep = namePart.endsWith("-") ? "" : "-";
-    const prefix = `${namePart}${sep}`;
+    
+    // 名前を「接頭辞」と「開始番号」に分解を試みる (例: "P-24-01" -> prefix: "P-24-", startNum: 1)
+    const match = namePart.match(/^(.*?)-(\d+)$/);
+    let prefix: string;
+    let startNum: number;
 
-    // 既存の管理名から同じプレフィックスを持つものを探し、数字部分を抽出
+    if (match) {
+      prefix = match[1] + "-";
+      startNum = parseInt(match[2], 10);
+    } else {
+      prefix = namePart.endsWith("-") ? namePart : `${namePart}-`;
+      startNum = 1;
+    }
+
+    // 指定したプレフィックスに合致する既存の数値を集計
     const existingNumbers = currentEntries
       .map(e => e.managementName || "")
       .filter(name => name.startsWith(prefix))
       .map(name => {
         const suffix = name.slice(prefix.length);
-        // 数字のみで構成されているかチェック
         return /^\d+$/.test(suffix) ? parseInt(suffix, 10) : null;
       })
       .filter((n): n is number => n !== null);
 
-    // 最大値を取得して +1 する。存在しない場合は 1 (01) から開始
-    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    // startNum 以降で未使用の最小番号を探す
+    let nextNumber = startNum;
+    if (existingNumbers.length > 0) {
+      const max = Math.max(...existingNumbers);
+      // 入力された番号が既存の最大値以下の場合は、最大値+1を割り当てる
+      if (max >= startNum) {
+        nextNumber = max + 1;
+      }
+    }
 
     // 2桁でパディング
     return `${prefix}${String(nextNumber).padStart(2, "0")}`;

@@ -39,7 +39,12 @@ export function SpawnSetForm({
 
   // 外部からの初期値変更を同期
   useEffect(() => {
-    setValues(initialValues);
+    const fmt = (d?: string) => (d ? d.slice(0, 10) : "");
+    setValues({
+      ...initialValues,
+      setDate: fmt(initialValues.setDate),
+      setEndDate: fmt(initialValues.setEndDate),
+    });
     // 再編集時に記録に応じてタイプを推定
     if (initialValues.setEndDate) {
       // 必要に応じてロジック追加。デフォルトは割出。

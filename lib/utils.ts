@@ -79,3 +79,25 @@ export function debounce<T extends (...args: unknown[]) => void>(
     timeout = setTimeout(() => callback(...args), wait);
   };
 }
+
+/**
+ * 幼虫の状態（孵化・セット期間・割出）に応じた日付表示情報（ラベルと値）を返します。
+ */
+export const getLarvaDateInfo = (entry: { hatchDate?: string; extractionDate?: string }) => {
+  if (entry.hatchDate && entry.extractionDate) {
+    return {
+      label: "セット期間",
+      value: `${formatDate(entry.hatchDate)} 〜 ${formatDate(entry.extractionDate)}`
+    };
+  }
+  if (entry.extractionDate) {
+    return {
+      label: "割出日",
+      value: formatDate(entry.extractionDate)
+    };
+  }
+  return {
+    label: "孵化日",
+    value: entry.hatchDate ? formatDate(entry.hatchDate) : "-"
+  };
+};
