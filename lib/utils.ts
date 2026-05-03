@@ -101,3 +101,25 @@ export const getLarvaDateInfo = (entry: { hatchDate?: string; extractionDate?: s
     value: entry.hatchDate ? formatDate(entry.hatchDate) : "-"
   };
 };
+
+/**
+ * 産卵セットの状態に応じた日付表示情報（ラベルと値）を返します。
+ */
+export const getSpawnSetDateInfo = (entry: { setDate?: string; setEndDate?: string }) => {
+  if (entry.setDate && entry.setEndDate) {
+    return {
+      label: "セット期間",
+      value: `${formatDate(entry.setDate)} 〜 ${formatDate(entry.setEndDate)}`
+    };
+  }
+  if (entry.setDate) {
+    return {
+      label: "セット開始日",
+      value: formatDate(entry.setDate)
+    };
+  }
+  return {
+    label: "セット情報",
+    value: "-"
+  };
+};
