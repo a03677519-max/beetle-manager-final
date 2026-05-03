@@ -39,18 +39,14 @@ export const splitDate = (value: string) => {
   return { year, month, day };
 };
 
-export const formatGeneration = ({
-  primary,
-  secondary,
-  count,
-}: {
-  primary: string;
-  secondary: string;
-  count: string;
-}) => {
-  const head = secondary !== "-" ? secondary : primary;
-  if (head === "-") return "-";
-  return `${head}${count || ""}`;
+import type { GenerationValue } from "@/types/beetle";
+
+// ...
+
+export const formatGeneration = (value: GenerationValue) => {
+  const { primary, count } = value;
+  if (primary === "-") return "-";
+  return `${primary}${count || ""}`;
 };
 
 export const toBase64 = (file: File) =>
