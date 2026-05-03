@@ -149,19 +149,34 @@ export function LarvaForm({
       }}
     >
       {/* Header Actions */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-3 border-b border-gray-100 flex justify-between items-center z-50 mb-4">
+      <div className="sticky top-0 bg-white/95 backdrop-blur-sm -mx-6 px-4 py-2 border-b border-gray-100 flex items-center gap-2 z-50 mb-4 h-[54px]">
         <button
           type="button"
-          className="text-gray-500 font-bold text-sm px-4 py-1.5 rounded-full hover:bg-gray-50"
+          className="text-gray-400 font-bold text-xs px-1 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
           onClick={onCancel}
         >
           キャンセル
         </button>
+
+        {/* 日付区分セレクトをヘッダーに移動 */}
+        <div className="flex-1 flex bg-gray-100/80 p-0.5 rounded-lg gap-0.5">
+          {(['hatch', 'set', 'extraction'] as const).map((type) => (
+            <button
+              key={type}
+              type="button"
+              className={`flex-1 py-1 rounded-md text-[9px] font-black transition-all ${dateType === type ? 'bg-white shadow-sm text-[#FF9800]' : 'text-gray-400'}`}
+              onClick={() => handleTabChange(type)}
+            >
+              {type === 'hatch' ? '孵化日' : type === 'set' ? 'セット' : '割出日'}
+            </button>
+          ))}
+        </div>
+
         <button 
           type="submit" 
-          className="bg-[#FF9800] text-white px-6 py-1.5 rounded-full font-bold text-sm shadow-lg shadow-[#FF9800]/30 hover:brightness-110 active:scale-95 transition-all select-none"
+          className="bg-[#FF9800] text-white px-4 py-1.5 rounded-lg font-black text-[11px] shadow-md shadow-[#FF9800]/20 hover:brightness-110 active:scale-95 transition-all select-none whitespace-nowrap"
         >
-          保存する
+          保存
         </button>
       </div>
 
@@ -174,22 +189,6 @@ export function LarvaForm({
         />
 
         <div className="pt-2 border-t border-gray-50 space-y-3">
-          <div className="field">
-            <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block tracking-wider uppercase">日付区分</span>
-            <div className="flex bg-[#F5F0EB]/50 p-1 rounded-xl gap-1">
-              {(['hatch', 'set', 'extraction'] as const).map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all ${dateType === type ? 'bg-white shadow-sm text-[#FF9800]' : 'text-gray-400'}`}
-                  onClick={() => handleTabChange(type)}
-                >
-                  {type === 'hatch' ? '孵化日' : type === 'set' ? 'セット期間' : '割出日'}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {dateType === "hatch" ? (
             <DateRollField
               label="孵化日"
@@ -466,6 +465,9 @@ export function LarvaForm({
           ))}
         </div>
         </div>
+
+        {/* ナビゲーションバー回避用のスペーサー */}
+        <div className="h-32" />
       </div>
     </form>
   );

@@ -47,19 +47,19 @@ export function AdultForm({
       }}
     >
       {/* Header Actions */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm -mx-6 px-6 py-3 border-b border-gray-100 flex justify-between items-center z-50 mb-4">
+      <div className="sticky top-0 bg-white/95 backdrop-blur-sm -mx-6 px-4 py-2 border-b border-gray-100 flex justify-between items-center z-50 mb-4 h-[54px]">
         <button
           type="button"
-          className="text-gray-500 font-bold text-sm px-4 py-1.5 rounded-full hover:bg-gray-50"
+          className="text-gray-400 font-bold text-xs px-2 py-1.5 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
           onClick={onCancel}
         >
           キャンセル
         </button>
         <button 
           type="submit" 
-          className="bg-[#7B5D3F] text-white px-6 py-1.5 rounded-full font-bold text-sm shadow-lg shadow-[#7B5D3F]/30 hover:brightness-110 active:scale-95 transition-all select-none"
+          className="bg-[#7B5D3F] text-white px-4 py-1.5 rounded-lg font-black text-[11px] shadow-md shadow-[#7B5D3F]/20 hover:brightness-110 active:scale-95 transition-all select-none whitespace-nowrap"
         >
-          保存する
+          保存
         </button>
       </div>
 
@@ -161,6 +161,9 @@ export function AdultForm({
           placeholder="管理上のメモなど"
           onChange={(val) => setValues({ ...values, memo: val })}
         />
+
+        {/* ナビゲーションバー回避用のスペーサー */}
+        <div className="h-32" />
         </div>
       </div>
     </form>

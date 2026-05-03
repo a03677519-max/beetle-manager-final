@@ -167,6 +167,9 @@ export function SpawnSetForm({
         placeholder="セットの様子や親個体の状態など"
         onChange={(val) => setValues({ ...values, memo: val })}
       />
+
+        {/* ナビゲーションバー回避用のスペーサー */}
+        <div className="h-32" />
         </div>
       </div>
     </form>
