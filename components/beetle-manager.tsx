@@ -670,7 +670,6 @@ export function BeetleManager() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
                 <div className="flex flex-col items-start min-w-[50px]">
                   <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Sort By</span>
                   <button 
