@@ -33,7 +33,9 @@ export const buildDateFromParts = (year: string, month: string, day: string) => 
 
 export const splitDate = (value: string) => {
   if (!value) return { year: "-", month: "-", day: "-" };
-  const [year = "-", month = "-", day = "-"] = value.split("-");
+  // ISO形式 (2024-01-01T...) の場合は日付部分のみを抽出
+  const datePart = value.includes("T") ? value.split("T")[0] : value;
+  const [year = "-", month = "-", day = "-"] = datePart.split("-");
   return { year, month, day };
 };
 

@@ -145,20 +145,25 @@ export function BeetleManager() {
   // 管理名のユニークな名前を生成するユーティリティ
   const generateUniqueMName = (base: string, currentEntries: BeetleEntry[]) => {
     const namePart = base.trim() || "個体";
-    let suffix = 1;
+    const sep = namePart.endsWith("-") ? "" : "-";
+    const prefix = `${namePart}${sep}`;
 
-    const getCandidate = (s: number) => {
-      const num = String(s).padStart(2, "0");
-      const sep = namePart.endsWith("-") ? "" : "-";
-      return `${namePart}${sep}${num}`;
-    };
+    // 既存の管理名から同じプレフィックスを持つものを探し、数字部分を抽出
+    const existingNumbers = currentEntries
+      .map(e => e.managementName || "")
+      .filter(name => name.startsWith(prefix))
+      .map(name => {
+        const suffix = name.slice(prefix.length);
+        // 数字のみで構成されているかチェック
+        return /^\d+$/.test(suffix) ? parseInt(suffix, 10) : null;
+      })
+      .filter((n): n is number => n !== null);
 
-    let candidate = getCandidate(suffix);
-    while (currentEntries.some(e => e.managementName === candidate)) {
-      suffix++;
-      candidate = getCandidate(suffix);
-    }
-    return candidate;
+    // 最大値を取得して +1 する。存在しない場合は 1 (01) から開始
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+
+    // 2桁でパディング
+    return `${prefix}${String(nextNumber).padStart(2, "0")}`;
   };
 
   const filteredEntries = useMemo(() => {

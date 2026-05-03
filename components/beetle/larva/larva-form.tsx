@@ -39,22 +39,25 @@ export function LarvaForm({
 
   useEffect(() => {
     setValues(initialValues);
-    setSetStartDate(initialValues.hatchDate || initialValues.createdAt || today());
-    setSetEndDate(initialValues.extractionDate || today());
+    // 日付文字列を YYYY-MM-DD に正規化
+    const fmt = (d?: string) => d ? d.slice(0, 10) : "";
+    setSetStartDate(fmt(initialValues.hatchDate) || fmt(initialValues.createdAt) || today());
+    setSetEndDate(fmt(initialValues.extractionDate) || today());
   }, [initialValues, initialValues.id]);
 
   // タブ切り替え時に日付データを同期する
   useEffect(() => {
     const type = dateType;
-    // 現在保持している有効な日付を取得（リセット防止）
-    const currentActiveDate = values.hatchDate || values.extractionDate || initialValues.hatchDate || initialValues.extractionDate || today();
+    // 現在保持している有効な日付を取得。既存の値がある場合はそれを優先する。
+    const currentActiveDate = values.hatchDate || values.extractionDate || (initialValues.createdAt ? initialValues.createdAt.slice(0, 10) : today());
     
     if (type === "hatch") {
-      setValues(prev => ({ ...prev, hatchDate: prev.hatchDate || currentActiveDate, extractionDate: "" }));
+      if (!values.hatchDate) setValues(prev => ({ ...prev, hatchDate: currentActiveDate }));
     } else if (type === "extraction") {
-      setValues(prev => ({ ...prev, extractionDate: prev.extractionDate || currentActiveDate, hatchDate: "" }));
+      if (!values.extractionDate) setValues(prev => ({ ...prev, extractionDate: currentActiveDate }));
     } else if (type === "set") {
-      setSetStartDate(values.hatchDate || initialValues.hatchDate || today());
+      // セット期間タブでは値をクリアせず、開始・終了日ピッカーに同期させる
+      setSetStartDate(values.hatchDate || initialValues.hatchDate || (initialValues.createdAt ? initialValues.createdAt.slice(0, 10) : today()));
       setSetEndDate(values.extractionDate || initialValues.extractionDate || today());
     }
   }, [dateType]);
@@ -133,11 +136,11 @@ export function LarvaForm({
         
         if (dateType === "hatch") {
           // 値が空の場合はフォールバックを適用してリセットを防ぐ
-          finalValues.hatchDate = finalValues.hatchDate || initialValues.createdAt || today();
-          finalValues.extractionDate = "";
+          finalValues.hatchDate = finalValues.hatchDate || (initialValues.createdAt ? initialValues.createdAt.slice(0, 10) : today());
+          finalValues.extractionDate = ""; // 孵化データとして保存
         } else if (dateType === "extraction") {
-          finalValues.extractionDate = finalValues.extractionDate || today();
-          finalValues.hatchDate = "";
+          finalValues.extractionDate = finalValues.extractionDate || (initialValues.createdAt ? initialValues.createdAt.slice(0, 10) : today());
+          finalValues.hatchDate = ""; // 割出データとして保存
         } else if (dateType === "set") {
           finalValues.extractionDate = setEndDate;
           finalValues.hatchDate = "";
@@ -157,7 +160,7 @@ export function LarvaForm({
           {dateType === "hatch" ? (
             <DateRollField
               label="孵化日"
-              value={values.hatchDate || values.createdAt || ""}
+              value={values.hatchDate || ""}
               onChange={(value) => setValues({ ...values, hatchDate: value })}
             />
           ) : dateType === "set" ? (
