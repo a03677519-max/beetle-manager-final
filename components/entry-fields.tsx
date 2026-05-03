@@ -225,7 +225,7 @@ export function GenerationRollField({
   const preview = useMemo(() => buildGenerationLabel(value), [value]);
 
   return (
-    <div className="field"> {/* Keep field class */}
+    <div className="field">
       <span className="text-[11px] font-bold text-[#A67C52] mb-1.5 block tracking-wider uppercase">累代</span>
       <PickerContainer>
         <DrumrollPicker
@@ -235,17 +235,11 @@ export function GenerationRollField({
         />
         <div className="w-[1px] h-full bg-gray-100/50" />
         <DrumrollPicker
-          options={GENERATION_SECONDARY}
-          value={value.secondary}
-          onChange={(v) => onChange({ ...value, secondary: v as GenerationValue["secondary"] })}
-        />
-        <div className="w-[1px] h-full bg-gray-100/50" />
-        <DrumrollPicker
           options={["-", ...GENERATION_COUNT_OPTIONS]}
           value={value.count || "-"}
           onChange={(v) => onChange({ ...value, count: v === "-" ? "" : v })}
         />
-      </PickerContainer> {/* Keep PickerContainer */}
+      </PickerContainer>
       <p className="field-note">表示: {preview}</p>
     </div>
   );
@@ -613,8 +607,4 @@ export function CohabitationField({
 }
 
 export const buildGenerationLabel = (value: GenerationValue) =>
-  value.secondary !== "-"
-    ? `${value.secondary}${value.count || ""}`
-    : value.primary !== "-"
-      ? `${value.primary}${value.count || ""}`
-      : "-";
+  value.primary !== "-" ? `${value.primary}${value.count || ""}` : "-";

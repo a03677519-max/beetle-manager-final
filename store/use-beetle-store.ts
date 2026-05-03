@@ -44,7 +44,6 @@ type BeetleState = {
 
 const emptyGeneration = {
   primary: "-",
-  secondary: "-",
   count: "",
 } as const;
 

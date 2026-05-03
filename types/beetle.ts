@@ -22,7 +22,6 @@ export type LogStage = (typeof LOG_STAGES)[number];
 
 export type GenerationValue = {
   primary: (typeof GENERATION_PRIMARY)[number];
-  secondary: (typeof GENERATION_SECONDARY)[number];
   count: string;
 };
 
