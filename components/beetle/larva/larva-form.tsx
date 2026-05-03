@@ -53,27 +53,28 @@ export function LarvaForm({
     // セット期間用の日付を初期化（既存の日付があれば優先、なければ作成日や今日）
     setSetStartDate(hatch || fmt(initialValues.createdAt) || today());
     setSetEndDate(extraction || today());
-  }, [initialValues.id, initialValues.hatchDate, initialValues.extractionDate, initialValues.actualEmergenceDate, initialValues.createdAt]);
+  }, [initialValues.id]);
 
   // タブ切り替え時に日付データを同期する
   useEffect(() => {
     const fmt = (d?: string) => (d ? d.slice(0, 10) : "");
-    // 現在保持している有効な日付を取得。既存の値がある場合はそれを優先する。
-    const currentActiveDate =
-      values.hatchDate ||
-      values.extractionDate ||
-      (initialValues.createdAt ? fmt(initialValues.createdAt) : today());
     
     if (dateType === "hatch") {
-      if (!values.hatchDate) setValues(prev => ({ ...prev, hatchDate: currentActiveDate }));
+      if (!values.hatchDate) {
+        const backupDate = values.extractionDate || (initialValues.createdAt ? fmt(initialValues.createdAt) : today());
+        setValues(prev => ({ ...prev, hatchDate: backupDate }));
+      }
     } else if (dateType === "extraction") {
-      if (!values.extractionDate) setValues(prev => ({ ...prev, extractionDate: currentActiveDate }));
+      if (!values.extractionDate) {
+        const backupDate = values.hatchDate || (initialValues.createdAt ? fmt(initialValues.createdAt) : today());
+        setValues(prev => ({ ...prev, extractionDate: backupDate }));
+      }
     } else if (dateType === "set") {
       // セット期間タブでは値をクリアせず、開始・終了日ピッカーに同期させる
       setSetStartDate(prev => prev || values.hatchDate || fmt(initialValues.hatchDate) || today());
       setSetEndDate(prev => prev || values.extractionDate || fmt(initialValues.extractionDate) || today());
     }
-  }, [dateType, initialValues.createdAt, initialValues.hatchDate, initialValues.extractionDate]);
+  }, [dateType]);
 
   useEffect(() => {
     if (!initialValues.id && (!values.logs || values.logs.length === 0)) {
