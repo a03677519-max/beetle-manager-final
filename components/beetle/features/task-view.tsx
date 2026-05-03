@@ -61,7 +61,9 @@ export function TaskView({
           const pb = b.type === 'emergence' ? (b.days <= 0 ? 3 : 1) : (b.days >= 90 ? 3 : 2);
           return pb - pa || b.days - a.days;
         }
-        return a.type === b.type ? a.entry.managementName.localeCompare(b.entry.managementName) : (a.type === "emergence" ? -1 : 1);
+        const nameA = (a.entry.managementName as string) ?? "";
+        const nameB = (b.entry.managementName as string) ?? "";
+        return a.type === b.type ? nameA.localeCompare(nameB) : (a.type === "emergence" ? -1 : 1);
       });
     });
 
