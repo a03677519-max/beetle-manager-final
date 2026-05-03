@@ -800,35 +800,19 @@ export function BeetleManager() {
         }}
         title={editingEntry ? "編集" : "新規登録"}
       >
-        <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md -mx-6 px-6 pt-2 pb-4 border-b border-gray-100 mb-6">
-          <div className="flex flex-col gap-3 mb-3">
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={handlePasteAndFill}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#FF9800] active:scale-95 transition-all"
-              >
-                <Clipboard size={12} />
-                貼付
-              </button>
-              <label 
-                className={`flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#FF9800] active:scale-95 transition-all cursor-pointer ${isOcrProcessing ? 'opacity-50 pointer-events-none' : ''}`}
-              >
-                {isOcrProcessing ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
-                カメラで読み取り
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  capture="environment" 
-                  hidden 
-                  onChange={handleCameraOCR} 
-                  disabled={isOcrProcessing} 
-                />
-              </label>
-            </div>
-            <div className="text-[10px] font-black text-[#D7CCC8] block tracking-widest uppercase">Select Type</div>
+        <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md -mx-6 px-6 pt-3 pb-4 border-b border-gray-100 mb-6">
+          {/* Row 1: Actions & Auto-fill */}
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <button 
+              onClick={() => { setIsCreating(false); startEditing(null); }}
+              className="text-gray-400 font-bold text-xs px-1 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
+            >
+              キャンセル
+            </button>
+
             {!editingEntry && (
               <label className="flex items-center gap-2 cursor-pointer group">
-                <span className={`text-[10px] font-bold transition-colors ${isAutoFillEnabled ? 'text-[#FF9800]' : 'text-gray-400'} uppercase tracking-tighter`}>前回入力を自動反映</span>
+                <span className={`text-[10px] font-black transition-colors ${isAutoFillEnabled ? 'text-[#FF9800]' : 'text-gray-400'} uppercase tracking-tighter`}>前回内容を自動反映</span>
                 <div 
                   onClick={() => setIsAutoFillEnabled(!isAutoFillEnabled)}
                   className={`w-8 h-4 rounded-full transition-colors relative border ${isAutoFillEnabled ? 'bg-[#FF9800] border-[#FF9800]' : 'bg-gray-100 border-gray-200'}`}
@@ -837,7 +821,25 @@ export function BeetleManager() {
                 </div>
               </label>
             )}
+
+            <button 
+              type="submit" 
+              form={editingEntry ? "edit-form" : "create-form"}
+              className="bg-[#2D5A27] text-white px-5 py-1.5 rounded-lg font-black text-[11px] shadow-md shadow-[#2D5A27]/20 hover:brightness-110 active:scale-95 transition-all select-none whitespace-nowrap"
+            >
+              保存
+            </button>
           </div>
+
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2">
+              <button onClick={handlePasteAndFill} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#FF9800] active:scale-95 transition-all"><Clipboard size={12} />貼付</button>
+              <label className={`flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#FF9800] active:scale-95 transition-all cursor-pointer ${isOcrProcessing ? 'opacity-50 pointer-events-none' : ''}`}>{isOcrProcessing ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}カメラで読み取り<input type="file" accept="image/*" capture="environment" hidden onChange={handleCameraOCR} disabled={isOcrProcessing} /></label>
+            </div>
+          </div>
+          
+          {!editingEntry && (
+            <div className="mt-3">
           <div className="text-[10px] font-black text-[#D7CCC8] block tracking-widest uppercase mb-1 px-1">種別を選択</div>
           <div className="flex items-center gap-2">
             <button
@@ -886,10 +888,12 @@ export function BeetleManager() {
             </button>
           </div>
         </div>
+          )}
+        </div>
 
         {isCreating && !editingEntry && createType === "成虫" ? (
           <AdultForm
-            className="flex-1"
+            id="create-form"
             initialValues={pastedData && pastedData.type === "成虫" ? { ...emptyAdultForm, ...pastedData } : getInitialValues("成虫", emptyAdultForm)}
             onSubmit={(value) => {
               addAdult(value);
@@ -900,7 +904,7 @@ export function BeetleManager() {
         ) : null}
         {isCreating && !editingEntry && createType === "幼虫" ? (
           <LarvaForm
-            className="flex-1"
+            id="create-form"
             initialValues={pastedData && pastedData.type === "幼虫" ? { ...emptyLarvaForm, ...pastedData } : getInitialValues("幼虫", emptyLarvaForm)}
             allEntries={entries}
             onSubmit={(values, count) => {
@@ -918,7 +922,7 @@ export function BeetleManager() {
         ) : null}
         {isCreating && !editingEntry && createType === "産卵セット" ? (
           <SpawnSetForm
-            className="flex-1"
+            id="create-form"
             initialValues={spawnTemplate ? { ...emptySpawnSetForm, ...spawnTemplate } : getInitialValues("産卵セット", emptySpawnSetForm)}
             allEntries={entries}
             onSubmit={(value) => {
@@ -933,6 +937,7 @@ export function BeetleManager() {
 
         {editingEntry?.type === "成虫" ? (
           <AdultForm
+            id="edit-form"
             initialValues={editingEntry}
             onSubmit={(value) => {
               updateAdult(editingEntry.id, value);
@@ -943,6 +948,7 @@ export function BeetleManager() {
         ) : null}
         {editingEntry?.type === "幼虫" ? (
           <LarvaForm
+            id="edit-form"
             initialValues={editingEntry}
             allEntries={entries}
             onSubmit={(value, count) => {
@@ -964,6 +970,7 @@ export function BeetleManager() {
         ) : null}
         {editingEntry?.type === "産卵セット" ? (
           <SpawnSetForm
+            id="edit-form"
             initialValues={editingEntry}
             allEntries={entries}
             onSubmit={(value) => {

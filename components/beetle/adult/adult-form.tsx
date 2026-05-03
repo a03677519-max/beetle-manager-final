@@ -11,11 +11,13 @@ export function AdultForm({
   initialValues,
   onSubmit,
   onCancel,
+  id,
   className,
 }: {
   initialValues: AdultFormValues;
   onSubmit: (value: AdultFormValues) => void;
   onCancel: () => void;
+  id?: string;
   className?: string;
 }) {
   const [values, setValues] = useState<AdultFormValues>(initialValues);
@@ -39,6 +41,7 @@ export function AdultForm({
 
   return (
     <form
+      id={id}
       ref={formRef}
       className={`flex flex-col h-full overflow-hidden ${className || ''}`}
       onSubmit={(event) => {
@@ -46,23 +49,6 @@ export function AdultForm({
         onSubmit(values);
       }}
     >
-      {/* Header Actions */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm -mx-6 px-4 py-2 border-b border-gray-100 flex justify-between items-center z-50 mb-4 h-[54px]">
-        <button
-          type="button"
-          className="text-gray-400 font-bold text-xs px-2 py-1.5 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
-          onClick={onCancel}
-        >
-          キャンセル
-        </button>
-        <button 
-          type="submit" 
-          className="bg-[#7B5D3F] text-white px-4 py-1.5 rounded-lg font-black text-[11px] shadow-md shadow-[#7B5D3F]/20 hover:brightness-110 active:scale-95 transition-all select-none whitespace-nowrap"
-        >
-          保存
-        </button>
-      </div>
-
       <div className="flex-1 overflow-y-auto px-1 space-y-3 mb-2">
         <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2">
         <EntryBaseFields

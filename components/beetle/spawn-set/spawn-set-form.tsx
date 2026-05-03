@@ -18,6 +18,7 @@ export function SpawnSetForm({
   onFetchTemperature,
   isFetchingTemperature,
   allEntries,
+  id,
   className,
 }: {
   initialValues: SpawnSetFormValues;
@@ -26,6 +27,7 @@ export function SpawnSetForm({
   onFetchTemperature: (setter: (value: string) => void) => void;
   isFetchingTemperature: boolean;
   allEntries: BeetleEntry[];
+  id?: string;
   className?: string;
 }) {
   const [values, setValues] = useState<SpawnSetFormValues>(initialValues);
@@ -45,6 +47,7 @@ export function SpawnSetForm({
 
   return (
     <form
+      id={id}
       ref={formRef}
       className={`flex flex-col h-full overflow-hidden touch-pan-y ${className || ''}`}
       onSubmit={(event) => {
@@ -52,18 +55,10 @@ export function SpawnSetForm({
         onSubmit(values);
       }}
     >
-      {/* Header Actions */}
-      <div className="sticky top-0 bg-white/95 backdrop-blur-sm -mx-6 px-4 py-2 border-b border-gray-100 flex items-center gap-2 z-50 mb-4 h-[54px]">
-        <button
-          type="button"
-          className="text-gray-400 font-bold text-xs px-1 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
-          onClick={onCancel}
-        >
-          キャンセル
-        </button>
-
-        {/* タイプセレクト（終了区分）を中央〜右寄りに配置 */}
-        <div className="flex-1 flex bg-gray-100/80 p-0.5 rounded-lg gap-0.5">
+      <div className="flex-1 overflow-y-auto px-1 space-y-3 mb-2 overscroll-contain">
+        <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2">
+        {/* 終了区分セレクトをコンテンツ上部に配置 */}
+        <div className="flex bg-gray-100/80 p-0.5 rounded-lg gap-0.5 mb-2">
           {(['割出', '掘出'] as const).map((type) => (
             <button
               key={type}
@@ -75,17 +70,6 @@ export function SpawnSetForm({
             </button>
           ))}
         </div>
-
-        <button 
-          type="submit" 
-          className="bg-[#2D5A27] text-white px-4 py-1.5 rounded-lg font-black text-[11px] shadow-md shadow-[#2D5A27]/20 hover:brightness-110 active:scale-95 transition-all select-none whitespace-nowrap"
-        >
-          保存
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-1 space-y-3 mb-2 overscroll-contain">
-        <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2">
         <EntryBaseFields
           {...values}
           managementName={values.managementName || ""}
