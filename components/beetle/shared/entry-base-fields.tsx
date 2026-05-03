@@ -39,16 +39,19 @@ export function EntryBaseFields({
     const jSet = new Set<string>();
     const sSet = new Set<string>();
     const lSet = new Set<string>();
+    const mSet = new Set<string>();
 
     allEntries.forEach((entry) => {
       if (entry.japaneseName) jSet.add(entry.japaneseName);
       if (entry.scientificName) sSet.add(entry.scientificName);
       if (entry.locality) lSet.add(entry.locality);
+      if (entry.managementName) mSet.add(entry.managementName);
     });
     return {
       japanese: Array.from(jSet).sort(),
       scientific: Array.from(sSet).sort(),
       locality: Array.from(lSet).sort(),
+      management: Array.from(mSet).sort(),
     };
   }, [allEntries]);
 
@@ -88,6 +91,7 @@ export function EntryBaseFields({
         label="管理名 (No/名前)"
         value={managementName || ""}
         placeholder="例: P-01 / L-24-01"
+        suggestions={suggestions.management}
         onChange={(val) => onChange({ managementName: val })}
       />
       <BottomSheetInput

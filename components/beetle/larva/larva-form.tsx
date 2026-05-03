@@ -156,8 +156,13 @@ export function LarvaForm({
           finalValues.extractionDate = finalValues.extractionDate || (initialValues.createdAt ? initialValues.createdAt.slice(0, 10) : today());
           finalValues.hatchDate = ""; // 割出データとして保存
         } else if (dateType === "set") {
-          finalValues.extractionDate = setEndDate;
-          finalValues.hatchDate = setStartDate;
+          if (new Date(setStartDate) > new Date(setEndDate)) {
+            finalValues.extractionDate = setStartDate;
+            finalValues.hatchDate = setEndDate;
+          } else {
+            finalValues.extractionDate = setEndDate;
+            finalValues.hatchDate = setStartDate;
+          }
         }
         onSubmit(finalValues, count);
       }}

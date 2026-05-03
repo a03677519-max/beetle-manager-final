@@ -5,19 +5,21 @@ import { EyeOff } from "lucide-react";
 import type { BeetleEntry, LarvaBeetle } from "@/types/beetle";
 import { daysBetween, today } from "@/lib/utils";
 
+type SortKey = "urgency" | "type" | "days" | "name";
+
 interface TaskViewProps {
   entries: BeetleEntry[];
   skippedTaskIds: string[];
   setSkippedTaskIds: (ids: string[]) => void;
-  taskSortType: "urgency" | "type";
-  setTaskSortType: (type: "urgency" | "type") => void;
+  taskSortConfig: { primary: SortKey; secondary: SortKey };
+  setTaskSortConfig: (config: { primary: SortKey; secondary: SortKey }) => void;
   setSelectedEntry: (entry: BeetleEntry | null) => void;
   handleQuickExchange: (e: React.MouseEvent, entry: LarvaBeetle) => void;
   handlePromoteToAdult: (e: React.MouseEvent, entry: LarvaBeetle) => void;
 }
 
 export function TaskView({ 
-  entries, skippedTaskIds, setSkippedTaskIds, taskSortType, setTaskSortType, 
+  entries, skippedTaskIds, setSkippedTaskIds, taskSortConfig, setTaskSortConfig, 
   setSelectedEntry, handleQuickExchange, handlePromoteToAdult 
 }: TaskViewProps) {
   const { groupedTasks, totalCount } = useMemo(() => {
@@ -25,7 +27,6 @@ export function TaskView({
     const exchangeTasks = visibleEntries
       .filter((e): e is LarvaBeetle => e.type === "幼虫")
       .map(e => {
-        // 経過日数（60日以上）で計算
         const lastExchange = e.logs[0]?.date || e.createdAt;
         const daysSinceExchange = daysBetween(lastExchange, today()) ?? 0;
         return { entry: e, days: daysSinceExchange, type: "exchange" as const };
@@ -39,7 +40,6 @@ export function TaskView({
 
     const allTasks = [...exchangeTasks, ...emergenceTasks];
     
-    // 学名ごとにグループ化
     const groups: Record<string, { sciName: string, japaneseName: string, items: typeof allTasks }> = {};
     allTasks.forEach(task => {
       const key = task.entry.scientificName || "Unknown";
@@ -53,33 +53,40 @@ export function TaskView({
       groups[key].items.push(task);
     });
 
-    // 各グループ内のソート
+    const getVal = (item: typeof allTasks[0], key: SortKey) => {
+      if (key === 'urgency') return item.type === 'emergence' ? (item.days <= 0 ? 3 : 1) : (item.days >= 90 ? 3 : 2);
+      if (key === 'type') return item.type === 'emergence' ? 1 : 2;
+      if (key === 'days') return item.days;
+      return 0;
+    };
+
+    const getStrVal = (item: typeof allTasks[0], key: SortKey) => {
+      if (key === 'name') return (item.entry.managementName as string) ?? "";
+      return "";
+    };
+
     Object.values(groups).forEach(group => {
       group.items.sort((a, b) => {
-        if (taskSortType === "urgency") {
-          const pa = a.type === 'emergence' ? (a.days <= 0 ? 3 : 1) : (a.days >= 90 ? 3 : 2);
-          const pb = b.type === 'emergence' ? (b.days <= 0 ? 3 : 1) : (b.days >= 90 ? 3 : 2);
-          return pb - pa || b.days - a.days;
-        }
-        const nameA = (a.entry.managementName as string) ?? "";
-        const nameB = (b.entry.managementName as string) ?? "";
-        return a.type === b.type ? nameA.localeCompare(nameB) : (a.type === "emergence" ? -1 : 1);
+        const compare = (key: SortKey) => {
+          if (key === 'name') return getStrVal(a, key).localeCompare(getStrVal(b, key));
+          return getVal(a, key) - getVal(b, key);
+        };
+        
+        const v1 = compare(taskSortConfig.primary);
+        if (v1 !== 0) return v1;
+        return compare(taskSortConfig.secondary);
       });
     });
 
-    // グループ自体のソート（和名順）
     const sortedGroups = Object.values(groups).sort((a, b) => {
-      if (taskSortType === "urgency") {
-        return b.items.length - a.items.length; // タスクが多い種を上に
-      }
-      return a.japaneseName.localeCompare(b.japaneseName);
+      return b.items.length - a.items.length;
     });
 
     return {
       groupedTasks: sortedGroups,
       totalCount: allTasks.length
     };
-  }, [entries, taskSortType, skippedTaskIds]);
+  }, [entries, taskSortConfig, skippedTaskIds]);
 
   return (
     <div className="space-y-4">
@@ -88,12 +95,22 @@ export function TaskView({
           <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tasks ({totalCount})</h3>
           {skippedTaskIds.length > 0 && <button onClick={() => setSkippedTaskIds([])} className="text-[9px] font-bold text-[#D7CCC8] bg-[#D7CCC8]/10 px-2 py-0.5 rounded-full">スキップ解除</button>}
         </div>
-        <div className="flex bg-white/60 p-1 rounded-xl border border-white/60 backdrop-blur-sm">
-          {["urgency", "type"].map((t) => (
-            <button key={t} onClick={() => setTaskSortType(t as "urgency" | "type")} className={`px-3 py-1 text-[9px] font-black rounded-lg transition-all uppercase ${taskSortType === t ? "bg-[#FF9800] text-white" : "text-gray-400"}`}>
-              {t === "urgency" ? "緊急度" : "種別"}
-            </button>
-          ))}
+        {/* ソートUIの変更が必要 */}
+        <div className="flex flex-col gap-1">
+          <div className="flex gap-1 overflow-x-auto no-scrollbar">
+            {(["urgency", "type", "days", "name"] as SortKey[]).map((k) => (
+              <button key={k} onClick={() => setTaskSortConfig({...taskSortConfig, primary: k})} className={`px-2 py-0.5 text-[8px] font-black rounded-md ${taskSortConfig.primary === k ? "bg-[#FF9800] text-white" : "bg-white text-gray-400"}`}>
+                P: {k}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-1 overflow-x-auto no-scrollbar">
+            {(["urgency", "type", "days", "name"] as SortKey[]).map((k) => (
+              <button key={k} onClick={() => setTaskSortConfig({...taskSortConfig, secondary: k})} className={`px-2 py-0.5 text-[8px] font-black rounded-md ${taskSortConfig.secondary === k ? "bg-[#FF9800] text-white" : "bg-white text-gray-400"}`}>
+                S: {k}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

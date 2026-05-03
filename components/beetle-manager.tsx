@@ -107,13 +107,11 @@ export function BeetleManager() {
 
   // サブタイプ（日付区分）用のステート
   const [larvaDateType, setLarvaDateType] = useState<"hatch" | "set" | "extraction">("hatch");
-  const [spawnSetDateType, setSpawnSetDateType] = useState<"割出" | "掘出">("割出");
 
   // 再編集時に既存データから日付区分を復元
   useEffect(() => {
     if (!editingEntry) {
       setLarvaDateType("hatch");
-      setSpawnSetDateType("割出");
       return;
     }
 
@@ -122,8 +120,6 @@ export function BeetleManager() {
       if (editingEntry.hatchDate && editingEntry.extractionDate) setLarvaDateType("set");
       else if (editingEntry.extractionDate) setLarvaDateType("extraction");
       else setLarvaDateType("hatch");
-    } else if (editingEntry.type === "産卵セット") {
-      setSpawnSetDateType((editingEntry as any).endDateType || "割出");
     }
   }, [editingEntry, editingEntry?.id]);
   
@@ -132,9 +128,12 @@ export function BeetleManager() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showSort, setShowSort] = useState(false);
   const [isBulkEditing, setIsBulkEditing] = useState(false);
-  const [sortConfig, setSortConfig] = useState({
-    key: "date",
-    direction: "desc" as "asc" | "desc"
+  const [sortConfig, setSortConfig] = useState<{
+    primary: { key: string, direction: "asc" | "desc" },
+    secondary: { key: string, direction: "asc" | "desc" }
+  }>({
+    primary: { key: "managementName", direction: "asc" },
+    secondary: { key: "japaneseName", direction: "asc" }
   });
 
   const sortKeys = [
@@ -146,7 +145,14 @@ export function BeetleManager() {
     { id: 'date', label: '日付' },
   ];
 
-  // 管理名のユニークな名前を生成するユーティリティ
+  const bulkEntryType = useMemo(() => {
+    if (selectedIds.length === 0) return null;
+    const firstEntry = entries.find(e => e.id === selectedIds[0]);
+    if (!firstEntry) return null;
+    return selectedIds.every(id => entries.find(e => e.id === id)?.type === firstEntry.type) ? firstEntry.type : null;
+  }, [selectedIds, entries]);
+
+  const bulkFormId = "bulk-edit-form";
   const generateUniqueMName = (base: string, currentEntries: BeetleEntry[]) => {
     const namePart = base.trim() || "個体";
     
@@ -207,8 +213,14 @@ export function BeetleManager() {
      };
  
      return [...list].sort((a, b) => {
-       const v = String(getSortVal(a, sortConfig.key)).localeCompare(String(getSortVal(b, sortConfig.key)), "ja", { numeric: true });
-       return sortConfig.direction === "asc" ? v : -v;
+       const compare = (key: string, direction: "asc" | "desc") => {
+         const v = String(getSortVal(a, key)).localeCompare(String(getSortVal(b, key)), "ja", { numeric: true });
+         return direction === "asc" ? v : -v;
+       };
+       
+       const v1 = compare(sortConfig.primary.key, sortConfig.primary.direction);
+       if (v1 !== 0) return v1;
+       return compare(sortConfig.secondary.key, sortConfig.secondary.direction);
      });
    }, [entries, query, selectedType, sortConfig]);
 
@@ -299,7 +311,7 @@ export function BeetleManager() {
     setSelectedIds([]);
   };
 
-  const [taskSortType, setTaskSortType] = useState<"urgency" | "type">("urgency");
+  const [taskSortConfig, setTaskSortConfig] = useState<{ primary: "urgency" | "type" | "days" | "name"; secondary: "urgency" | "type" | "days" | "name" }>({ primary: "urgency", secondary: "name" });
   const [skippedTaskIds, setSkippedTaskIds] = useState<string[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [isPersisted, setIsPersisted] = useState(false);
@@ -719,16 +731,30 @@ export function BeetleManager() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
                 <div className="flex flex-col items-start min-w-[50px]">
-                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Sort By</span>
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Primary</span>
                   <button 
-                    onClick={() => setSortConfig(s => ({ ...s, direction: s.direction === "asc" ? "desc" : "asc" }))}
+                    onClick={() => setSortConfig(s => ({ ...s, primary: { ...s.primary, direction: s.primary.direction === "asc" ? "desc" : "asc" } }))}
                     className="text-[8px] font-black text-[#F4511E] flex items-center gap-0.5"
                   >
-                    <ArrowUpDown size={8} /> {sortConfig.direction === "asc" ? "昇順" : "降順"}
+                    <ArrowUpDown size={8} /> {sortConfig.primary.direction === "asc" ? "昇" : "降"}
                   </button>
                 </div>
                 {sortKeys.map(k => (
-                  <button key={`p-${k.id}`} onClick={() => setSortConfig(s => ({...s, key: k.id}))} className={`px-3 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all ${sortConfig.key === k.id ? "bg-[#FF9800] text-white shadow-sm" : "bg-white text-gray-400 border border-gray-100"}`}>{k.label}</button>
+                  <button key={`p-${k.id}`} onClick={() => setSortConfig(s => ({...s, primary: { ...s.primary, key: k.id }}))} className={`px-3 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all ${sortConfig.primary.key === k.id ? "bg-[#FF9800] text-white shadow-sm" : "bg-white text-gray-400 border border-gray-100"}`}>{k.label}</button>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                <div className="flex flex-col items-start min-w-[50px]">
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Secondary</span>
+                  <button 
+                    onClick={() => setSortConfig(s => ({ ...s, secondary: { ...s.secondary, direction: s.secondary.direction === "asc" ? "desc" : "asc" } }))}
+                    className="text-[8px] font-black text-[#F4511E] flex items-center gap-0.5"
+                  >
+                    <ArrowUpDown size={8} /> {sortConfig.secondary.direction === "asc" ? "昇" : "降"}
+                  </button>
+                </div>
+                {sortKeys.map(k => (
+                  <button key={`s-${k.id}`} onClick={() => setSortConfig(s => ({...s, secondary: { ...s.secondary, key: k.id }}))} className={`px-3 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all ${sortConfig.secondary.key === k.id ? "bg-[#FF9800] text-white shadow-sm" : "bg-white text-gray-400 border border-gray-100"}`}>{k.label}</button>
                 ))}
               </div>
             </div>
@@ -956,25 +982,6 @@ export function BeetleManager() {
               </div>
             </div>
           )}
-
-          {/* 産卵セットの場合の終了区分セレクター (固定表示) */}
-          {(createType === "産卵セット" || editingEntry?.type === "産卵セット") && (
-            <div className="mt-3 pt-3 border-t border-gray-100">
-              <div className="text-[9px] font-black text-gray-400 block tracking-widest uppercase mb-1.5 px-1">終了区分</div>
-              <div className="flex bg-gray-50 shadow-inner rounded-xl p-1 gap-1">
-                {(['割出', '掘出'] as const).map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all ${spawnSetDateType === type ? "bg-white shadow-sm text-[#FF9800]" : "text-gray-400"}`}
-                    onClick={() => setSpawnSetDateType(type)}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {isCreating && !editingEntry && createType === "成虫" ? (
@@ -1012,8 +1019,6 @@ export function BeetleManager() {
           <SpawnSetForm
             id="create-form"
             initialValues={spawnTemplate ? { ...emptySpawnSetForm, ...spawnTemplate } : getInitialValues("産卵セット", emptySpawnSetForm)}
-            endDateType={spawnSetDateType}
-            onEndDateTypeChange={setSpawnSetDateType}
             allEntries={entries}
             onSubmit={(value) => {
               addSpawnSet(value);
@@ -1064,8 +1069,6 @@ export function BeetleManager() {
           <SpawnSetForm
             id="edit-form"
             initialValues={editingEntry}
-            endDateType={spawnSetDateType}
-            onEndDateTypeChange={setSpawnSetDateType}
             allEntries={entries}
             onSubmit={(value) => {
               updateSpawnSet(editingEntry.id, value);
@@ -1081,32 +1084,35 @@ export function BeetleManager() {
       {/* 一括編集モーダル */}
       <Modal isOpen={isBulkEditing} onClose={() => setIsBulkEditing(false)} title={`一括編集 (${selectedIds.length}件)`}>
         <div className="p-1 h-full flex flex-col overflow-hidden">
-          <div className="sticky top-0 bg-white z-10 pb-4 mb-4 border-b border-gray-100">
-             <div className="text-[9px] font-black text-gray-400 block tracking-widest uppercase mb-1.5 px-1">日付区分を一括指定</div>
-             <div className="flex bg-gray-50 shadow-inner rounded-xl p-1 gap-1">
-                {(['hatch', 'set', 'extraction'] as const).map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all ${larvaDateType === type ? "bg-white shadow-sm text-[#FF9800]" : "text-gray-400"}`}
-                    onClick={() => setLarvaDateType(type)}
-                  >
-                    {type === 'hatch' ? '孵化日' : type === 'set' ? 'セット' : '割出日'}
-                  </button>
-                ))}
-             </div>
-          </div>
           <div className="flex-1 overflow-y-auto px-1">
-            <p className="text-[10px] text-gray-400 mb-4">※ 入力した項目のみが選択中の個体すべてに上書きされます。</p>
-            <LarvaForm
-              initialValues={{ ...emptyLarvaForm, id: 'bulk', hatchDate: '' }}
-              dateType={larvaDateType}
-              onDateTypeChange={setLarvaDateType}
-              allEntries={entries}
-              onSubmit={(values) => handleBulkEditSubmit(values)} // count は一括編集では使用しない
-              onCancel={() => setIsBulkEditing(false)}
-            />
+            {bulkEntryType === "幼虫" ? (
+              <LarvaForm
+                id={bulkFormId}
+                initialValues={{ ...emptyLarvaForm, id: 'bulk', hatchDate: '' }}
+                dateType={larvaDateType}
+                onDateTypeChange={setLarvaDateType}
+                allEntries={entries}
+                onSubmit={(values) => handleBulkEditSubmit(values)}
+                onCancel={() => setIsBulkEditing(false)}
+              />
+            ) : bulkEntryType === "成虫" ? (
+              <AdultForm
+                id={bulkFormId}
+                initialValues={{ ...emptyAdultForm, id: 'bulk' }}
+                onSubmit={(values) => handleBulkEditSubmit(values)}
+                onCancel={() => setIsBulkEditing(false)}
+              />
+            ) : (
+              <p className="text-center p-4 text-gray-400">一括編集は同じ種別の個体のみ可能です。</p>
+            )}
           </div>
+          <button 
+             type="submit"
+             form={bulkFormId}
+             className="w-full bg-[#2D5A27] text-white py-3 rounded-xl font-black mt-4"
+          >
+            保存
+          </button>
         </div>
       </Modal>
 
@@ -1195,8 +1201,8 @@ export function BeetleManager() {
             entries={entries}
             skippedTaskIds={skippedTaskIds}
             setSkippedTaskIds={setSkippedTaskIds}
-            taskSortType={taskSortType}
-            setTaskSortType={setTaskSortType}
+            taskSortConfig={taskSortConfig}
+            setTaskSortConfig={setTaskSortConfig}
             setSelectedEntry={setSelectedEntry}
             handleQuickExchange={handleQuickExchange}
             handlePromoteToAdult={handlePromoteToAdult}
