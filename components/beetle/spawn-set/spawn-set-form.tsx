@@ -18,6 +18,8 @@ export function SpawnSetForm({
   onFetchTemperature,
   isFetchingTemperature,
   allEntries,
+  endDateType = "割出",
+  onEndDateTypeChange,
   id,
   className,
 }: {
@@ -27,13 +29,12 @@ export function SpawnSetForm({
   onFetchTemperature: (setter: (value: string) => void) => void;
   isFetchingTemperature: boolean;
   allEntries: BeetleEntry[];
+  endDateType?: "割出" | "掘出";
+  onEndDateTypeChange?: (type: "割出" | "掘出") => void;
   id?: string;
   className?: string;
 }) {
   const [values, setValues] = useState<SpawnSetFormValues>(initialValues);
-  const [endDateType, setEndDateType] = useState<"割出" | "掘出">(
-    initialValues.setEndDate ? "割出" : "割出"
-  );
   const formRef = useRef<HTMLFormElement>(null);
 
   // 外部からの初期値変更を同期
@@ -57,19 +58,6 @@ export function SpawnSetForm({
     >
       <div className="flex-1 overflow-y-auto px-1 space-y-3 mb-2 overscroll-contain">
         <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2">
-        {/* 終了区分セレクトをコンテンツ上部に配置 */}
-        <div className="flex bg-gray-100/80 p-0.5 rounded-lg gap-0.5 mb-2">
-          {(['割出', '掘出'] as const).map((type) => (
-            <button
-              key={type}
-              type="button"
-              className={`flex-1 py-1 rounded-md text-[10px] font-black transition-all ${endDateType === type ? 'bg-white shadow-sm text-[#FF9800]' : 'text-gray-400'}`}
-              onClick={() => setEndDateType(type)}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
         <EntryBaseFields
           {...values}
           managementName={values.managementName || ""}

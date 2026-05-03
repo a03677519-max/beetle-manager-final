@@ -102,6 +102,21 @@ export function BeetleManager() {
   const [isOcrProcessing, setIsOcrProcessing] = useState(false);
   const [isAutoFillEnabled, setIsAutoFillEnabled] = useState(false);
   const [spawnTemplate, setSpawnTemplate] = useState<any>(null);
+
+  // サブタイプ（日付区分）用のステート
+  const [larvaDateType, setLarvaDateType] = useState<"hatch" | "set" | "extraction">("hatch");
+  const [spawnSetDateType, setSpawnSetDateType] = useState<"割出" | "掘出">("割出");
+
+  // 再編集時に既存データから日付区分を復元
+  useEffect(() => {
+    if (editingEntry?.type === "幼虫") {
+      if (editingEntry.extractionDate) setLarvaDateType("extraction");
+      else if (editingEntry.hatchDate) setLarvaDateType("hatch");
+      else setLarvaDateType("set");
+    } else if (editingEntry?.type === "産卵セット") {
+      setSpawnSetDateType(editingEntry.setEndDate ? "割出" : "割出");
+    }
+  }, [editingEntry]);
   
   // 一括操作用のステート
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -124,15 +139,19 @@ export function BeetleManager() {
 
   // 管理名のユニークな名前を生成するユーティリティ
   const generateUniqueMName = (base: string, currentEntries: BeetleEntry[]) => {
-    let namePart = base || "個体";
+    const namePart = base.trim() || "個体";
     let suffix = 1;
 
-    let candidate = `${namePart}-${String(suffix).padStart(2, "0")}`;
-    if (!base) candidate = `個体-${String(suffix).padStart(2, "0")}`;
+    const getCandidate = (s: number) => {
+      const num = String(s).padStart(2, "0");
+      const sep = namePart.endsWith("-") ? "" : "-";
+      return `${namePart}${sep}${num}`;
+    };
 
+    let candidate = getCandidate(suffix);
     while (currentEntries.some(e => e.managementName === candidate)) {
       suffix++;
-      candidate = `${namePart}-${String(suffix).padStart(2, "0")}`;
+      candidate = getCandidate(suffix);
     }
     return candidate;
   };
@@ -832,7 +851,7 @@ export function BeetleManager() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-1">
               <button onClick={handlePasteAndFill} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#FF9800] active:scale-95 transition-all"><Clipboard size={12} />貼付</button>
               <label className={`flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl shadow-sm text-[10px] font-black text-[#FF9800] active:scale-95 transition-all cursor-pointer ${isOcrProcessing ? 'opacity-50 pointer-events-none' : ''}`}>{isOcrProcessing ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}カメラで読み取り<input type="file" accept="image/*" capture="environment" hidden onChange={handleCameraOCR} disabled={isOcrProcessing} /></label>
             </div>
@@ -889,6 +908,44 @@ export function BeetleManager() {
           </div>
         </div>
           )}
+
+          {/* 幼虫の場合の日付区分セレクター (固定表示) */}
+          {(createType === "幼虫" || editingEntry?.type === "幼虫") && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="text-[9px] font-black text-gray-400 block tracking-widest uppercase mb-1.5 px-1">日付区分</div>
+              <div className="flex bg-gray-50 shadow-inner rounded-xl p-1 gap-1">
+                {(['hatch', 'set', 'extraction'] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all ${larvaDateType === type ? "bg-white shadow-sm text-[#FF9800]" : "text-gray-400"}`}
+                    onClick={() => setLarvaDateType(type)}
+                  >
+                    {type === 'hatch' ? '孵化日' : type === 'set' ? 'セット' : '割出日'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 産卵セットの場合の終了区分セレクター (固定表示) */}
+          {(createType === "産卵セット" || editingEntry?.type === "産卵セット") && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <div className="text-[9px] font-black text-gray-400 block tracking-widest uppercase mb-1.5 px-1">終了区分</div>
+              <div className="flex bg-gray-50 shadow-inner rounded-xl p-1 gap-1">
+                {(['割出', '掘出'] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all ${spawnSetDateType === type ? "bg-white shadow-sm text-[#FF9800]" : "text-gray-400"}`}
+                    onClick={() => setSpawnSetDateType(type)}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {isCreating && !editingEntry && createType === "成虫" ? (
@@ -906,6 +963,8 @@ export function BeetleManager() {
           <LarvaForm
             id="create-form"
             initialValues={pastedData && pastedData.type === "幼虫" ? { ...emptyLarvaForm, ...pastedData } : getInitialValues("幼虫", emptyLarvaForm)}
+            dateType={larvaDateType}
+            onDateTypeChange={setLarvaDateType}
             allEntries={entries}
             onSubmit={(values, count) => {
             let currentEntries = [...entries];
@@ -924,6 +983,8 @@ export function BeetleManager() {
           <SpawnSetForm
             id="create-form"
             initialValues={spawnTemplate ? { ...emptySpawnSetForm, ...spawnTemplate } : getInitialValues("産卵セット", emptySpawnSetForm)}
+            endDateType={spawnSetDateType}
+            onEndDateTypeChange={setSpawnSetDateType}
             allEntries={entries}
             onSubmit={(value) => {
               addSpawnSet(value);
@@ -950,6 +1011,8 @@ export function BeetleManager() {
           <LarvaForm
             id="edit-form"
             initialValues={editingEntry}
+            dateType={larvaDateType}
+            onDateTypeChange={setLarvaDateType}
             allEntries={entries}
             onSubmit={(value, count) => {
               updateLarva(editingEntry.id, value);
@@ -972,6 +1035,8 @@ export function BeetleManager() {
           <SpawnSetForm
             id="edit-form"
             initialValues={editingEntry}
+            endDateType={spawnSetDateType}
+            onEndDateTypeChange={setSpawnSetDateType}
             allEntries={entries}
             onSubmit={(value) => {
               updateSpawnSet(editingEntry.id, value);
@@ -986,14 +1051,33 @@ export function BeetleManager() {
 
       {/* 一括編集モーダル */}
       <Modal isOpen={isBulkEditing} onClose={() => setIsBulkEditing(false)} title={`一括編集 (${selectedIds.length}件)`}>
-        <div className="p-1">
-          <p className="text-[10px] text-gray-400 mb-4">※ 入力した項目のみが選択中の個体すべてに上書きされます。</p>
-          <LarvaForm
-            initialValues={{ ...emptyLarvaForm, id: 'bulk', hatchDate: '' }}
-            allEntries={entries}
-            onSubmit={(values) => handleBulkEditSubmit(values)} // count は一括編集では使用しない
-            onCancel={() => setIsBulkEditing(false)}
-          />
+        <div className="p-1 h-full flex flex-col overflow-hidden">
+          <div className="sticky top-0 bg-white z-10 pb-4 mb-4 border-b border-gray-100">
+             <div className="text-[9px] font-black text-gray-400 block tracking-widest uppercase mb-1.5 px-1">日付区分を一括指定</div>
+             <div className="flex bg-gray-50 shadow-inner rounded-xl p-1 gap-1">
+                {(['hatch', 'set', 'extraction'] as const).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all ${larvaDateType === type ? "bg-white shadow-sm text-[#FF9800]" : "text-gray-400"}`}
+                    onClick={() => setLarvaDateType(type)}
+                  >
+                    {type === 'hatch' ? '孵化日' : type === 'set' ? 'セット' : '割出日'}
+                  </button>
+                ))}
+             </div>
+          </div>
+          <div className="flex-1 overflow-y-auto px-1">
+            <p className="text-[10px] text-gray-400 mb-4">※ 入力した項目のみが選択中の個体すべてに上書きされます。</p>
+            <LarvaForm
+              initialValues={{ ...emptyLarvaForm, id: 'bulk', hatchDate: '' }}
+              dateType={larvaDateType}
+              onDateTypeChange={setLarvaDateType}
+              allEntries={entries}
+              onSubmit={(values) => handleBulkEditSubmit(values)} // count は一括編集では使用しない
+              onCancel={() => setIsBulkEditing(false)}
+            />
+          </div>
         </div>
       </Modal>
 

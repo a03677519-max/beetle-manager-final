@@ -15,6 +15,8 @@ export function LarvaForm({
   onSubmit,
   onCancel,
   allEntries,
+  dateType = "hatch",
+  onDateTypeChange,
   id,
   className,
 }: {
@@ -22,12 +24,13 @@ export function LarvaForm({
   onSubmit: (value: LarvaFormValues, count: number) => void;
   onCancel: () => void;
   allEntries: BeetleEntry[];
+  dateType?: "hatch" | "set" | "extraction";
+  onDateTypeChange?: (type: "hatch" | "set" | "extraction") => void;
   id?: string;
   className?: string;
 }) {
   const [values, setValues] = useState<LarvaFormValues>(initialValues);
   const [count, setCount] = useState(1);
-  const [dateType, setDateType] = useState<"hatch" | "set" | "extraction">("hatch");
   const [setStartDate, setSetStartDate] = useState(today());
   const [setEndDate, setSetEndDate] = useState(today());
 
@@ -36,34 +39,24 @@ export function LarvaForm({
 
   useEffect(() => {
     setValues(initialValues);
-    // 再編集時（idがある場合）、既存データの状況に合わせて初期タブを選択
-    if (initialValues.id) {
-      if (initialValues.extractionDate) {
-        setDateType("extraction");
-        setSetEndDate(initialValues.extractionDate);
-      } else {
-        setDateType(initialValues.hatchDate ? "hatch" : "set");
-      }
-      // Initialize setStartDate and setEndDate for the "set" period tab,
-      // in case the user switches to it.
-      setSetStartDate(initialValues.hatchDate || initialValues.createdAt || today());
-      setSetEndDate(initialValues.extractionDate || today());
-    }
-  }, [initialValues]);
+    setSetStartDate(initialValues.hatchDate || initialValues.createdAt || today());
+    setSetEndDate(initialValues.extractionDate || today());
+  }, [initialValues, initialValues.id]);
 
   // タブ切り替え時に日付データを同期する
-  const handleTabChange = (type: "hatch" | "set" | "extraction") => {
-    if (type === "set") {
-      // セット期間へ切り替える際、既存の日付があれば開始/終了日に反映
-      if (values.hatchDate) setSetStartDate(values.hatchDate);
-      if (values.extractionDate) setSetEndDate(values.extractionDate);
-    } else if (type === "hatch" && dateType === "set") { // Only update if switching FROM "set"
-      setValues((prev) => ({ ...prev, hatchDate: setStartDate }));
-    } else if (type === "extraction" && dateType === "set") { // Only update if switching FROM "set"
-      setValues((prev) => ({ ...prev, extractionDate: setEndDate }));
+  useEffect(() => {
+    const type = dateType;
+    const currentActiveDate = values.hatchDate || values.extractionDate || setEndDate || today();
+    
+    if (type === "hatch") {
+      setValues(prev => ({ ...prev, hatchDate: currentActiveDate, extractionDate: "" }));
+    } else if (type === "extraction") {
+      setValues(prev => ({ ...prev, extractionDate: currentActiveDate, hatchDate: "" }));
+    } else if (type === "set") {
+      setSetStartDate(values.hatchDate || today());
+      setSetEndDate(values.extractionDate || today());
     }
-    setDateType(type);
-  };
+  }, [dateType]);
 
   useEffect(() => {
     if (!initialValues.id && (!values.logs || values.logs.length === 0)) {
@@ -136,15 +129,15 @@ export function LarvaForm({
       onSubmit={(event) => {
         event.preventDefault();
         const finalValues = { ...values };
-        // 重複防止ロジック: 選択されたタイプ以外の日付データを確実にクリアする
+        
         if (dateType === "hatch") {
-          // 孵化日の場合は割出日を空にする
+          // 値が空の場合はフォールバックを適用してリセットを防ぐ
+          finalValues.hatchDate = finalValues.hatchDate || initialValues.createdAt || today();
           finalValues.extractionDate = "";
         } else if (dateType === "extraction") {
-          // 割出日の場合は孵化日を空にする
+          finalValues.extractionDate = finalValues.extractionDate || today();
           finalValues.hatchDate = "";
         } else if (dateType === "set") {
-          // セット期間の場合は終了日を割出日とし、孵化日を空にする
           finalValues.extractionDate = setEndDate;
           finalValues.hatchDate = "";
         }
@@ -152,19 +145,6 @@ export function LarvaForm({
       }}
     >
       <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm space-y-2 flex-1 overflow-y-auto mb-4">
-        {/* 日付区分セレクトをコンテンツ最上部に配置 */}
-        <div className="flex bg-gray-100/80 p-0.5 rounded-lg gap-0.5 mb-4">
-          {(['hatch', 'set', 'extraction'] as const).map((type) => (
-            <button
-              key={type}
-              type="button"
-              className={`flex-1 py-1 rounded-md text-[9px] font-black transition-all ${dateType === type ? 'bg-white shadow-sm text-[#FF9800]' : 'text-gray-400'}`}
-              onClick={() => handleTabChange(type)}
-            >
-              {type === 'hatch' ? '孵化日' : type === 'set' ? 'セット' : '割出日'}
-            </button>
-          ))}
-        </div>
         <EntryBaseFields
           {...values}
           managementName={values.managementName || ""}
